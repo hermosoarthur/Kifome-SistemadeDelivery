@@ -1,0 +1,96 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --primaria: #FF6B35; --primaria-dark: #E55A25;
+  --texto: #2D3436; --texto-sec: #636E72; --texto-claro: #B2BEC3;
+  --fundo: #F8F9FA; --branco: #fff; --bordas: #DFE6E9;
+  --sucesso: #00B894; --erro: #D63031; --aviso: #F39C12;
+  --sombra: 0 2px 12px rgba(0,0,0,0.07); --sombra-md: 0 4px 20px rgba(0,0,0,0.11);
+  --radius: 12px; --radius-lg: 18px;
+}
+body { font-family: 'Inter', sans-serif; background: var(--fundo); color: var(--texto); -webkit-font-smoothing: antialiased; }
+button { cursor: pointer; font-family: inherit; }
+input, textarea, select { font-family: inherit; }
+a { text-decoration: none; color: inherit; }
+::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: var(--bordas); border-radius: 3px; }
+
+/* Spinner */
+.spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; border-radius: 50%; animation: spin .65s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Alerts */
+.alert { padding: 12px 16px; border-radius: var(--radius); font-size: 14px; font-weight: 500; margin-bottom: 16px; }
+.alert-erro { background: #FEE2E2; color: #B91C1C; border: 1px solid #FECACA; }
+.alert-sucesso { background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
+.alert-info { background: #EFF6FF; color: #1E40AF; border: 1px solid #BFDBFE; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border-radius: var(--radius); padding: 12px 20px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
+.btn-primary { background: linear-gradient(135deg, var(--primaria), var(--primaria-dark)); color: #fff; width: 100%; }
+.btn-primary:hover { opacity: .91; } .btn-primary:active { transform: scale(.98); } .btn-primary:disabled { opacity: .55; cursor: not-allowed; }
+.btn-secondary { background: var(--fundo); color: var(--texto); border: 1.5px solid var(--bordas); }
+.btn-secondary:hover { background: #eee; }
+.btn-danger { background: #FEE2E2; color: var(--erro); }
+.btn-danger:hover { background: #FECACA; }
+.btn-sm { padding: 8px 14px; font-size: 13px; }
+.btn-icon { width: 34px; height: 34px; padding: 0; border-radius: 8px; border: 1px solid var(--bordas); background: var(--branco); font-size: 15px; }
+.btn-icon:hover { background: var(--fundo); border-color: var(--primaria); }
+.btn-icon.danger:hover { background: #FEE2E2; border-color: var(--erro); }
+
+/* Form */
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.input-box { display: flex; align-items: center; gap: 9px; border: 1.5px solid var(--bordas); border-radius: var(--radius); background: var(--fundo); padding: 0 13px; transition: border-color .2s; }
+.input-box:focus-within { border-color: var(--primaria); background: #fff; }
+.icon { font-size: 16px; flex-shrink: 0; }
+.input-box input, .input-box textarea, .input-box select { flex: 1; border: none; background: transparent; font-size: 14px; color: var(--texto); padding: 12px 0; outline: none; }
+.input-box textarea { resize: vertical; min-height: 70px; padding: 12px 0; }
+.input-box select { cursor: pointer; }
+.eye { background: none; border: none; font-size: 16px; cursor: pointer; padding: 3px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* Badges */
+.badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: capitalize; }
+.badge-verde { background: #D1FAE5; color: #065F46; }
+.badge-amarelo { background: #FEF3C7; color: #92400E; }
+.badge-vermelho { background: #FEE2E2; color: #B91C1C; }
+.badge-azul { background: #DBEAFE; color: #1E40AF; }
+.badge-cinza { background: var(--fundo); color: var(--texto-sec); border: 1px solid var(--bordas); }
+.badge-laranja { background: #FFEDD5; color: #C2410C; }
+
+/* Cards */
+.card { background: #fff; border-radius: var(--radius-lg); box-shadow: var(--sombra); }
+
+/* Page wrapper */
+.page { padding: 28px 32px; max-width: 1100px; margin: 0 auto; }
+.page-title { font-size: 22px; font-weight: 800; margin-bottom: 22px; }
+
+/* Modal */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 500; padding: 16px; }
+.modal { background: #fff; border-radius: var(--radius-lg); width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+.modal-head { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px 16px; border-bottom: 1px solid var(--bordas); }
+.modal-head h3 { font-size: 17px; font-weight: 700; }
+.modal-close { width: 28px; height: 28px; border-radius: 6px; border: none; background: var(--fundo); cursor: pointer; }
+.modal-body { padding: 20px 24px; }
+.modal-foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--bordas); }
+
+/* Table */
+.table-wrap { background: #fff; border-radius: var(--radius-lg); box-shadow: var(--sombra); overflow: hidden; overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; min-width: 500px; }
+.table thead { background: var(--fundo); }
+.table th { padding: 11px 14px; text-align: left; font-size: 11px; font-weight: 700; color: var(--texto-sec); text-transform: uppercase; letter-spacing: .4px; border-bottom: 1px solid var(--bordas); }
+.table td { padding: 12px 14px; border-bottom: 1px solid var(--bordas); font-size: 14px; vertical-align: middle; }
+.table tbody tr:last-child td { border-bottom: none; }
+.table tbody tr:hover { background: #FAFAFA; }
+
+/* Status pedido colors */
+.status-pendente { background: #FEF3C7; color: #92400E; }
+.status-confirmado { background: #DBEAFE; color: #1E40AF; }
+.status-preparando { background: #FFEDD5; color: #C2410C; }
+.status-saiu_entrega { background: #EDE9FE; color: #6D28D9; }
+.status-entregue { background: #D1FAE5; color: #065F46; }
+.status-cancelado { background: #FEE2E2; color: #B91C1C; }
+
+@media (max-width: 768px) {
+  .page { padding: 14px; }
+  .form-row { grid-template-columns: 1fr; }
+}

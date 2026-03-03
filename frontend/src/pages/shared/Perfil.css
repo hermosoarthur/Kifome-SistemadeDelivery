@@ -1,0 +1,14 @@
+.perfil-hero { display: flex; align-items: center; gap: 20px; padding: 24px; margin-bottom: 18px; }
+.p-avatar { width: 70px; height: 70px; border-radius: 50%; background: color-mix(in srgb, var(--cor, var(--primaria)) 20%, white); display: flex; align-items: center; justify-content: center; font-size: 30px; flex-shrink: 0; box-shadow: 0 0 0 3px color-mix(in srgb, var(--cor, var(--primaria)) 30%, white); }
+.p-info h2 { font-size: 20px; font-weight: 700; margin-bottom: 3px; }
+.p-info p { color: var(--texto-sec); font-size: 13px; margin-bottom: 8px; }
+.p-badge { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: capitalize; }
+.p-card { padding: 22px; margin-bottom: 14px; }
+.p-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.p-card-head h3 { font-size: 15px; font-weight: 700; }
+.p-dados { display: flex; flex-direction: column; gap: 13px; }
+.p-row { display: flex; align-items: center; gap: 12px; }
+.p-ic { width: 34px; height: 34px; background: var(--fundo); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.p-label { display: block; font-size: 11px; color: var(--texto-sec); margin-bottom: 1px; }
+.p-val { display: block; font-size: 14px; font-weight: 600; text-transform: capitalize; }
+@media (max-width: 768px) { .perfil-hero { flex-direction: column; text-align: center; } }

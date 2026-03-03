@@ -21,6 +21,39 @@ def atualizar_usuario(usuario_atual, usuario_id):
         return jsonify({'erro': 'Erro ao atualizar'}), 500
 
 
+# ── USUÁRIOS (CRUD) ─────────────────────────────────────
+def listar_usuarios(usuario_atual):
+    # Retorna lista limitada de usuários (campos não sensíveis)
+    us = Usuario.query.order_by(Usuario.criado_em.desc()).all()
+    usuarios = [
+        {
+            'id': u.id, 'nome': u.nome, 'email': u.email,
+            'telefone': u.telefone, 'tipo': u.tipo, 'ativo': u.ativo,
+            'criado_em': u.criado_em.isoformat() if u.criado_em else None,
+        } for u in us
+    ]
+    return jsonify({'usuarios': usuarios}), 200
+
+
+def obter_usuario(usuario_atual, usuario_id):
+    u = Usuario.query.get_or_404(usuario_id)
+    return jsonify({'usuario': u.to_dict()}), 200
+
+
+def deletar_usuario(usuario_atual, usuario_id):
+    # Soft-delete: apenas o próprio usuário pode desativar sua conta
+    if usuario_atual.id != usuario_id:
+        return jsonify({'erro': 'Sem permissão'}), 403
+    u = Usuario.query.get_or_404(usuario_id)
+    try:
+        u.ativo = False
+        db.session.commit()
+        return jsonify({'mensagem': 'Conta desativada'}), 200
+    except Exception:
+        db.session.rollback()
+        return jsonify({'erro': 'Erro ao desativar conta'}), 500
+
+
 # ── RESTAURANTE ───────────────────────────────────────────
 def listar_restaurantes():
     busca = request.args.get('busca', '')
@@ -316,3 +349,4 @@ def atualizar_entregador(usuario_atual, eid):
     except Exception:
         db.session.rollback()
         return jsonify({'erro': 'Erro ao atualizar'}), 500
+#bp

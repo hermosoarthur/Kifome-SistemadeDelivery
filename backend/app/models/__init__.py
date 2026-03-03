@@ -150,3 +150,4 @@ class Entregador(db.Model):
             'usuario': self.usuario.to_dict() if self.usuario else None,
             'veiculo': self.veiculo, 'placa': self.placa, 'cnh': self.cnh, 'ativo': self.ativo,
         }
+#bp

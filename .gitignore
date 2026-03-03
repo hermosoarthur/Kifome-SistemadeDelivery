@@ -1,0 +1,130 @@
+
+# -------------------------
+# Environment / secrets
+# -------------------------
+.env
+.env.*
+/backend/.env
+/frontend/.env
+.env.local
+
+# -------------------------
+# Python / Flask
+# -------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.pyc
+.Python
+env/
+venv/
+ENV/
+.venv/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+pip-log.txt
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+htmlcov/
+mypy_cache/
+.mypy_cache/
+__pypackages__/
+instance/
+.pyre/
+
+# DB / data files
+*.sqlite3
+*.db
+*.db-journal
+
+# Logs
+*.log
+logs/
+
+# -------------------------
+# Node / Frontend
+# -------------------------
+/frontend/node_modules/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+README copy.md
+
+# build outputs
+/frontend/build/
+/frontend/dist/
+/frontend/.next/
+dist/
+build/
+
+# local env overrides (create-react-app, Next, etc.)
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# -------------------------
+# Editors / OS
+# -------------------------
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+.DS_Store
+Thumbs.db
+
+# JetBrains
+/.idea/
+
+# macOS
+.DS_Store
+
+# Windows image file caches
+Thumbs.db
+
+# -------------------------
+# Misc
+# -------------------------
+.cache/
+.parcel-cache/
+.next/
+.turbo/
+.serverless/
+.pnp.*
+*.log
+.envrc
+.supabase/
+coverage/
+coverage.xml
+
+# Avoid committing build artefacts or temporary files
+*.class
+*.log
+*.csv
+*.dat
+*.out
+
+

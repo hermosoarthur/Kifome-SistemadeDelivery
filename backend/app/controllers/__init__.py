@@ -349,4 +349,3 @@ def atualizar_entregador(usuario_atual, eid):
     except Exception:
         db.session.rollback()
         return jsonify({'erro': 'Erro ao atualizar'}), 500
-#bp

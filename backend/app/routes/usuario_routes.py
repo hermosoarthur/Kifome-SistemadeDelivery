@@ -29,4 +29,3 @@ def rota_atualizar(u, uid):
 @token_requerido
 def rota_deletar(u, uid):
 	return deletar_usuario(u, uid)
-#bp

@@ -150,3 +150,43 @@ class Entregador(db.Model):
             'usuario': self.usuario.to_dict() if self.usuario else None,
             'veiculo': self.veiculo, 'placa': self.placa, 'cnh': self.cnh, 'ativo': self.ativo,
         }
+
+
+class AuthOtpRequest(db.Model):
+    """OTP Request for Email and SMS authentication"""
+    __tablename__ = 'auth_otp_requests'
+    id = db.Column(db.Integer, primary_key=True)
+    tipo = db.Column(db.String(20), nullable=False)  # 'email', 'sms', 'magic_link'
+    destino = db.Column(db.String(255), nullable=False, index=True)  # email or phone
+    codigo_hash = db.Column(db.String(255), nullable=False)
+    tentativas = db.Column(db.Integer, default=0)
+    max_tentativas = db.Column(db.Integer, default=3)
+    expiracao = db.Column(db.DateTime, nullable=False, index=True)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    verificado_em = db.Column(db.DateTime, nullable=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id, 'tipo': self.tipo, 'destino': self.destino,
+            'tentativas': self.tentativas, 'max_tentativas': self.max_tentativas,
+            'expiracao': self.expiracao.isoformat() if self.expiracao else None,
+        }
+
+
+class ResetPasswordToken(db.Model):
+    """Password reset tokens"""
+    __tablename__ = 'reset_password_tokens'
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='CASCADE'), nullable=False, index=True)
+    token_hash = db.Column(db.String(255), nullable=False, unique=True)
+    expiracao = db.Column(db.DateTime, nullable=False, index=True)
+    usado = db.Column(db.Boolean, default=False)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+    usuario = db.relationship('Usuario', backref='reset_tokens')
+
+    def to_dict(self):
+        return {
+            'id': self.id, 'usuario_id': self.usuario_id,
+            'expiracao': self.expiracao.isoformat() if self.expiracao else None,
+            'usado': self.usado,
+        }

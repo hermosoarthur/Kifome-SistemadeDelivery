@@ -47,3 +47,5 @@ def rota_me(u):
 # Sync Supabase user to local app user
 auth_bp.route('/sync_supabase_user', methods=['POST'])(sync_supabase_user)
 
+#
+

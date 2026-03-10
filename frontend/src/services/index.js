@@ -98,3 +98,5 @@ export const usuarioService = {
   listar: () => api.get('/api/usuarios').then(r => r.data),
   deletar: (id) => api.delete(`/api/usuarios/${id}`).then(r => r.data),
 };
+
+// #

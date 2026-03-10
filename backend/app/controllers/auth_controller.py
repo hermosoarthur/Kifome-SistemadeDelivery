@@ -226,6 +226,8 @@ def verify_otp_email():
     token = gerar_token(usuario.id, usuario.tipo)
     return jsonify({'token': token, 'usuario': usuario.to_dict()}), 200
 
+#
+
 
 # ============================================================================
 # OTP VIA SMS

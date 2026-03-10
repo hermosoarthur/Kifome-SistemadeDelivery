@@ -1,7 +1,12 @@
 import os
-from flask import Flask, jsonify, request, make_response
+from pathlib import Path
+from flask import Flask, jsonify, request, make_response, current_app
 from flask_sqlalchemy import SQLAlchemy
+from dotenv import load_dotenv
 from app.config.settings import config_map
+
+
+load_dotenv(Path(__file__).resolve().parent.parent / '.env')
 
 db = SQLAlchemy()
 supabase_client = None
@@ -12,9 +17,19 @@ def get_supabase():
     if supabase_client is None:
         url = os.environ.get('SUPABASE_URL', '')
         key = os.environ.get('SUPABASE_SERVICE_KEY') or os.environ.get('SUPABASE_KEY', '')
+
+        if (not url or not key):
+            try:
+                url = url or current_app.config.get('SUPABASE_URL', '')
+                key = key or current_app.config.get('SUPABASE_SERVICE_KEY') or current_app.config.get('SUPABASE_KEY', '')
+            except RuntimeError:
+                pass
+
         if url and key:
             try:
+                from app.utils.supabase_utils import patch_supabase_runtime_compat
                 from supabase import create_client
+                patch_supabase_runtime_compat()
                 supabase_client = create_client(url, key)
             except Exception as e:
                 print(f'[Supabase] Erro ao conectar: {e}')

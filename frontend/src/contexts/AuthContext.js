@@ -46,6 +46,36 @@ export function AuthProvider({ children }) {
     return data;
   }, []);
 
+  const requestMagicLink = useCallback(async (email) => {
+    return await authService.requestMagicLink(email);
+  }, []);
+
+  const verifyMagicLink = useCallback(async (token) => {
+    const data = await authService.verifyMagicLink(token);
+    salvarSessao(data.token, data.usuario);
+    return data;
+  }, []);
+
+  const requestOtpEmail = useCallback(async (email) => {
+    return await authService.requestOtpEmail(email);
+  }, []);
+
+  const verifyOtpEmail = useCallback(async (email, codigo, extras = {}) => {
+    const data = await authService.verifyOtpEmail(email, codigo, extras);
+    salvarSessao(data.token, data.usuario);
+    return data;
+  }, []);
+
+  const requestOtpSms = useCallback(async (telefone) => {
+    return await authService.requestOtpSms(telefone);
+  }, []);
+
+  const verifyOtpSms = useCallback(async (telefone, codigo, extras = {}) => {
+    const data = await authService.verifyOtpSms(telefone, codigo, extras);
+    salvarSessao(data.token, data.usuario);
+    return data;
+  }, []);
+
   const loginGoogle = useCallback(async () => {
     if (!supabase) throw new Error('Supabase não configurado');
     const { error } = await supabase.auth.signInWithOAuth({
@@ -55,8 +85,23 @@ export function AuthProvider({ children }) {
     if (error) throw error;
   }, []);
 
-  const registro = useCallback(async (dados) => {
-    return await authService.registro(dados);
+  const loginFacebook = useCallback(async () => {
+    if (!supabase) throw new Error('Supabase não configurado');
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'facebook',
+      options: { redirectTo: `${window.location.origin}/auth/callback` }
+    });
+    if (error) throw error;
+  }, []);
+
+  const requestPasswordReset = useCallback(async (email) => {
+    return await authService.requestPasswordReset(email);
+  }, []);
+
+  const verifyPasswordReset = useCallback(async (token, novaSenha) => {
+    const data = await authService.verifyPasswordReset(token, novaSenha);
+    salvarSessao(data.token, data.usuario);
+    return data;
   }, []);
 
   const sair = useCallback(async () => {
@@ -73,7 +118,15 @@ export function AuthProvider({ children }) {
   }, [usuario]);
 
   return (
-    <AuthContext.Provider value={{ usuario, carregando, autenticado: !!usuario, login, loginGoogle, registro, sair, atualizarUsuario }}>
+    <AuthContext.Provider value={{
+      usuario, carregando, autenticado: !!usuario,
+      login, loginGoogle, loginFacebook,
+      requestMagicLink, verifyMagicLink,
+      requestOtpEmail, verifyOtpEmail,
+      requestOtpSms, verifyOtpSms,
+      requestPasswordReset, verifyPasswordReset,
+      sair, atualizarUsuario, salvarSessao
+    }}>
       {children}
     </AuthContext.Provider>
   );
@@ -84,3 +137,4 @@ export function useAuth() {
   if (!ctx) throw new Error('useAuth fora do AuthProvider');
   return ctx;
 }
+

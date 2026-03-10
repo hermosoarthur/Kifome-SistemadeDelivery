@@ -50,50 +50,94 @@ export default function Perfil() {
 
   return (
     <div className="page">
-      <h1 className="page-title">Meu Perfil</h1>
-
-      <div className="perfil-hero card" style={{ '--cor': cor }}>
-        <div className="p-avatar">{TE[usuario?.tipo] || '👤'}</div>
-        <div className="p-info">
-          <h2>{usuario?.nome}</h2>
-          <p>{usuario?.email}</p>
-          <span className="p-badge" style={{ background: `color-mix(in srgb, ${cor} 15%, white)`, color: cor }}>{usuario?.tipo}</span>
-        </div>
-      </div>
-
-      {msg.texto && <div className={`alert alert-${msg.tipo}`}>{msg.texto}</div>}
-
-      <div className="card p-card">
-        <div className="p-card-head">
-          <h3>Informações pessoais</h3>
-          <button className="btn btn-secondary btn-sm" onClick={() => { setEditando(!editando); setMsg({ tipo: '', texto: '' }); setForm({ nome: usuario?.nome || '', telefone: usuario?.telefone || '' }); }}>
-            {editando ? '✕ Cancelar' : '✏️ Editar'}
-          </button>
+      <div className="perfil-shell">
+        <div>
+          <h1 className="page-title">Meu Perfil</h1>
+          <p className="page-subtitle">Gerencie seus dados e preferências com a mesma identidade visual do Kifome no restante do app.</p>
         </div>
 
-        {editando ? (
-          <form onSubmit={salvar}>
-            <div className="form-row">
-              <div className="form-group"><label>Nome completo</label><div className="input-box"><input type="text" value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))} /></div></div>
-              <div className="form-group"><label>Telefone</label><div className="input-box"><input type="tel" placeholder="(11) 99999-9999" value={form.telefone} onChange={e => setForm(p => ({ ...p, telefone: e.target.value }))} /></div></div>
-            </div>
-            <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: 'auto', padding: '12px 28px' }}>{loading ? <span className="spinner" /> : '💾 Salvar'}</button>
-          </form>
-        ) : (
-          <div className="p-dados">
-            {[{ i: '👤', l: 'Nome', v: usuario?.nome }, { i: '📧', l: 'Email', v: usuario?.email }, { i: '📞', l: 'Telefone', v: usuario?.telefone || 'Não informado' }, { i: '🏷️', l: 'Tipo de conta', v: usuario?.tipo }].map(d => (
-              <div key={d.l} className="p-row">
-                <span className="p-ic">{d.i}</span>
-                <div><span className="p-label">{d.l}</span><span className="p-val">{d.v}</span></div>
-              </div>
-            ))}
+        <div className="perfil-hero card" style={{ '--cor': cor }}>
+          <div className="p-avatar">{TE[usuario?.tipo] || '👤'}</div>
+          <div className="p-info">
+            <h2>{usuario?.nome}</h2>
+            <p>{usuario?.email}</p>
+            <span className="p-badge">{TE[usuario?.tipo] || '👤'} {usuario?.tipo}</span>
           </div>
-        )}
-      </div>
 
-      <div className="card p-card" style={{ display: 'grid', gap: 8 }}>
-        <button className="btn btn-danger" onClick={handleSair} style={{ width: '100%' }}>🚪 Sair da conta</button>
-        <button className="btn btn-danger-outline" onClick={deletarConta} disabled={loading} style={{ width: '100%' }}>🗑️ Desativar conta</button>
+          <div className="perfil-kpis">
+            <div className="perfil-kpi"><strong>{usuario?.tipo === 'cliente' ? 'Pedidos' : usuario?.tipo === 'restaurante' ? 'Operação' : 'Status'}</strong><span>{usuario?.tipo === 'cliente' ? 'Histórico sob controle' : usuario?.tipo === 'restaurante' ? 'Painel pronto' : 'Perfil ativo'}</span></div>
+            <div className="perfil-kpi"><strong>{usuario?.telefone ? 'Completo' : 'Pendente'}</strong><span>Telefone {usuario?.telefone ? 'informado' : 'não informado'}</span></div>
+            <div className="perfil-kpi"><strong>Kifome</strong><span>Conta conectada</span></div>
+          </div>
+        </div>
+
+        {msg.texto && <div className={`alert alert-${msg.tipo}`}>{msg.texto}</div>}
+
+        <div className="perfil-grid">
+          <div className="card p-card">
+            <div className="p-card-head">
+              <h3>Informações pessoais</h3>
+              <button className="btn btn-secondary btn-sm" onClick={() => { setEditando(!editando); setMsg({ tipo: '', texto: '' }); setForm({ nome: usuario?.nome || '', telefone: usuario?.telefone || '' }); }}>
+                {editando ? '✕ Cancelar' : '✏️ Editar'}
+              </button>
+            </div>
+
+            {editando ? (
+              <form onSubmit={salvar}>
+                <div className="form-row">
+                  <div className="form-group"><label>Nome completo</label><div className="input-box"><input type="text" value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))} /></div></div>
+                  <div className="form-group"><label>Telefone</label><div className="input-box"><input type="tel" placeholder="(11) 99999-9999" value={form.telefone} onChange={e => setForm(p => ({ ...p, telefone: e.target.value }))} /></div></div>
+                </div>
+                <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: 'auto', padding: '12px 28px' }}>{loading ? <span className="spinner" /> : '💾 Salvar alterações'}</button>
+              </form>
+            ) : (
+              <div className="p-dados">
+                {[{ i: '👤', l: 'Nome', v: usuario?.nome }, { i: '📧', l: 'Email', v: usuario?.email }, { i: '📞', l: 'Telefone', v: usuario?.telefone || 'Não informado' }, { i: '🏷️', l: 'Tipo de conta', v: usuario?.tipo }].map(d => (
+                  <div key={d.l} className="p-row">
+                    <span className="p-ic">{d.i}</span>
+                    <div><span className="p-label">{d.l}</span><span className="p-val">{d.v}</span></div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="card perfil-side-card">
+            <div>
+              <h3>Conta e segurança</h3>
+              <p>Seu acesso usa autenticação sem senha e a navegação foi reorganizada para lembrar a experiência de um app de delivery moderno.</p>
+            </div>
+
+            <div className="perfil-highlight-list">
+              <div className="perfil-highlight-item">
+                <span>🔐</span>
+                <div>
+                  <strong>Passwordless</strong>
+                  <p>Login via e-mail ou SMS para reduzir fricção sem perder segurança.</p>
+                </div>
+              </div>
+              <div className="perfil-highlight-item">
+                <span>📱</span>
+                <div>
+                  <strong>Mobile-first</strong>
+                  <p>Cards, inputs e CTAs foram organizados para funcionar muito bem no celular.</p>
+                </div>
+              </div>
+              <div className="perfil-highlight-item">
+                <span>🎯</span>
+                <div>
+                  <strong>Ações rápidas</strong>
+                  <p>Sair e desativar conta continuam acessíveis, mas com hierarquia visual mais segura.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="perfil-actions">
+              <button className="btn btn-danger" onClick={handleSair} style={{ width: '100%' }}>🚪 Sair da conta</button>
+              <button className="btn btn-danger-outline" onClick={deletarConta} disabled={loading} style={{ width: '100%' }}>🗑️ Desativar conta</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

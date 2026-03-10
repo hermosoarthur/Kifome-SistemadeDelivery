@@ -54,37 +54,44 @@ export default function MeuRestaurante() {
 
   return (
     <div className="page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+      <div className="hero-panel" style={{ marginBottom: 20 }}>
+        <span className="hero-chip">🏪 Identidade do seu negócio no Kifome</span>
+        <h2 style={{ fontSize: 'clamp(24px, 4vw, 34px)', margin: '16px 0 10px', letterSpacing: '-0.04em' }}>Organize os dados do restaurante com uma apresentação mais forte e comercial.</h2>
+        <p style={{ color: 'rgba(255,255,255,.78)', maxWidth: 620, lineHeight: 1.7 }}>Nome, endereço, categoria e imagem ficam centralizados aqui para deixar sua operação pronta para cardápio e pedidos.</p>
+      </div>
+
+      <div className="section-heading">
         <div>
           <h1 className="page-title" style={{ margin: 0 }}>Meu Restaurante</h1>
-          <p style={{ color: 'var(--texto-sec)', fontSize: 13, marginTop: 4 }}>{restaurantes.length} restaurante{restaurantes.length !== 1 ? 's' : ''} cadastrado{restaurantes.length !== 1 ? 's' : ''}</p>
+          <p className="page-subtitle">Cadastre, edite e organize os dados do seu restaurante com aparência mais profissional.</p>
         </div>
         <button className="btn btn-primary" style={{ width: 'auto' }} onClick={() => abrirModal()}>+ Novo Restaurante</button>
       </div>
 
       {msg && <div className="alert alert-sucesso">{msg}</div>}
 
-      {loading ? <p style={{ textAlign: 'center', padding: 32 }}>Carregando...</p> : restaurantes.length === 0 ? (
-        <div className="card" style={{ padding: 48, textAlign: 'center' }}>
-          <span style={{ fontSize: 52 }}>🍽️</span>
-          <h3 style={{ margin: '12px 0 8px' }}>Nenhum restaurante cadastrado</h3>
-          <button className="btn btn-primary" style={{ width: 'auto', marginTop: 16, padding: '12px 28px' }} onClick={() => abrirModal()}>+ Cadastrar agora</button>
+      {loading ? <div className="loading-state"><h3>Carregando restaurantes</h3><p>Estamos buscando os dados do seu negócio para montar o painel.</p></div> : restaurantes.length === 0 ? (
+        <div className="empty-state">
+          <span className="empty-state-emoji">🍽️</span>
+          <h3>Nenhum restaurante cadastrado</h3>
+          <p>Cadastre seu primeiro restaurante para ativar cardápio, pedidos e toda a experiência administrativa.</p>
+          <div style={{ marginTop: 18 }}><button className="btn btn-primary" style={{ width: 'auto', padding: '12px 28px' }} onClick={() => abrirModal()}>+ Cadastrar agora</button></div>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className="rest-card-list">
           {restaurantes.map(r => (
-            <div key={r.id} className="card" style={{ padding: 20, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-              <div style={{ width: 60, height: 60, borderRadius: 12, background: '#EDE9FE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0 }}>🍽️</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                  <strong style={{ fontSize: 16 }}>{r.nome_fantasia}</strong>
+            <div key={r.id} className="card rest-entity-card">
+              <div className="rest-entity-thumb">🍽️</div>
+              <div className="rest-entity-content">
+                <div className="rest-entity-meta">
+                  <strong>{r.nome_fantasia}</strong>
                   <span className={`badge ${r.status === 'aprovado' ? 'badge-verde' : 'badge-amarelo'}`}>{r.status}</span>
                   {r.categoria && <span className="badge badge-cinza">{r.categoria}</span>}
                 </div>
-                <p style={{ fontSize: 13, color: 'var(--texto-sec)' }}>📍 {r.endereco}</p>
-                {r.telefone && <p style={{ fontSize: 13, color: 'var(--texto-sec)' }}>📞 {r.telefone}</p>}
+                <p className="rest-entity-line">📍 {r.endereco}</p>
+                {r.telefone && <p className="rest-entity-line">📞 {r.telefone}</p>}
               </div>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div className="rest-entity-actions">
                 <button className="btn btn-secondary btn-sm" onClick={() => abrirModal(r)}>✏️ Editar</button>
                 <button className="btn btn-danger btn-sm" onClick={() => excluir(r)}>🗑️</button>
               </div>

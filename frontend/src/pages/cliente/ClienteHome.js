@@ -56,7 +56,10 @@ function ModalPedido({ restaurante, onFechar, onPedido }) {
     <div className="modal-bg" onClick={onFechar}>
       <div className="modal" style={{ maxWidth: 640 }} onClick={e => e.stopPropagation()}>
         <div className="modal-head">
-          <h3>🍽️ {restaurante.nome_fantasia}</h3>
+          <div className="pedido-modal-header">
+            <h3>🍽️ {restaurante.nome_fantasia}</h3>
+            <p>Monte seu pedido com leitura rápida, itens claros e total sempre visível.</p>
+          </div>
           <button className="modal-close" onClick={onFechar}>✕</button>
         </div>
         <div className="modal-body">
@@ -157,69 +160,129 @@ export default function ClienteHome() {
 
   return (
     <div className="cliente-home">
-      <div className="ch-hero">
-        <div className="ch-hero-inner">
-          <h1>Olá, {usuario?.nome?.split(' ')[0]} 👋</h1>
-          <p>📍 O que você quer comer hoje?</p>
-          <div className="ch-busca">
-            <span>🔍</span>
-            <input type="text" placeholder="Buscar restaurante ou culinária..." value={busca} onChange={e => handleBusca(e.target.value)} />
-          </div>
-        </div>
-      </div>
-
-      <div className="page" style={{ paddingTop: 24 }}>
-        {pedidoSucesso && (
-          <div className="alert alert-sucesso">
-            ✅ Pedido #{pedidoSucesso.id} realizado! <button className="btn btn-secondary btn-sm" style={{ marginLeft: 12 }} onClick={() => navigate('/meus-pedidos')}>Ver pedidos</button>
-          </div>
-        )}
-
-        <div className="cats-scroll">
-          {CATS.map(c => (
-            <button key={c.id} className={`cat-btn ${catAtiva === c.id ? 'ativo' : ''}`} onClick={() => handleCat(c.id)}>
-              <span>{c.e}</span><span>{c.l}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="sec-header">
-          <h2 className="sec-title">Restaurantes</h2>
-          <span style={{ fontSize: 13, color: 'var(--texto-sec)' }}>{restaurantes.length} disponíveis</span>
-        </div>
-
-        {loading ? (
-          <div className="r-grid">{[1,2,3,4,5,6].map(i => <div key={i} className="r-skeleton" />)}</div>
-        ) : restaurantes.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '48px 0' }}>
-            <span style={{ fontSize: 48 }}>🍽️</span>
-            <h3 style={{ margin: '12px 0 6px' }}>Nenhum restaurante encontrado</h3>
-            <p style={{ color: 'var(--texto-sec)' }}>Tente outro termo</p>
-          </div>
-        ) : (
-          <div className="r-grid">
-            {restaurantes.map((r, i) => (
-              <div key={r.id} className="r-card" onClick={() => setRestauranteSelecionado(r)}>
-                <div className="r-img">
-                  <img src={r.imagem_url || IMGS[i % IMGS.length]} alt={r.nome_fantasia} loading="lazy" />
-                  {r.categoria && <span className="r-tag">{r.categoria}</span>}
+      <div className="page">
+        <div className="ch-page">
+          <div className="ch-hero">
+            <div className="ch-hero-inner">
+              <div className="ch-hero-copy">
+                <span className="ch-brand-chip">Kifome</span>
+                <div className="ch-hero-badges">
+                  <span>🍔 Restaurantes perto de você</span>
+                  <span>🧭 Busca rápida</span>
+                  <span>🛵 Entrega prática</span>
                 </div>
-                <div className="r-body">
-                  <h3>{r.nome_fantasia}</h3>
-                  <p>{r.endereco}</p>
-                  <div className="r-meta">
-                    <span>⭐ {(3.8 + (i * 0.2 % 1.1)).toFixed(1)}</span>
-                    <span className="dot">•</span>
-                    <span>🕐 {25 + (i * 8 % 35)} min</span>
-                    <span className="dot">•</span>
-                    <span style={{ color: 'var(--sucesso)', fontWeight: 700 }}>🚚 Grátis</span>
-                  </div>
-                  <button className="r-pedir-btn">Ver cardápio e pedir</button>
+                <h1>Olá, {usuario?.nome?.split(' ')[0]} 👋<br />O que você quer pedir hoje?</h1>
+                <p>Escolha restaurantes, filtre por categoria e abra o cardápio com uma navegação mais direta, limpa e no estilo de app de delivery.</p>
+                <div className="ch-busca">
+                  <span>🔍</span>
+                  <input type="text" placeholder="Buscar restaurante, prato ou categoria..." value={busca} onChange={e => handleBusca(e.target.value)} />
                 </div>
               </div>
-            ))}
+
+              <div className="ch-highlight-card">
+                <strong>Peça no seu ritmo</strong>
+                <p>Sem poluição visual: busque, filtre, escolha um restaurante e monte seu pedido de forma simples.</p>
+                <div className="ch-highlight-list">
+                  <div className="ch-highlight-item"><span>� Endereço e categoria</span><span>decisão mais rápida</span></div>
+                  <div className="ch-highlight-item"><span>⭐ Nota, tempo e entrega</span><span>tudo no mesmo card</span></div>
+                  <div className="ch-highlight-item"><span>🧾 Pedido direto</span><span>cardápio com total visível</span></div>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
+
+          {pedidoSucesso && (
+            <div className="alert alert-sucesso">
+              Pedido #{pedidoSucesso.id} realizado com sucesso!
+              <button className="btn btn-secondary btn-sm" style={{ marginLeft: 12 }} onClick={() => navigate('/meus-pedidos')}>Ver pedidos</button>
+            </div>
+          )}
+
+          <div className="ch-top-grid">
+            <div className="card ch-section-card">
+              <div className="section-heading">
+                <h2>Categorias</h2>
+                <span className="page-subtitle">Navegue por estilos de cozinha</span>
+              </div>
+              <div className="cats-scroll">
+                {CATS.map(c => (
+                  <button key={c.id} className={`cat-btn ${catAtiva === c.id ? 'ativo' : ''}`} onClick={() => handleCat(c.id)}>
+                    <span>{c.e}</span><span>{c.l}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="card ch-section-card">
+              <div className="section-heading">
+                <h2>Visão rápida</h2>
+              </div>
+              <div className="ch-mini-list">
+                <div className="ch-mini-item"><span>🏪</span><div><strong>{restaurantes.length} restaurantes</strong><p>Opções encontradas na sua busca atual.</p></div></div>
+                <div className="ch-mini-item"><span>⚡</span><div><strong>Fluxo rápido</strong><p>Abra o restaurante e faça o pedido sem etapas desnecessárias.</p></div></div>
+                <div className="ch-mini-item"><span>📦</span><div><strong>Pedidos organizados</strong><p>Acompanhe depois tudo em uma linha do tempo simples.</p></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="card ch-section-card">
+            <div className="section-heading">
+              <h2>Seu momento no Kifome</h2>
+              <span className="page-subtitle">Uma home limpa, sem cupons e focada em busca, categorias e restaurantes</span>
+            </div>
+            <div className="ch-stat-strip">
+              <div className="ch-stat-item"><strong>{restaurantes.length}</strong><span>Restaurantes disponíveis</span></div>
+              <div className="ch-stat-item"><strong>{catAtiva || 'Todos'}</strong><span>Categoria em destaque</span></div>
+              <div className="ch-stat-item"><strong>{busca ? 'Busca ativa' : 'Exploração livre'}</strong><span>Contexto da vitrine atual</span></div>
+            </div>
+          </div>
+
+          <div>
+            <div className="sec-header">
+              <h2 className="sec-title">Restaurantes</h2>
+              <span className="page-subtitle">{restaurantes.length} disponíveis para pedir agora</span>
+            </div>
+
+            {loading ? (
+              <div className="r-grid">{[1,2,3,4,5,6].map(i => <div key={i} className="r-skeleton" />)}</div>
+            ) : restaurantes.length === 0 ? (
+              <div className="empty-state">
+                <span className="empty-state-emoji">🍽️</span>
+                <h3>Nenhum restaurante encontrado</h3>
+                <p>Tente outro termo de busca ou remova o filtro de categoria para explorar o marketplace.</p>
+              </div>
+            ) : (
+              <div className="r-grid">
+                {restaurantes.map((r, i) => (
+                  <div key={r.id} className="r-card" onClick={() => setRestauranteSelecionado(r)}>
+                    <div className="r-img">
+                      <img src={r.imagem_url || IMGS[i % IMGS.length]} alt={r.nome_fantasia} loading="lazy" />
+                      <div className="r-top-badges">
+                        {r.categoria && <span className="r-tag">{r.categoria}</span>}
+                        <span className="r-rating-chip">⭐ {(3.8 + (i * 0.2 % 1.1)).toFixed(1)}</span>
+                      </div>
+                    </div>
+                    <div className="r-body">
+                      <h3>{r.nome_fantasia}</h3>
+                      <p>{r.endereco}</p>
+                      <div className="r-meta">
+                        <span>🕐 {25 + (i * 8 % 35)} min</span>
+                        <span className="dot">•</span>
+                        <span style={{ color: 'var(--sucesso)' }}>🚚 Entrega</span>
+                        <span className="dot">•</span>
+                        <span>Pedido online</span>
+                      </div>
+                      <div className="r-footer">
+                        <span className="r-price-note">Toque para abrir o cardápio</span>
+                        <button className="r-pedir-btn">Ver cardápio</button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {restauranteSelecionado && (

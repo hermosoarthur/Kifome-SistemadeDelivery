@@ -65,45 +65,52 @@ export default function Produtos() {
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
-  if (loading) return <div className="page" style={{ textAlign: 'center', padding: 64 }}>Carregando...</div>;
+  if (loading) return <div className="page"><div className="loading-state"><h3>Carregando cardápio</h3><p>Estamos buscando os produtos do restaurante para montar a vitrine administrativa.</p></div></div>;
 
   if (!restaurante) return (
-    <div className="page"><div className="card" style={{ padding: 48, textAlign: 'center' }}>
-      <span style={{ fontSize: 52 }}>🍽️</span>
-      <h3 style={{ margin: '12px 0 8px' }}>Cadastre seu restaurante primeiro</h3>
+    <div className="page"><div className="empty-state">
+      <span className="empty-state-emoji">🍽️</span>
+      <h3>Cadastre seu restaurante primeiro</h3>
+      <p>Você precisa de um restaurante ativo para poder gerenciar produtos e cardápio.</p>
     </div></div>
   );
 
   return (
     <div className="page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+      <div className="hero-panel" style={{ marginBottom: 20 }}>
+        <span className="hero-chip">🍕 Cardápio Kifome</span>
+        <h2 style={{ fontSize: 'clamp(24px, 4vw, 34px)', margin: '16px 0 10px', letterSpacing: '-0.04em' }}>Monte um cardápio mais visual, organizado e pronto para vender.</h2>
+        <p style={{ color: 'rgba(255,255,255,.78)', maxWidth: 620, lineHeight: 1.7 }}>Gerencie itens, preços, disponibilidade e imagens com a mesma linguagem visual do restante da operação.</p>
+      </div>
+
+      <div className="section-heading">
         <div>
           <h1 className="page-title" style={{ margin: 0 }}>Cardápio</h1>
-          <p style={{ color: 'var(--texto-sec)', fontSize: 13, marginTop: 4 }}>{restaurante.nome_fantasia} • {produtos.length} produto{produtos.length !== 1 ? 's' : ''}</p>
+          <p className="page-subtitle">{restaurante.nome_fantasia} • {produtos.length} produto{produtos.length !== 1 ? 's' : ''} com apresentação mais limpa e profissional.</p>
         </div>
         <button className="btn btn-primary" style={{ width: 'auto' }} onClick={() => abrirModal()}>+ Novo Produto</button>
       </div>
 
       {produtos.length === 0 ? (
-        <div className="card" style={{ padding: 48, textAlign: 'center' }}>
-          <span style={{ fontSize: 52 }}>🍕</span>
-          <h3 style={{ margin: '12px 0 8px' }}>Nenhum produto cadastrado</h3>
-          <p style={{ color: 'var(--texto-sec)', marginBottom: 16 }}>Adicione itens ao seu cardápio</p>
-          <button className="btn btn-primary" style={{ width: 'auto', padding: '12px 24px' }} onClick={() => abrirModal()}>+ Adicionar produto</button>
+        <div className="empty-state">
+          <span className="empty-state-emoji">🍕</span>
+          <h3>Nenhum produto cadastrado</h3>
+          <p>Adicione os primeiros itens do cardápio para transformar o restaurante em uma vitrine real de delivery.</p>
+          <div style={{ marginTop: 18 }}><button className="btn btn-primary" style={{ width: 'auto', padding: '12px 24px' }} onClick={() => abrirModal()}>+ Adicionar produto</button></div>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px,1fr))', gap: 14 }}>
+        <div className="product-grid">
           {produtos.map(p => (
-            <div key={p.id} className="card" style={{ overflow: 'hidden', opacity: p.disponivel ? 1 : 0.6 }}>
-              {p.imagem_url && <img src={p.imagem_url} alt={p.nome} style={{ width: '100%', height: 140, objectFit: 'cover' }} />}
-              <div style={{ padding: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                  <strong style={{ fontSize: 15 }}>{p.nome}</strong>
-                  <strong style={{ color: '#6C63FF', fontSize: 15 }}>R$ {p.preco.toFixed(2)}</strong>
+            <div key={p.id} className="card product-card" style={{ opacity: p.disponivel ? 1 : 0.7 }}>
+              <div className="product-card-media">{p.imagem_url && <img src={p.imagem_url} alt={p.nome} />}</div>
+              <div className="product-card-body">
+                <div className="product-card-head">
+                  <strong>{p.nome}</strong>
+                  <strong className="product-card-price">R$ {p.preco.toFixed(2)}</strong>
                 </div>
-                {p.descricao && <p style={{ fontSize: 12, color: 'var(--texto-sec)', marginBottom: 8 }}>{p.descricao}</p>}
+                {p.descricao && <p className="product-card-desc">{p.descricao}</p>}
                 {p.categoria && <span className="badge badge-cinza" style={{ marginBottom: 10, display: 'inline-block' }}>{p.categoria}</span>}
-                <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                <div className="product-card-actions">
                   <button className="btn btn-sm" style={{ flex: 1, background: p.disponivel ? '#D1FAE5' : '#FEF3C7', color: p.disponivel ? '#065F46' : '#92400E', border: 'none' }} onClick={() => toggleDisponivel(p)}>
                     {p.disponivel ? '✅ Disponível' : '⏸️ Indisponível'}
                   </button>

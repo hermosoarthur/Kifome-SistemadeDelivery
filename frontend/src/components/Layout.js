@@ -42,6 +42,12 @@ const TIPO_LABEL = {
   entregador: '🛵 Entregador',
 };
 
+const TIPO_TITULO = {
+  cliente: 'Peça comida, mercado e muito mais',
+  restaurante: 'Gerencie sua operação em tempo real',
+  entregador: 'Aceite corridas e mova a cidade',
+};
+
 export default function Layout({ children }) {
   const { usuario, sair } = useAuth();
   const navigate = useNavigate();
@@ -55,11 +61,22 @@ export default function Layout({ children }) {
     if (window.confirm('Deseja sair?')) { await sair(); navigate('/login'); }
   }
 
+  const primeiroNome = usuario?.nome?.split(' ')[0] || 'Usuário';
+  const saudacao = tipo === 'cliente'
+    ? 'Encontre restaurantes, acompanhe pedidos e mate a fome sem fricção.'
+    : tipo === 'restaurante'
+      ? 'Gerencie seu negócio, acompanhe pedidos e destaque seu cardápio.'
+      : 'Aceite entregas, monitore corridas e mantenha seu dia produtivo.';
+
   return (
     <div className="layout">
       <aside className={`sidebar ${aberto ? 'open' : ''}`} style={{ '--cor-tipo': cor }}>
         <div className="sb-brand">
-          <span>🍔</span><span className="sb-nome">Kifome</span>
+          <span className="sb-brand-mark">K</span>
+          <div className="sb-brand-copy">
+            <small>delivery app</small>
+            <span className="sb-nome">Kifome</span>
+          </div>
         </div>
 
         <div className="sb-tipo-badge">{TIPO_LABEL[tipo]}</div>
@@ -89,12 +106,31 @@ export default function Layout({ children }) {
 
       <header className="mob-header">
         <button className="mob-menu" onClick={() => setAberto(!aberto)}>☰</button>
-        <span className="mob-brand" style={{ color: cor }}>🍔 Kifome</span>
-        <div style={{ width: 40 }} />
+        <span className="mob-brand" style={{ color: cor }}>Kifome</span>
+        <button className="mob-menu" onClick={() => navigate('/perfil')} aria-label="Ir para perfil">👤</button>
       </header>
 
       {aberto && <div className="mob-overlay" onClick={() => setAberto(false)} />}
-      <main className="layout-main">{children}</main>
+      <main className="layout-main">
+        <div className="layout-topbar">
+          <div className="layout-topbar-copy">
+            <span className="layout-eyebrow">{TIPO_LABEL[tipo]}</span>
+            <h1>{TIPO_TITULO[tipo]}</h1>
+            <p>{saudacao}</p>
+          </div>
+          <div className="layout-topbar-actions">
+            <button className="btn btn-secondary btn-sm" onClick={() => navigate('/perfil')}>Minha conta</button>
+            <div className="layout-user-chip">
+              <div className="avatar">{usuario?.nome?.[0]?.toUpperCase() || '?'}</div>
+              <div>
+                <strong style={{ display: 'block', fontSize: 13 }}>{primeiroNome}</strong>
+                <span style={{ fontSize: 11, color: 'var(--texto-sec)', textTransform: 'capitalize' }}>Bem-vindo ao Kifome</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="layout-content">{children}</div>
+      </main>
     </div>
   );
 }

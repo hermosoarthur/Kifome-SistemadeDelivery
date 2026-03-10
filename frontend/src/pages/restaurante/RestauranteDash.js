@@ -41,28 +41,50 @@ export default function RestauranteDash() {
 
   return (
     <div className="page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h1 className="page-title" style={{ margin: 0 }}>Dashboard</h1>
-          <p style={{ color: 'var(--texto-sec)', fontSize: 13, marginTop: 4 }}>Visão geral do seu restaurante</p>
+      <div className="rh-shell">
+        <div className="section-heading">
+          <div>
+            <h1 className="page-title">Dashboard</h1>
+            <p className="page-subtitle">Visão geral do seu restaurante, com foco em pedidos, faturamento e ações rápidas.</p>
+          </div>
+          {restaurantes.length === 0 && (
+            <button className="btn btn-primary" style={{ width: 'auto' }} onClick={() => navigate('/meu-restaurante')}>
+              + Cadastrar Restaurante
+            </button>
+          )}
         </div>
-        {restaurantes.length === 0 && (
-          <button className="btn btn-primary" style={{ width: 'auto' }} onClick={() => navigate('/meu-restaurante')}>
-            + Cadastrar Restaurante
-          </button>
-        )}
-      </div>
 
-      {restaurantes.length === 0 ? (
-        <div className="card" style={{ padding: 48, textAlign: 'center' }}>
-          <span style={{ fontSize: 56 }}>🍽️</span>
-          <h3 style={{ margin: '16px 0 8px', fontSize: 20 }}>Cadastre seu restaurante</h3>
-          <p style={{ color: 'var(--texto-sec)', marginBottom: 20 }}>Comece a receber pedidos agora</p>
-          <button className="btn btn-primary" style={{ width: 'auto', padding: '13px 28px' }} onClick={() => navigate('/meu-restaurante')}>Cadastrar agora</button>
-        </div>
-      ) : (
-        <>
-          <div className="dash-stats">
+        {restaurantes.length === 0 ? (
+          <div className="empty-state">
+            <span className="empty-state-emoji">🍽️</span>
+            <h3>Cadastre seu restaurante</h3>
+            <p>Crie o primeiro restaurante para liberar cardápio, pedidos e toda a operação administrativa do Kifome.</p>
+            <div style={{ marginTop: 18 }}>
+              <button className="btn btn-primary" style={{ width: 'auto', padding: '13px 28px' }} onClick={() => navigate('/meu-restaurante')}>Cadastrar agora</button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="rest-hero">
+              <div className="hero-panel">
+                <span className="hero-chip">🍽️ Central Kifome para restaurantes</span>
+                <h2 style={{ fontSize: 'clamp(26px, 4vw, 36px)', margin: '16px 0 10px', letterSpacing: '-0.04em' }}>Controle pedidos, cardápio e operação em um painel mais direto.</h2>
+                <p style={{ color: 'rgba(255,255,255,.78)', maxWidth: 560, lineHeight: 1.7 }}>Uma leitura mais parecida com apps de delivery: indicadores no topo, ações rápidas e pedidos recentes logo abaixo.</p>
+              </div>
+
+              <div className="card rest-focus-card">
+                <div className="section-heading">
+                  <h2 style={{ fontSize: 18 }}>Resumo do turno</h2>
+                </div>
+                <div className="rest-focus-list">
+                  <div className="rest-focus-item"><span>⏳</span><div><strong>{stats.pendentes} pedidos pendentes</strong><p>Concentre-se nas próximas confirmações para reduzir o tempo de atendimento.</p></div></div>
+                  <div className="rest-focus-item"><span>👨‍🍳</span><div><strong>{stats.preparando} em preparo</strong><p>Veja rapidamente o volume da cozinha e avance os status no momento certo.</p></div></div>
+                  <div className="rest-focus-item"><span>💰</span><div><strong>R$ {stats.faturamento.toFixed(2)}</strong><p>Faturamento concluído com leitura simples no topo do painel.</p></div></div>
+                </div>
+              </div>
+            </div>
+
+            <div className="dash-stats">
             {[
               { icon: '📋', label: 'Total pedidos', val: stats.total, cor: '#6C63FF' },
               { icon: '⏳', label: 'Novos / pendentes', val: stats.pendentes, cor: '#F59E0B' },
@@ -78,13 +100,21 @@ export default function RestauranteDash() {
                 </div>
               </div>
             ))}
-          </div>
+            </div>
 
-          <h2 style={{ fontSize: 16, fontWeight: 700, margin: '28px 0 14px' }}>Pedidos recentes</h2>
-          {pedidos.length === 0 ? (
-            <div className="card" style={{ padding: 32, textAlign: 'center', color: 'var(--texto-sec)' }}>Nenhum pedido ainda</div>
-          ) : (
-            <div className="table-wrap">
+            <div>
+              <div className="section-heading">
+                <h2>Pedidos recentes</h2>
+                <button className="btn btn-secondary btn-sm" onClick={() => navigate('/pedidos')}>Ver todos os pedidos</button>
+              </div>
+              {pedidos.length === 0 ? (
+                <div className="empty-state">
+                  <span className="empty-state-emoji">📋</span>
+                  <h3>Nenhum pedido ainda</h3>
+                  <p>Assim que os clientes começarem a comprar, os pedidos vão aparecer aqui com leitura rápida e ações claras.</p>
+                </div>
+              ) : (
+                <div className="table-wrap">
               <table className="table">
                 <thead><tr><th>#</th><th>Cliente</th><th>Total</th><th>Status</th><th>Horário</th><th>Ações</th></tr></thead>
                 <tbody>
@@ -100,10 +130,12 @@ export default function RestauranteDash() {
                   ))}
                 </tbody>
               </table>
+                </div>
+              )}
             </div>
-          )}
-        </>
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

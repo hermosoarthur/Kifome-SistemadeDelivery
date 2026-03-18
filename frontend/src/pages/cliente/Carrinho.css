@@ -1,0 +1,33 @@
+.carrinho-page { padding: 18px; }
+.cart-shell { display:flex; flex-direction:column; gap:16px; max-width: 1100px; margin: 0 auto; }
+.cart-main, .cart-aside { background:#fff; border:1px solid var(--bordas); border-radius:16px; padding:16px; box-shadow: 0 10px 24px rgba(0,0,0,0.04); }
+.cart-head { display:flex; justify-content:space-between; align-items:center; }
+.cart-head h2 { margin:0; }
+.cart-sub { color: var(--texto-sec); font-size:13px; }
+.cart-total { font-weight:900; color: #ea1d2c; font-size: 20px; }
+.cart-list { display:flex; flex-direction:column; gap:12px; margin-top:12px; }
+.cart-item { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px; border:1px solid var(--bordas); border-radius:14px; }
+.cart-item-left { display:flex; align-items:center; gap:12px; }
+.cart-item-left img { width:76px; height:76px; object-fit:cover; border-radius:12px; }
+.cart-item-left p { margin:4px 0 0; color: var(--texto-sec); font-size:13px; }
+.cart-item-actions { display:flex; align-items:center; gap:8px; }
+.qtd-btn { width:32px; height:32px; border-radius:50%; border:none; background:#f2f3f5; display:inline-flex; align-items:center; justify-content:center; font-weight:800; }
+.qtd-btn.add { background:#ea1d2c; color:#fff; }
+.qtd-value { min-width:24px; text-align:center; font-weight:800; }
+.remove-btn { border:none; background:#ffe8eb; color:#ea1d2c; padding:8px 10px; border-radius:10px; cursor:pointer; }
+.cart-empty { padding: 18px; color: var(--texto-sec); }
+
+.cart-aside { display:flex; flex-direction:column; gap:12px; }
+.cart-summary { border:1px dashed var(--bordas); border-radius:14px; padding:14px; }
+.cart-summary h3 { margin-top:0; }
+.cart-row { display:flex; justify-content:space-between; padding:6px 0; }
+.cart-row.total { border-top:1px solid var(--bordas); margin-top:6px; padding-top:10px; font-size:16px; }
+.btn.full { width:100%; }
+.cart-form { display:flex; flex-direction:column; gap:8px; }
+.input-box input, .input-box textarea { width:100%; padding:10px; border-radius:8px; border:1px solid var(--bordas); }
+
+@media (min-width: 960px) {
+	.cart-shell { flex-direction:row; align-items:flex-start; }
+	.cart-main { flex: 2; }
+	.cart-aside { flex: 1; position: sticky; top: 80px; }
+}

@@ -1,7 +1,9 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { CartProvider } from './contexts/CartContext';
 import Layout from './components/Layout';
+import Carrinho from './pages/cliente/Carrinho';
 
 // Shared
 import { Login, Registro } from './pages/shared/Auth';
@@ -14,6 +16,8 @@ import './pages/shared/Perfil.css';
 import ClienteHome from './pages/cliente/ClienteHome';
 import './pages/cliente/ClienteHome.css';
 import MeusPedidos from './pages/cliente/MeusPedidos';
+import RestaurantePage from './pages/cliente/Restaurante';
+import './pages/cliente/Restaurante.css';
 
 // Restaurante
 import RestauranteDash from './pages/restaurante/RestauranteDash';
@@ -85,6 +89,8 @@ function AppRoutes() {
       {/* ── CLIENTE ── */}
       {tipo === 'cliente' && <>
         <Route path="/meus-pedidos" element={<Protegida><Layout><MeusPedidos /></Layout></Protegida>} />
+        <Route path="/carrinho" element={<Protegida><Layout><Carrinho /></Layout></Protegida>} />
+        <Route path="/restaurante/:id" element={<Protegida><Layout><RestaurantePage /></Layout></Protegida>} />
       </>}
 
       {/* ── RESTAURANTE ── */}
@@ -110,7 +116,10 @@ export default function App() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthProvider>
-        <AppRoutesWrapper />
+        {/* CartProvider fornece estado do carrinho para toda a aplicação */}
+        <CartProvider>
+          <AppRoutesWrapper />
+        </CartProvider>
       </AuthProvider>
     </BrowserRouter>
   );

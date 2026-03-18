@@ -1,3 +1,4 @@
+// Arquivo: frontend/src/pages/restaurante/MeuRestaurante.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { restauranteService } from '../../services';
 

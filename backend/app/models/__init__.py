@@ -1,3 +1,4 @@
+# Arquivo: backend/app/models/__init__.py
 from datetime import datetime
 from app import db
 import bcrypt

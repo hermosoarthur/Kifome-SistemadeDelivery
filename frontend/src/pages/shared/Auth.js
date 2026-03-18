@@ -1,3 +1,4 @@
+// Arquivo: frontend/src/pages/shared/Auth.js
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';

@@ -1,3 +1,4 @@
+# Arquivo: backend/app/controllers/__init__.py
 from flask import request, jsonify
 from app import db
 from app.models import Usuario, Restaurante, Produto, Pedido, ItemPedido, Entregador
@@ -57,9 +58,12 @@ def deletar_usuario(usuario_atual, usuario_id):
 # ── RESTAURANTE ───────────────────────────────────────────
 def listar_restaurantes():
     busca = request.args.get('busca', '')
+    categoria = request.args.get('categoria', '')
     page = request.args.get('page', 1, type=int)
     per_page = min(request.args.get('per_page', 12, type=int), 50)
     q = Restaurante.query.filter_by(status='aprovado')
+    if categoria:
+        q = q.filter(Restaurante.categoria.ilike(f'%{categoria}%'))
     if busca:
         q = q.filter(Restaurante.nome_fantasia.ilike(f'%{busca}%') |
                      Restaurante.categoria.ilike(f'%{busca}%'))
@@ -134,8 +138,24 @@ def obter_restaurante(rid):
 # ── PRODUTO ───────────────────────────────────────────────
 def listar_produtos(rid):
     r = Restaurante.query.get_or_404(rid)
-    ps = Produto.query.filter_by(restaurante_id=rid).all()
-    return jsonify({'produtos': [p.to_dict() for p in ps]}), 200
+    busca = request.args.get('busca', '')
+    categoria = request.args.get('categoria', '')
+    disponivel = request.args.get('disponivel')
+    page = request.args.get('page', 1, type=int)
+    per_page = min(request.args.get('per_page', 50, type=int), 100)
+
+    q = Produto.query.filter_by(restaurante_id=rid)
+    if busca:
+        q = q.filter(Produto.nome.ilike(f'%{busca}%') |
+                     Produto.categoria.ilike(f'%{busca}%'))
+    if categoria:
+        q = q.filter(Produto.categoria.ilike(f'%{categoria}%'))
+    if disponivel is not None:
+        flag = str(disponivel).lower() in ['1', 'true', 'sim', 'yes']
+        q = q.filter(Produto.disponivel == flag)
+
+    p = q.order_by(Produto.criado_em.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    return jsonify({'produtos': [p.to_dict() for p in p.items], 'total': p.total}), 200
 
 
 def criar_produto(usuario_atual, rid):

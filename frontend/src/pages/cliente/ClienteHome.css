@@ -32,6 +32,27 @@
   align-items: end;
 }
 
+/* banner de cupons estilo iFood */
+.coupon-banner { margin-top: 12px; border-radius: 10px; background: #2f9d67; color: #fff; padding: 12px 18px; box-shadow: var(--sombra-sm); }
+.coupon-inner { display:flex; align-items:center; justify-content:space-between; max-width:1200px; margin:0 auto; }
+.coupon-left { font-weight:700; display:flex; align-items:center; gap:12px; }
+.coupon-left strong { font-weight:900; margin:0 6px; }
+.coupon-cta { opacity:0.95; font-size:18px; transform: rotate(0deg); }
+.coupon-banner { border-radius: 0; padding: 14px 20px; }
+
+/* Últimas lojas */
+.ultimas-lojas { margin: 18px 0 12px; }
+.ultimas-list { display:flex; gap:12px; align-items:center; }
+.ultimas-card { display:flex; gap:12px; align-items:center; padding:14px 18px; border-radius:14px; background:#fff; border:1px solid #f3ecec; cursor:pointer; min-width:280px; box-shadow: 0 8px 20px rgba(10,15,20,0.04); }
+.ultimas-card img { width:64px; height:64px; object-fit:contain; border-radius:12px; background:#fff; padding:6px; }
+.ultimas-info { font-size:14px; color:var(--texto); }
+.link-like { background:none; border:none; color:var(--primaria); font-weight:700; cursor:pointer; }
+
+/* Botão flutuante do carrinho */
+.cart-float { position: fixed; right: 22px; bottom: 22px; z-index: 1200; display:flex; align-items:center; gap:8px; padding:12px 14px; background: linear-gradient(180deg, var(--primaria), var(--primaria-dark)); color:#fff; border:none; border-radius:999px; box-shadow: 0 18px 40px rgba(0,0,0,0.25); cursor:pointer; font-weight:800; }
+.cart-float .cart-count { background: #fff; color: var(--primaria); border-radius:999px; padding:4px 8px; font-size:13px; font-weight:900; }
+.cart-float .cart-emoji { font-size:18px; }
+
 .ch-brand-chip {
   display: inline-flex;
   align-items: center;
@@ -67,35 +88,38 @@
   justify-self: end;
   max-width: 360px;
   width: 100%;
-  padding: 22px;
+  padding: 20px;
   border-radius: 26px;
-  background: rgba(255,255,255,0.14);
-  border: 1px solid rgba(255,255,255,0.16);
-  backdrop-filter: blur(12px);
+  background: linear-gradient(180deg, #c13d48 0%, #a62833 100%);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 18px 30px rgba(0,0,0,0.22);
 }
 
 .ch-highlight-card strong { display: block; font-size: 18px; margin-bottom: 9px; }
-.ch-highlight-card p { margin-bottom: 14px; color: rgba(255,255,255,0.82); line-height: 1.6; font-size: 14px; }
+.ch-highlight-card p { margin-bottom: 14px; color: rgba(255,255,255,0.9); line-height: 1.6; font-size: 14px; }
 
 .ch-highlight-list { display: grid; gap: 10px; }
 .ch-highlight-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   padding: 12px 14px;
   border-radius: 18px;
-  background: rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.14);
 }
+.chi-icon { width: 34px; height: 34px; border-radius: 12px; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.2); }
+.chi-text { display:flex; flex-direction:column; gap:2px; }
+.chi-title { font-weight: 800; color:#fff; }
+.chi-sub { color: rgba(255,255,255,0.82); font-size: 12px; }
 
-.ch-highlight-item span:last-child { color: rgba(255,255,255,0.72); font-size: 12px; }
-
-.cats-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
+.cats-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 12px 6px; scrollbar-width: none; }
 .cats-scroll::-webkit-scrollbar { display: none; }
-.cat-btn { display: flex; align-items: center; gap: 8px; padding: 13px 17px; border-radius: 18px; border: 1px solid var(--bordas); background: #fff; cursor: pointer; flex-shrink: 0; transition: all .18s ease; font-size: 12px; font-weight: 700; color: var(--texto-sec); box-shadow: var(--shadow-xs); }
-.cat-btn span:first-child { font-size: 18px; }
-.cat-btn:hover, .cat-btn.ativo { border-color: rgba(244,63,94,0.3); transform: translateY(-1px); }
-.cat-btn.ativo { background: linear-gradient(180deg, #fff, var(--primaria-soft)); color: var(--primaria); }
+.cat-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px; border-radius: 12px; border: none; background: transparent; cursor: pointer; flex-shrink: 0; transition: transform .18s ease; font-size: 12px; font-weight: 700; color: var(--texto-sec); min-width:80px; }
+.cat-btn span:first-child { display:inline-flex; width:64px; height:64px; align-items:center; justify-content:center; border-radius:12px; background:#fff; box-shadow: 0 8px 20px rgba(10,15,20,0.04); font-size:26px; }
+.cat-btn span:last-child { font-size:13px; margin-top:6px; }
+.cat-btn:hover { transform: translateY(-4px); }
+.cat-btn.ativo span:first-child { background: linear-gradient(180deg,#fff,#ffeef0); border:1px solid rgba(244,63,94,0.12); }
 
 .sec-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 10px; flex-wrap: wrap; }
 .sec-title { font-size: 22px; font-weight: 800; letter-spacing: -0.03em; }
@@ -109,8 +133,8 @@
 .ch-stat-item span { color: var(--texto-sec); font-size: 12px; }
 
 .ch-mini-list { display: grid; gap: 12px; }
-.ch-mini-item { display: flex; gap: 12px; align-items: flex-start; }
-.ch-mini-item span { width: 40px; height: 40px; border-radius: 14px; background: var(--primaria-soft); display: inline-flex; align-items: center; justify-content: center; font-size: 18px; }
+.ch-mini-item { display: flex; gap: 12px; align-items: flex-start; padding: 12px; background:#fff; border-radius: 18px; box-shadow: 0 10px 24px rgba(17,24,39,0.06); }
+.ch-mini-item span { width: 40px; height: 40px; border-radius: 14px; background: #fff2f2; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; }
 .ch-mini-item strong { display: block; margin-bottom: 4px; }
 .ch-mini-item p { color: var(--texto-sec); font-size: 13px; line-height: 1.5; }
 
@@ -184,7 +208,9 @@
 @media (max-width: 768px) {
   .ch-top-grid,
   .ch-hero-inner { grid-template-columns: 1fr; }
-  .ch-highlight-card { justify-self: stretch; }
+  .ch-highlight-card { justify-self: stretch; max-width: 100%; }
+  .ch-highlight-item { align-items: flex-start; }
+  .ch-mini-item { padding: 10px; }
   .r-grid { grid-template-columns: 1fr; }
   .r-footer { flex-direction: column; align-items: stretch; }
   .r-pedir-btn { width: 100%; }

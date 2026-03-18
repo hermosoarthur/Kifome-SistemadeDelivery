@@ -1,7 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+// Arquivo: frontend/src/pages/cliente/ClienteHome.js
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { restauranteService, produtoService, pedidoService } from '../../services';
+import { restauranteService } from '../../services';
+import RestaurantCard from '../../components/RestaurantCard';
+import CategoryCarousel from '../../components/CategoryCarousel';
 import './ClienteHome.css';
 
 const CATS = [
@@ -11,126 +14,22 @@ const CATS = [
   { id: 'Árabe', l: 'Árabe', e: '🥙' }, { id: 'Doces', l: 'Doces', e: '🍰' },
 ];
 
-const IMGS = [
-  'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&auto=format',
-  'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format',
-  'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=600&auto=format',
-  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format',
-];
-
-function ModalPedido({ restaurante, onFechar, onPedido }) {
-  const [produtos, setProdutos] = useState([]);
-  const [carrinho, setCarrinho] = useState({});
-  const [endereco, setEndereco] = useState('');
-  const [obs, setObs] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [loadingP, setLoadingP] = useState(true);
-  const [erro, setErro] = useState('');
-
-  useEffect(() => {
-    produtoService.listar(restaurante.id)
-      .then(d => setProdutos(d.produtos || []))
-      .catch(() => setProdutos([]))
-      .finally(() => setLoadingP(false));
-  }, [restaurante.id]);
-
-  const add = (id) => setCarrinho(p => ({ ...p, [id]: (p[id] || 0) + 1 }));
-  const rem = (id) => setCarrinho(p => { const n = { ...p }; if (n[id] > 1) n[id]--; else delete n[id]; return n; });
-  const total = produtos.reduce((s, p) => s + (carrinho[p.id] || 0) * p.preco, 0);
-  const qtdTotal = Object.values(carrinho).reduce((s, v) => s + v, 0);
-
-  async function confirmar() {
-    if (!endereco.trim()) { setErro('Informe o endereço de entrega'); return; }
-    if (qtdTotal === 0) { setErro('Adicione pelo menos um item'); return; }
-    setLoading(true); setErro('');
-    try {
-      const itens = Object.entries(carrinho).map(([produto_id, quantidade]) => ({ produto_id: Number(produto_id), quantidade }));
-      const d = await pedidoService.criar({ restaurante_id: restaurante.id, itens, endereco_entrega: endereco, observacao: obs });
-      onPedido(d.pedido);
-    } catch (err) {
-      setErro(err.response?.data?.erro || 'Erro ao fazer pedido');
-    } finally { setLoading(false); }
-  }
-
-  return (
-    <div className="modal-bg" onClick={onFechar}>
-      <div className="modal" style={{ maxWidth: 640 }} onClick={e => e.stopPropagation()}>
-        <div className="modal-head">
-          <div className="pedido-modal-header">
-            <h3>🍽️ {restaurante.nome_fantasia}</h3>
-            <p>Monte seu pedido com leitura rápida, itens claros e total sempre visível.</p>
-          </div>
-          <button className="modal-close" onClick={onFechar}>✕</button>
-        </div>
-        <div className="modal-body">
-          {erro && <div className="alert alert-erro">{erro}</div>}
-          {loadingP ? <p style={{ textAlign: 'center', padding: 24 }}>Carregando cardápio...</p> : (
-            <>
-              <h4 style={{ marginBottom: 12, color: 'var(--texto-sec)', fontSize: 13, textTransform: 'uppercase' }}>Cardápio</h4>
-              {produtos.length === 0 ? (
-                <p style={{ textAlign: 'center', color: 'var(--texto-sec)', padding: '16px 0' }}>Nenhum produto disponível</p>
-              ) : (
-                <div className="produto-list">
-                  {produtos.filter(p => p.disponivel).map(p => (
-                    <div key={p.id} className="produto-item">
-                      <div className="produto-info">
-                        <strong>{p.nome}</strong>
-                        {p.descricao && <small>{p.descricao}</small>}
-                        <span className="produto-preco">R$ {p.preco.toFixed(2)}</span>
-                      </div>
-                      <div className="produto-qtd">
-                        {carrinho[p.id] ? (
-                          <>
-                            <button className="qtd-btn" onClick={() => rem(p.id)}>−</button>
-                            <span>{carrinho[p.id]}</span>
-                            <button className="qtd-btn add" onClick={() => add(p.id)}>+</button>
-                          </>
-                        ) : (
-                          <button className="qtd-btn add" onClick={() => add(p.id)}>+</button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="form-group" style={{ marginTop: 16 }}>
-                <label>📍 Endereço de entrega *</label>
-                <div className="input-box"><input type="text" placeholder="Rua, número, bairro" value={endereco} onChange={e => setEndereco(e.target.value)} /></div>
-              </div>
-              <div className="form-group">
-                <label>Observação</label>
-                <div className="input-box"><textarea placeholder="Ex: sem cebola, ponto da carne..." value={obs} onChange={e => setObs(e.target.value)} /></div>
-              </div>
-              {total > 0 && (
-                <div className="pedido-total">
-                  <span>Total: <strong>R$ {total.toFixed(2)}</strong></span>
-                  <span>{qtdTotal} ite{qtdTotal > 1 ? 'ns' : 'm'}</span>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-        <div className="modal-foot">
-          <button className="btn btn-secondary" onClick={onFechar}>Cancelar</button>
-          <button className="btn btn-primary" disabled={loading || qtdTotal === 0} style={{ width: 'auto', padding: '12px 28px' }} onClick={confirmar}>
-            {loading ? <span className="spinner" /> : `Fazer Pedido ${total > 0 ? `• R$ ${total.toFixed(2)}` : ''}`}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function ClienteHome() {
   const { usuario } = useAuth();
   const navigate = useNavigate();
   const [restaurantes, setRestaurantes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [busca, setBusca] = useState('');
+  const [busca] = useState('');
   const [catAtiva, setCatAtiva] = useState('');
-  const [restauranteSelecionado, setRestauranteSelecionado] = useState(null);
-  const [pedidoSucesso, setPedidoSucesso] = useState(null);
-  const buscaTimer = useRef(null);
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    try {
+      const c = JSON.parse(localStorage.getItem('@kifome:carrinho') || '{}');
+      const count = Object.values(c).reduce((s, v) => s + (Number(v) || 0), 0);
+      setCartCount(count);
+    } catch (e) { setCartCount(0); }
+  }, []);
 
   const carregar = useCallback(async (params = {}) => {
     setLoading(true);
@@ -141,21 +40,10 @@ export default function ClienteHome() {
 
   useEffect(() => { carregar(); }, [carregar]);
 
-  function handleBusca(v) {
-    setBusca(v);
-    clearTimeout(buscaTimer.current);
-    buscaTimer.current = setTimeout(() => carregar(v ? { busca: v } : {}), 400);
-  }
 
   function handleCat(id) {
     setCatAtiva(id);
-    carregar(id ? { busca: id } : {});
-  }
-
-  function handlePedidoFeito(pedido) {
-    setRestauranteSelecionado(null);
-    setPedidoSucesso(pedido);
-    setTimeout(() => setPedidoSucesso(null), 5000);
+    carregar(id ? { categoria: id } : {});
   }
 
   return (
@@ -173,30 +61,45 @@ export default function ClienteHome() {
                 </div>
                 <h1>Olá, {usuario?.nome?.split(' ')[0]} 👋<br />O que você quer pedir hoje?</h1>
                 <p>Escolha restaurantes, filtre por categoria e abra o cardápio com uma navegação mais direta, limpa e no estilo de app de delivery.</p>
-                <div className="ch-busca">
-                  <span>🔍</span>
-                  <input type="text" placeholder="Buscar restaurante, prato ou categoria..." value={busca} onChange={e => handleBusca(e.target.value)} />
-                </div>
+                {/* busca centralizada foi movida para o header global */}
               </div>
 
               <div className="ch-highlight-card">
                 <strong>Peça no seu ritmo</strong>
                 <p>Sem poluição visual: busque, filtre, escolha um restaurante e monte seu pedido de forma simples.</p>
                 <div className="ch-highlight-list">
-                  <div className="ch-highlight-item"><span>� Endereço e categoria</span><span>decisão mais rápida</span></div>
-                  <div className="ch-highlight-item"><span>⭐ Nota, tempo e entrega</span><span>tudo no mesmo card</span></div>
-                  <div className="ch-highlight-item"><span>🧾 Pedido direto</span><span>cardápio com total visível</span></div>
+                  <div className="ch-highlight-item">
+                    <div className="chi-icon">📍</div>
+                    <div className="chi-text">
+                      <span className="chi-title">Endereço e categoria</span>
+                      <span className="chi-sub">decisão mais rápida</span>
+                    </div>
+                  </div>
+                  <div className="ch-highlight-item">
+                    <div className="chi-icon">⭐</div>
+                    <div className="chi-text">
+                      <span className="chi-title">Nota, tempo e entrega</span>
+                      <span className="chi-sub">tudo no mesmo card</span>
+                    </div>
+                  </div>
+                  <div className="ch-highlight-item">
+                    <div className="chi-icon">🧾</div>
+                    <div className="chi-text">
+                      <span className="chi-title">Pedido direto</span>
+                      <span className="chi-sub">cardápio com total visível</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-
-          {pedidoSucesso && (
-            <div className="alert alert-sucesso">
-              Pedido #{pedidoSucesso.id} realizado com sucesso!
-              <button className="btn btn-secondary btn-sm" style={{ marginLeft: 12 }} onClick={() => navigate('/meus-pedidos')}>Ver pedidos</button>
+          {/* Banner de cupons bem parecido com iFood */}
+          <div className="coupon-banner">
+            <div className="coupon-inner">
+              <div className="coupon-left">🎁 Você tem <strong>203 cupons!</strong> Aproveite seus descontos</div>
+              <div className="coupon-cta">▾</div>
             </div>
-          )}
+          </div>
 
           <div className="ch-top-grid">
             <div className="card ch-section-card">
@@ -204,13 +107,7 @@ export default function ClienteHome() {
                 <h2>Categorias</h2>
                 <span className="page-subtitle">Navegue por estilos de cozinha</span>
               </div>
-              <div className="cats-scroll">
-                {CATS.map(c => (
-                  <button key={c.id} className={`cat-btn ${catAtiva === c.id ? 'ativo' : ''}`} onClick={() => handleCat(c.id)}>
-                    <span>{c.e}</span><span>{c.l}</span>
-                  </button>
-                ))}
-              </div>
+              <CategoryCarousel categories={CATS} activeId={catAtiva} onSelect={handleCat} />
             </div>
 
             <div className="card ch-section-card">
@@ -243,6 +140,22 @@ export default function ClienteHome() {
               <span className="page-subtitle">{restaurantes.length} disponíveis para pedir agora</span>
             </div>
 
+            {/* Últimas Lojas - exemplo similar ao iFood */}
+            <div className="ultimas-lojas">
+              <h3>Últimas Lojas</h3>
+              <div className="ultimas-list">
+                <div className="ultimas-card" onClick={() => { /* navegar para restaurante de exemplo */ navigate('/restaurante/1'); }}>
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/4/4c/Burger_King_Logo.svg" alt="Burger King" />
+                  <div className="ultimas-info"><strong>Burger King - Jk Iguatemi</strong></div>
+                </div>
+                <div className="ultimas-card" onClick={() => { navigate('/restaurante/2'); }}>
+                  <img src="https://seeklogo.com/images/P/popeyes-logo-2B39F4C4B6-seeklogo.com.png" alt="Popeyes" />
+                  <div className="ultimas-info"><strong>Popeyes - Frango Frito - Vila Olímpia</strong></div>
+                </div>
+              </div>
+              <div style={{ textAlign: 'right', marginTop: 8 }}><button className="link-like" onClick={() => navigate('/restaurantes')}>Ver mais</button></div>
+            </div>
+
             {loading ? (
               <div className="r-grid">{[1,2,3,4,5,6].map(i => <div key={i} className="r-skeleton" />)}</div>
             ) : restaurantes.length === 0 ? (
@@ -254,30 +167,7 @@ export default function ClienteHome() {
             ) : (
               <div className="r-grid">
                 {restaurantes.map((r, i) => (
-                  <div key={r.id} className="r-card" onClick={() => setRestauranteSelecionado(r)}>
-                    <div className="r-img">
-                      <img src={r.imagem_url || IMGS[i % IMGS.length]} alt={r.nome_fantasia} loading="lazy" />
-                      <div className="r-top-badges">
-                        {r.categoria && <span className="r-tag">{r.categoria}</span>}
-                        <span className="r-rating-chip">⭐ {(3.8 + (i * 0.2 % 1.1)).toFixed(1)}</span>
-                      </div>
-                    </div>
-                    <div className="r-body">
-                      <h3>{r.nome_fantasia}</h3>
-                      <p>{r.endereco}</p>
-                      <div className="r-meta">
-                        <span>🕐 {25 + (i * 8 % 35)} min</span>
-                        <span className="dot">•</span>
-                        <span style={{ color: 'var(--sucesso)' }}>🚚 Entrega</span>
-                        <span className="dot">•</span>
-                        <span>Pedido online</span>
-                      </div>
-                      <div className="r-footer">
-                        <span className="r-price-note">Toque para abrir o cardápio</span>
-                        <button className="r-pedir-btn">Ver cardápio</button>
-                      </div>
-                    </div>
-                  </div>
+                  <RestaurantCard key={r.id} restaurante={r} index={i} onSelect={(rest) => navigate(`/restaurante/${rest.id}`)} />
                 ))}
               </div>
             )}
@@ -285,13 +175,11 @@ export default function ClienteHome() {
         </div>
       </div>
 
-      {restauranteSelecionado && (
-        <ModalPedido
-          restaurante={restauranteSelecionado}
-          onFechar={() => setRestauranteSelecionado(null)}
-          onPedido={handlePedidoFeito}
-        />
-      )}
+      {/* Botão flutuante do carrinho (estilo iFood) */}
+      <button className="cart-float" onClick={() => navigate('/carrinho')} aria-label="Abrir carrinho">
+        <span className="cart-emoji">🛒</span>
+        {cartCount > 0 && <span className="cart-count">{cartCount}</span>}
+      </button>
     </div>
   );
 }

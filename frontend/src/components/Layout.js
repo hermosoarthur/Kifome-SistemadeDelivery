@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import './Layout.css';
+import Header from './Header';
 
 const NAV_CLIENTE = [
   { to: '/', label: 'Início', icon: '🏠', end: true },
@@ -42,11 +43,7 @@ const TIPO_LABEL = {
   entregador: '🛵 Entregador',
 };
 
-const TIPO_TITULO = {
-  cliente: 'Peça comida, mercado e muito mais',
-  restaurante: 'Gerencie sua operação em tempo real',
-  entregador: 'Aceite corridas e mova a cidade',
-};
+// TIPO_TITULO removed: header now handles topbar copy
 
 export default function Layout({ children }) {
   const { usuario, sair } = useAuth();
@@ -61,12 +58,7 @@ export default function Layout({ children }) {
     if (window.confirm('Deseja sair?')) { await sair(); navigate('/login'); }
   }
 
-  const primeiroNome = usuario?.nome?.split(' ')[0] || 'Usuário';
-  const saudacao = tipo === 'cliente'
-    ? 'Encontre restaurantes, acompanhe pedidos e mate a fome sem fricção.'
-    : tipo === 'restaurante'
-      ? 'Gerencie seu negócio, acompanhe pedidos e destaque seu cardápio.'
-      : 'Aceite entregas, monitore corridas e mantenha seu dia produtivo.';
+  // Header displays user name, greeting and cart summary now.
 
   return (
     <div className="layout">
@@ -112,23 +104,7 @@ export default function Layout({ children }) {
 
       {aberto && <div className="mob-overlay" onClick={() => setAberto(false)} />}
       <main className="layout-main">
-        <div className="layout-topbar">
-          <div className="layout-topbar-copy">
-            <span className="layout-eyebrow">{TIPO_LABEL[tipo]}</span>
-            <h1>{TIPO_TITULO[tipo]}</h1>
-            <p>{saudacao}</p>
-          </div>
-          <div className="layout-topbar-actions">
-            <button className="btn btn-secondary btn-sm" onClick={() => navigate('/perfil')}>Minha conta</button>
-            <div className="layout-user-chip">
-              <div className="avatar">{usuario?.nome?.[0]?.toUpperCase() || '?'}</div>
-              <div>
-                <strong style={{ display: 'block', fontSize: 13 }}>{primeiroNome}</strong>
-                <span style={{ fontSize: 11, color: 'var(--texto-sec)', textTransform: 'capitalize' }}>Bem-vindo ao Kifome</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Header />
         <div className="layout-content">{children}</div>
       </main>
     </div>

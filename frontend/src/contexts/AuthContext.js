@@ -1,3 +1,4 @@
+// Arquivo: frontend/src/contexts/AuthContext.js
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authService } from '../services';
 import { supabase } from '../services/supabase';

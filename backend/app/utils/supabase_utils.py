@@ -230,7 +230,7 @@ def verify_oauth_token(provider, token):
     
     Args:
         provider: 'google' or 'facebook'
-        token: Access token or ID token
+        token: Supabase access token or provider ID token
     
     Returns:
         dict: { 'success': bool, 'error': str|None, 'user': dict }
@@ -240,6 +240,16 @@ def verify_oauth_token(provider, token):
         return {'success': False, 'error': 'Supabase não configurado', 'user': None}
     
     try:
+        # First try treating token as a Supabase access token (from OAuth callback session)
+        try:
+            user_response = sb.auth.get_user(token)
+            user = getattr(user_response, 'user', None)
+            if user:
+                return {'success': True, 'error': None, 'user': user.model_dump()}
+        except Exception:
+            pass
+
+        # Fallback: treat token as provider ID token
         response = sb.auth.sign_in_with_id_token({
             'provider': provider,
             'token': token,

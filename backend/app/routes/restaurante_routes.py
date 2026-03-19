@@ -1,3 +1,4 @@
+# Arquivo: backend/app/routes/restaurante_routes.py
 from flask import Blueprint
 from app.controllers import (listar_restaurantes, meus_restaurantes, criar_restaurante,
     obter_restaurante, atualizar_restaurante, deletar_restaurante)

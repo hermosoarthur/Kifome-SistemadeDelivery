@@ -1,3 +1,4 @@
+// Arquivo: frontend/src/services/index.js
 import axios from 'axios';
 
 const api = axios.create({
@@ -68,7 +69,7 @@ export const restauranteService = {
 
 // Produtos
 export const produtoService = {
-  listar: (rid) => api.get(`/api/restaurantes/${rid}/produtos`).then(r => r.data),
+  listar: (rid, params) => api.get(`/api/restaurantes/${rid}/produtos`, { params }).then(r => r.data),
   criar: (rid, d) => api.post(`/api/restaurantes/${rid}/produtos`, d).then(r => r.data),
   atualizar: (rid, pid, d) => api.put(`/api/restaurantes/${rid}/produtos/${pid}`, d).then(r => r.data),
   deletar: (rid, pid) => api.delete(`/api/restaurantes/${rid}/produtos/${pid}`).then(r => r.data),

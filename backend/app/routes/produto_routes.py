@@ -1,3 +1,4 @@
+# Arquivo: backend/app/routes/produto_routes.py
 from flask import Blueprint
 from app.controllers import listar_produtos, criar_produto, atualizar_produto, deletar_produto
 from app.utils.jwt_utils import requer_tipo

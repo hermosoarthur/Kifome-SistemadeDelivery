@@ -2,9 +2,22 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: 1.08fr 0.92fr;
-  background: #f4f4f5;
   position: relative;
   overflow: hidden;
+  background-color: #ffffff;
+}
+
+.auth-stage-panel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #fff;
+  background-image: url('../../assets/ilustracao-kifome.png');
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-size: contain;
 }
 
 .auth-brand-corner {
@@ -21,186 +34,6 @@
   letter-spacing: -0.06em;
   color: #ea1d2c;
   text-transform: lowercase;
-}
-
-.auth-stage-panel {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-}
-
-.auth-stage-circle {
-  position: absolute;
-  left: -22%;
-  top: -12%;
-  width: 92%;
-  height: 128%;
-  border-radius: 50%;
-  background: #f2dfe2;
-}
-
-.auth-stage-illustration {
-  position: relative;
-  z-index: 1;
-  width: min(100%, 520px);
-  height: 360px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.delivery-scene {
-  position: relative;
-  width: 340px;
-  height: 250px;
-}
-
-.scene-cloud {
-  position: absolute;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.9);
-}
-
-.cloud-one {
-  width: 70px;
-  height: 34px;
-  top: 10px;
-  left: 136px;
-}
-
-.cloud-two {
-  width: 18px;
-  height: 12px;
-  top: 82px;
-  left: 26px;
-}
-
-.scene-person {
-  position: absolute;
-  bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.scene-person .person-head {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: #c7a1a5;
-  margin-bottom: -4px;
-  z-index: 2;
-}
-
-.scene-person .person-body {
-  position: relative;
-  background: linear-gradient(180deg, #df2131 0%, #b51624 100%);
-}
-
-.scene-person .food-bag {
-  position: absolute;
-  right: -12px;
-  top: 44px;
-  width: 28px;
-  height: 34px;
-  border-radius: 6px;
-  background: #ef2232;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.scene-person .food-bag.small {
-  width: 22px;
-  height: 26px;
-}
-
-.person-wheelchair {
-  left: 24px;
-  transform: scale(0.82);
-}
-
-.person-wheelchair .person-body {
-  width: 52px;
-  height: 82px;
-  border-radius: 20px 20px 16px 16px;
-}
-
-.person-wheelchair .wheel {
-  position: absolute;
-  border-radius: 50%;
-  border: 6px solid #a11928;
-  background: transparent;
-}
-
-.person-wheelchair .wheel-large {
-  width: 74px;
-  height: 74px;
-  left: -26px;
-  bottom: -18px;
-}
-
-.person-wheelchair .wheel-small {
-  width: 22px;
-  height: 22px;
-  right: -12px;
-  bottom: 6px;
-}
-
-.person-main {
-  left: 116px;
-}
-
-.person-main .person-body {
-  width: 70px;
-  height: 126px;
-  border-radius: 26px 26px 18px 18px;
-}
-
-.person-main .person-arm {
-  position: absolute;
-  width: 34px;
-  height: 12px;
-  border-radius: 12px;
-  background: #d0a3a6;
-  right: -16px;
-  top: 24px;
-  transform: rotate(35deg);
-}
-
-.person-side {
-  right: 34px;
-  transform: scale(0.88);
-}
-
-.person-side .person-body {
-  width: 54px;
-  height: 98px;
-  border-radius: 22px 22px 16px 16px;
-  background: linear-gradient(180deg, #ef3248 0%, #c61d30 100%);
-}
-
-.scene-shadow {
-  position: absolute;
-  height: 16px;
-  border-radius: 999px;
-  background: rgba(208, 67, 85, 0.55);
-  bottom: 0;
-}
-
-.shadow-one {
-  width: 122px;
-  left: 70px;
-}
-
-.shadow-two {
-  width: 86px;
-  right: 32px;
 }
 
 .auth-card-panel {
@@ -514,33 +347,7 @@
 
 .auth-alert {
   margin-bottom: 18px;
-}
 
-.auth-form-panel,
-.auth-brand-row,
-.auth-brand-logo,
-.auth-hero-copy,
-.auth-feature-stack,
-.auth-feature-card,
-.auth-hero-footer,
-.auth-method-grid,
-.auth-access-card,
-.auth-access-icon,
-.auth-access-check,
-.smart-form,
-.auth-field,
-.input-wrapper,
-.input-icon,
-.auth-info-banner,
-.form-divider,
-.social-login,
-.btn-social,
-.auth-footer-note,
-.auth-form-eyebrow,
-.form-footer,
-.centered-hint,
-.link-btn {
-  display: none;
 }
 
 @media (max-width: 1040px) {
@@ -558,12 +365,6 @@
     margin-top: -36px;
     position: relative;
     z-index: 2;
-  }
-
-  .auth-stage-circle {
-    left: -30%;
-    width: 110%;
-    height: 122%;
   }
 
   .auth-reference-shell {
@@ -584,14 +385,6 @@
 
   .auth-stage-panel {
     min-height: 260px;
-  }
-
-  .auth-stage-illustration {
-    height: 220px;
-  }
-
-  .delivery-scene {
-    transform: scale(0.78);
   }
 
   .auth-reference-card {

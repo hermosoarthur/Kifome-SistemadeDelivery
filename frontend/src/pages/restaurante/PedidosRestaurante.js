@@ -7,7 +7,6 @@ const STATUS_ICON = { pendente: '⏳', confirmado: '✅', preparando: '👨‍�
 const STATUS_COR = { pendente: '#F59E0B', confirmado: '#3B82F6', preparando: '#F97316', saiu_entrega: '#8B5CF6', entregue: '#10B981', cancelado: '#EF4444' };
 
 export default function PedidosRestaurante() {
-  const [restaurante, setRestaurante] = useState(null);
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState('');
@@ -19,7 +18,6 @@ export default function PedidosRestaurante() {
       const dr = await restauranteService.meus();
       const rs = dr.restaurantes || [];
       if (rs.length > 0) {
-        setRestaurante(rs[0]);
         const dp = await pedidoService.doRestaurante(rs[0].id, filtro ? { status: filtro } : {});
         setPedidos(dp.pedidos || []);
       }
@@ -62,18 +60,23 @@ export default function PedidosRestaurante() {
 
   return (
     <div className="page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+      <div className="hero-panel" style={{ marginBottom: 20 }}>
+        <span className="hero-chip">📋 Central de pedidos Kifome</span>
+        <h2 style={{ fontSize: 'clamp(24px, 4vw, 34px)', margin: '16px 0 10px', letterSpacing: '-0.04em' }}>Avance status, filtre etapas e acompanhe a operação sem ruído.</h2>
+        <p style={{ color: 'rgba(255,255,255,.78)', maxWidth: 620, lineHeight: 1.7 }}>A tela foi pensada para parecer uma central real de delivery: filtros rápidos, cards claros e ações imediatas por pedido.</p>
+      </div>
+
+      <div className="section-heading">
         <div>
           <h1 className="page-title" style={{ margin: 0 }}>
             Pedidos {pendentes > 0 && <span style={{ background: '#EF4444', color: '#fff', borderRadius: '50%', padding: '2px 8px', fontSize: 13, fontWeight: 700, marginLeft: 8 }}>{pendentes}</span>}
           </h1>
-          <p style={{ color: 'var(--texto-sec)', fontSize: 13, marginTop: 4 }}>Atualizado automaticamente a cada 30s</p>
+          <p className="page-subtitle">Atualizado automaticamente a cada 30 segundos, com foco em leitura rápida e ação imediata.</p>
         </div>
         <button className="btn btn-secondary btn-sm" onClick={carregar}>🔄 Atualizar</button>
       </div>
 
-      {/* Filtros */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+      <div className="orders-filter-row">
         {[{ v: '', l: 'Todos' }, ...Object.entries(STATUS_LABEL).map(([v, l]) => ({ v, l }))].map(f => (
           <button key={f.v} className="btn btn-sm" style={{ background: filtro === f.v ? 'var(--texto)' : '#fff', color: filtro === f.v ? '#fff' : 'var(--texto-sec)', border: '1.5px solid var(--bordas)' }} onClick={() => setFiltro(f.v)}>
             {STATUS_ICON[f.v] || '📋'} {f.l}
@@ -81,10 +84,11 @@ export default function PedidosRestaurante() {
         ))}
       </div>
 
-      {loading ? <p style={{ textAlign: 'center', padding: 32 }}>Carregando pedidos...</p> : filtrados.length === 0 ? (
-        <div className="card" style={{ padding: 48, textAlign: 'center' }}>
-          <span style={{ fontSize: 48 }}>📋</span>
-          <h3 style={{ margin: '12px 0 6px' }}>Nenhum pedido {filtro ? `com status "${STATUS_LABEL[filtro]}"` : 'ainda'}</h3>
+      {loading ? <div className="loading-state"><h3>Carregando pedidos</h3><p>Estamos buscando os pedidos do restaurante e organizando os status para você.</p></div> : filtrados.length === 0 ? (
+        <div className="empty-state">
+          <span className="empty-state-emoji">📋</span>
+          <h3>Nenhum pedido {filtro ? `com status "${STATUS_LABEL[filtro]}"` : 'ainda'}</h3>
+          <p>A central vai exibir aqui os pedidos com badges, itens e ações rápidas assim que houver movimentação.</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -93,11 +97,11 @@ export default function PedidosRestaurante() {
             const idx = STATUS_FLOW.indexOf(p.status);
             const proximo = idx >= 0 && idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null;
             return (
-              <div key={p.id} className="card" style={{ padding: 20, borderLeft: `4px solid ${cor}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+              <div key={p.id} className="card restaurant-order-card" style={{ borderLeftColor: cor }}>
+                <div className="restaurant-order-head">
                   <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
-                      <strong style={{ fontSize: 16 }}>Pedido #{p.id}</strong>
+                    <div className="restaurant-order-meta">
+                      <strong style={{ fontSize: 18 }}>Pedido #{p.id}</strong>
                       <span className="badge" style={{ background: `${cor}22`, color: cor }}>
                         {STATUS_ICON[p.status]} {STATUS_LABEL[p.status]}
                       </span>
@@ -106,9 +110,9 @@ export default function PedidosRestaurante() {
                       </span>
                     </div>
 
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                    <div className="restaurant-order-items">
                       {(p.itens || []).map(it => (
-                        <span key={it.id} style={{ background: 'var(--fundo)', border: '1px solid var(--bordas)', borderRadius: 7, padding: '4px 9px', fontSize: 12 }}>
+                        <span key={it.id} className="restaurant-order-item">
                           {it.quantidade}x {it.produto?.nome} — R$ {(it.preco_unitario * it.quantidade).toFixed(2)}
                         </span>
                       ))}
@@ -118,9 +122,9 @@ export default function PedidosRestaurante() {
                     {p.observacao && <p style={{ fontSize: 12, color: '#F97316', marginTop: 4 }}>💬 {p.observacao}</p>}
                   </div>
 
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <strong style={{ fontSize: 20, color: '#6C63FF', display: 'block' }}>R$ {p.total.toFixed(2)}</strong>
-                    <div style={{ display: 'flex', gap: 8, marginTop: 10, justifyContent: 'flex-end' }}>
+                  <div className="restaurant-order-side">
+                    <strong style={{ color: '#6C63FF' }}>R$ {p.total.toFixed(2)}</strong>
+                    <div className="restaurant-order-actions">
                       {proximo && p.status !== 'cancelado' && (
                         <button className="btn btn-sm" disabled={atualizando === p.id}
                           style={{ background: cor, color: '#fff', border: 'none' }}

@@ -1,10 +1,13 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { CartProvider } from './contexts/CartContext';
 import Layout from './components/Layout';
+import Carrinho from './pages/cliente/Carrinho';
 
 // Shared
 import { Login, Registro } from './pages/shared/Auth';
+import { AuthCallback } from './pages/shared/AuthCallback';
 import './pages/shared/Auth.css';
 import Perfil from './pages/shared/Perfil';
 import './pages/shared/Perfil.css';
@@ -13,6 +16,8 @@ import './pages/shared/Perfil.css';
 import ClienteHome from './pages/cliente/ClienteHome';
 import './pages/cliente/ClienteHome.css';
 import MeusPedidos from './pages/cliente/MeusPedidos';
+import RestaurantePage from './pages/cliente/Restaurante';
+import './pages/cliente/Restaurante.css';
 
 // Restaurante
 import RestauranteDash from './pages/restaurante/RestauranteDash';
@@ -30,9 +35,16 @@ import './components/Layout.css';
 
 function Carregando() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 16, background: '#F8F9FA' }}>
-      <span style={{ fontSize: 56 }}>🍔</span>
-      <span style={{ fontSize: 20, fontWeight: 800, color: '#FF6B35' }}>Kifome</span>
+    <div className="page-loader">
+      <div className="page-loader-card">
+        <span className="logo-mark">🍔</span>
+        <h2 style={{ fontSize: 24, margin: '18px 0 8px', letterSpacing: '-0.03em' }}>Preparando sua experiência Kifome</h2>
+        <p style={{ color: 'var(--texto-sec)', marginBottom: 18 }}>Estamos conectando seu painel, restaurantes e pedidos em segundos.</p>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, color: 'var(--primaria)', fontWeight: 700 }}>
+          <span className="spinner" style={{ borderColor: 'rgba(244,63,94,.22)', borderTopColor: 'var(--primaria)' }} />
+          Carregando
+        </div>
+      </div>
     </div>
   );
 }
@@ -66,6 +78,7 @@ function AppRoutes() {
       {/* Públicas */}
       <Route path="/login" element={<SoPublica><Login /></SoPublica>} />
       <Route path="/registro" element={<SoPublica><Registro /></SoPublica>} />
+  <Route path="/auth/callback" element={<AuthCallback />} />
 
       {/* Autenticadas — home dinâmica */}
       <Route path="/" element={<Protegida><Layout><HomeRouter /></Layout></Protegida>} />
@@ -76,6 +89,8 @@ function AppRoutes() {
       {/* ── CLIENTE ── */}
       {tipo === 'cliente' && <>
         <Route path="/meus-pedidos" element={<Protegida><Layout><MeusPedidos /></Layout></Protegida>} />
+        <Route path="/carrinho" element={<Protegida><Layout><Carrinho /></Layout></Protegida>} />
+        <Route path="/restaurante/:id" element={<Protegida><Layout><RestaurantePage /></Layout></Protegida>} />
       </>}
 
       {/* ── RESTAURANTE ── */}
@@ -101,7 +116,10 @@ export default function App() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthProvider>
-        <AppRoutesWrapper />
+        {/* CartProvider fornece estado do carrinho para toda a aplicação */}
+        <CartProvider>
+          <AppRoutesWrapper />
+        </CartProvider>
       </AuthProvider>
     </BrowserRouter>
   );

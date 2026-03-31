@@ -1,8 +1,7 @@
 // Arquivo: frontend/src/pages/shared/Auth.js
-import React, { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { authService } from '../../services';
 import { supabase } from '../../services/supabase';
 import './Auth.css';
 
@@ -232,7 +231,6 @@ function LoginOtpStep({ title, subtitle, code, setCode, loading, onSubmit, onBac
 export function Login() {
   const { requestOtpEmail, verifyOtpEmail, requestOtpSms, verifyOtpSms, loginGoogle, loginFacebook } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [method, setMethod] = useState(AUTH_METHODS.EMAIL_OTP);
   const [step, setStep] = useState('start');
   const [loading, setLoading] = useState(false);
@@ -248,7 +246,6 @@ export function Login() {
   const [telefone, setTelefone] = useState('');
   const [codigoSms, setCodigoSms] = useState('');
   const [enviouSms, setEnviouSms] = useState(false);
-  const [pendingSocialUser, setPendingSocialUser] = useState(null);
 
   function resetFeedback() {
     setErro('');
@@ -291,24 +288,6 @@ export function Login() {
     return response;
   }
 
-  useEffect(() => {
-    const pending = sessionStorage.getItem('@kifome:pending-social-oauth');
-    const shouldCompletePhone = searchParams.get('complete') === 'google-phone';
-    if (!pending || !shouldCompletePhone) return;
-
-    try {
-      const parsed = JSON.parse(pending);
-      if (parsed?.user) {
-        setPendingSocialUser(parsed.user);
-        setMethod(AUTH_METHODS.SMS_OTP);
-        setStep('social-phone-entry');
-        setSucesso('Confirme seu celular com SMS para concluir seu primeiro acesso com Google.');
-      }
-    } catch {
-      sessionStorage.removeItem('@kifome:pending-social-oauth');
-    }
-  }, [searchParams]);
-
   // ====== EMAIL OTP ======
   async function handleRequestEmail(e) {
     e.preventDefault();
@@ -340,41 +319,6 @@ export function Login() {
       () => requestSmsCode({ successMessage: 'Código enviado por SMS! Confira as mensagens do seu celular.', nextStep: 'sms-code' }),
       'Erro ao enviar SMS'
     );
-  }
-
-  async function handleRequestSocialSms(e) {
-    e.preventDefault();
-    if (!telefone.trim() || !pendingSocialUser) { setErro('Preencha o telefone para continuar'); return; }
-    await runAuthAction(
-      () => requestSmsCode({ successMessage: 'Código enviado por SMS! Agora falta só validar seu celular para liberar o acesso com Google.', nextStep: 'social-phone-code' }),
-      'Erro ao enviar SMS'
-    );
-  }
-
-  async function handleVerifySocialSms(e) {
-    e.preventDefault();
-    if (!codigoSms || !pendingSocialUser) { setErro('Preencha o código'); return; }
-    await runAuthAction(async () => {
-      await verifyOtpSms(normalizePhone(telefone.trim()), codigoSms, {
-        nome: pendingSocialUser.nome,
-        email: pendingSocialUser.email,
-        tipo: pendingSocialUser.tipo || 'cliente',
-      });
-
-      const syncResponse = await authService.syncSupabaseUser({
-        email: pendingSocialUser.email,
-        supabase_uid: pendingSocialUser.supabase_uid,
-        nome: pendingSocialUser.nome,
-        telefone: normalizePhone(telefone.trim()),
-        tipo: pendingSocialUser.tipo || 'cliente',
-        avatar_url: pendingSocialUser.avatar_url || '',
-      });
-
-      sessionStorage.removeItem('@kifome:pending-social-oauth');
-      localStorage.setItem('@kifome:token', syncResponse.token);
-      localStorage.setItem('@kifome:usuario', JSON.stringify(syncResponse.usuario));
-      navigate('/');
-    }, 'Não foi possível confirmar seu celular');
   }
 
   async function handleVerifySms(e) {
@@ -432,25 +376,8 @@ export function Login() {
         <LoginPhoneStep telefone={telefone} setTelefone={setTelefone} loading={loading} onSubmit={handleRequestSms} onBack={handleBackToStart} />
       )}
 
-      {method === AUTH_METHODS.SMS_OTP && step === 'social-phone-entry' && (
-        <LoginPhoneStep
-          telefone={telefone}
-          setTelefone={setTelefone}
-          loading={loading}
-          onSubmit={handleRequestSocialSms}
-          onBack={handleBackToStart}
-          title={`Seu acesso com Google já foi reconhecido${pendingSocialUser?.nome ? `, ${pendingSocialUser.nome.split(' ')[0]}` : ''}`}
-          subtitle="Agora falta confirmar seu celular por SMS para ativar sua conta Kifome com segurança."
-          helpText={`Vamos vincular esse número ao e-mail ${pendingSocialUser?.email || 'da sua conta'} para concluir seu primeiro acesso.`}
-        />
-      )}
-
       {method === AUTH_METHODS.SMS_OTP && step === 'sms-code' && enviouSms && (
         <LoginOtpStep title="Digite o código enviado por SMS" subtitle={telefone} code={codigoSms} setCode={setCodigoSms} loading={loading} onSubmit={handleVerifySms} onBack={() => { setEnviouSms(false); setStep('sms-entry'); }} buttonText="Entrar" />
-      )}
-
-      {method === AUTH_METHODS.SMS_OTP && step === 'social-phone-code' && enviouSms && (
-        <LoginOtpStep title="Confirme seu celular para concluir com Google" subtitle={`Código enviado para ${telefone}. Depois disso você já entra no Kifome.`} code={codigoSms} setCode={setCodigoSms} loading={loading} onSubmit={handleVerifySocialSms} onBack={() => { setEnviouSms(false); setStep('social-phone-entry'); }} buttonText="Validar celular e entrar" />
       )}
     </AuthShell>
   );

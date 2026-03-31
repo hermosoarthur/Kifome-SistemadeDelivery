@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import './Layout.css';
+import Header from './Header';
 
 const NAV_CLIENTE = [
   { to: '/', label: 'Início', icon: '🏠', end: true },
@@ -42,6 +43,8 @@ const TIPO_LABEL = {
   entregador: '🛵 Entregador',
 };
 
+// TIPO_TITULO removed: header now handles topbar copy
+
 export default function Layout({ children }) {
   const { usuario, sair } = useAuth();
   const navigate = useNavigate();
@@ -55,11 +58,17 @@ export default function Layout({ children }) {
     if (window.confirm('Deseja sair?')) { await sair(); navigate('/login'); }
   }
 
+  // Header displays user name, greeting and cart summary now.
+
   return (
     <div className="layout">
       <aside className={`sidebar ${aberto ? 'open' : ''}`} style={{ '--cor-tipo': cor }}>
         <div className="sb-brand">
-          <span>🍔</span><span className="sb-nome">Kifome</span>
+          <span className="sb-brand-mark">K</span>
+          <div className="sb-brand-copy">
+            <small>delivery app</small>
+            <span className="sb-nome">Kifome</span>
+          </div>
         </div>
 
         <div className="sb-tipo-badge">{TIPO_LABEL[tipo]}</div>
@@ -89,12 +98,15 @@ export default function Layout({ children }) {
 
       <header className="mob-header">
         <button className="mob-menu" onClick={() => setAberto(!aberto)}>☰</button>
-        <span className="mob-brand" style={{ color: cor }}>🍔 Kifome</span>
-        <div style={{ width: 40 }} />
+        <span className="mob-brand" style={{ color: cor }}>Kifome</span>
+        <button className="mob-menu" onClick={() => navigate('/perfil')} aria-label="Ir para perfil">👤</button>
       </header>
 
       {aberto && <div className="mob-overlay" onClick={() => setAberto(false)} />}
-      <main className="layout-main">{children}</main>
+      <main className="layout-main">
+        <Header />
+        <div className="layout-content">{children}</div>
+      </main>
     </div>
   );
 }

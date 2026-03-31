@@ -434,45 +434,17 @@ def login_google():
             return jsonify({'erro': 'Conta Google sem e-mail disponível'}), 400
 
         metadata = user_data.get('user_metadata', {}) or {}
-        usuario_existente = Usuario.query.filter_by(email=email).first()
-        telefone_base = (usuario_existente.telefone if usuario_existente and usuario_existente.telefone else user_data.get('phone', '')) if usuario_existente or user_data.get('phone') else ''
-        telefone_existente = normalize_phone(telefone_base) if telefone_base else None
 
-        def build_oauth_pending_payload(nome_padrao):
-            return {
-                'needs_phone_verification': True,
-                'provider': 'google',
-                'oauth_user': {
-                    'email': email,
-                    'supabase_uid': user_data.get('id', ''),
-                    'nome': nome_padrao,
-                    'avatar_url': metadata.get('avatar_url', usuario_existente.avatar_url if usuario_existente else ''),
-                    'tipo': (usuario_existente.tipo if usuario_existente and usuario_existente.tipo else metadata.get('tipo')) or 'cliente',
-                }
+        # Login Google deve concluir direto, mesmo em primeiro acesso
+        usuario = _sync_usuario_from_auth(
+            user_data,
+            email=email,
+            telefone=user_data.get('phone', ''),
+            defaults={
+                'nome': metadata.get('full_name') or metadata.get('name') or email.split('@')[0],
+                'tipo': metadata.get('tipo') or 'cliente',
             }
-
-        if not usuario_existente:
-            return jsonify(build_oauth_pending_payload(metadata.get('full_name') or metadata.get('name') or email.split('@')[0])), 200
-
-        if not telefone_existente:
-            return jsonify(build_oauth_pending_payload(metadata.get('full_name') or metadata.get('name') or usuario_existente.nome or email.split('@')[0])), 200
-        
-        # Sync or create local user
-        usuario = usuario_existente
-        if not usuario:
-            usuario = Usuario(
-                nome=user_data.get('user_metadata', {}).get('full_name', email.split('@')[0]),
-                email=email,
-                tipo='cliente',
-                supabase_uid=user_data.get('id'),
-                avatar_url=user_data.get('user_metadata', {}).get('avatar_url', '')
-            )
-            db.session.add(usuario)
-            db.session.commit()
-        else:
-            usuario.supabase_uid = user_data.get('id')
-            usuario.avatar_url = user_data.get('user_metadata', {}).get('avatar_url', usuario.avatar_url or '')
-            db.session.commit()
+        )
         
         token = gerar_token(usuario.id, usuario.tipo)
         return jsonify({'token': token, 'usuario': usuario.to_dict()}), 200

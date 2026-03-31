@@ -50,14 +50,6 @@ export function AuthCallback() {
         }
 
         const { token, usuario } = backendData;
-        if (backendData?.needs_phone_verification && backendData?.oauth_user) {
-          sessionStorage.setItem('@kifome:pending-social-oauth', JSON.stringify({
-            provider,
-            user: backendData.oauth_user,
-          }));
-          navigate('/login?complete=google-phone');
-          return;
-        }
 
         if (!token || !usuario) {
           throw new Error('Resposta inválida do backend durante o login social');

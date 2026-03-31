@@ -47,7 +47,7 @@ export const authService = {
   
   // Social Login
   loginGoogle: (accessToken, idToken, user = null) => api.post('/api/auth/login_google', { access_token: accessToken, id_token: idToken, user }).then(r => r.data),
-  loginFacebook: (accessToken) => api.post('/api/auth/login_facebook', { access_token: accessToken }).then(r => r.data),
+  loginFacebook: (accessToken, user = null) => api.post('/api/auth/login_facebook', { access_token: accessToken, user }).then(r => r.data),
   
   // Password Reset
   requestPasswordReset: (email) => api.post('/api/auth/request_password_reset', { email }).then(r => r.data),
@@ -95,6 +95,7 @@ export const entregadorService = {
 // Usuario
 export const usuarioService = {
   atualizar: (id, d) => api.put(`/api/usuarios/${id}`, d).then(r => r.data),
+  atualizarEndereco: (id, d) => api.put(`/api/usuarios/${id}/endereco`, d).then(r => r.data),
   obter: (id) => api.get(`/api/usuarios/${id}`).then(r => r.data),
   listar: () => api.get('/api/usuarios').then(r => r.data),
   deletar: (id) => api.delete(`/api/usuarios/${id}`).then(r => r.data),

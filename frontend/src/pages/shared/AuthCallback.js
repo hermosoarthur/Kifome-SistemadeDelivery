@@ -44,7 +44,7 @@ export function AuthCallback() {
         if (provider === 'google' || identities.some(i => i.provider === 'google')) {
           backendData = await authService.loginGoogle(session.access_token, session.provider_token, user);
         } else if (provider === 'facebook' || identities.some(i => i.provider === 'facebook')) {
-          backendData = await authService.loginFacebook(session.access_token);
+          backendData = await authService.loginFacebook(session.provider_token || session.access_token, user);
         } else {
           throw new Error(`Provider ${provider} não suportado`);
         }

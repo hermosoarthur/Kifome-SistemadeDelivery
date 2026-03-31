@@ -14,6 +14,15 @@ from app.utils.supabase_utils import (
 )
 
 
+def _to_float(value):
+    if value is None or value == '':
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def _sync_usuario_from_auth(user_data, *, email=None, telefone=None, defaults=None):
     defaults = defaults or {}
     metadata = user_data.get('user_metadata') or {}
@@ -50,6 +59,22 @@ def _sync_usuario_from_auth(user_data, *, email=None, telefone=None, defaults=No
 
     if defaults.get('telefone'):
         usuario.telefone = normalize_phone(defaults['telefone'])
+
+    endereco_principal = (defaults.get('endereco_principal') or '').strip() if defaults.get('endereco_principal') else ''
+    if endereco_principal:
+        usuario.endereco_principal = endereco_principal
+        usuario.tem_endereco = True
+
+    endereco_json = defaults.get('endereco_json')
+    if isinstance(endereco_json, dict):
+        usuario.endereco_json = endereco_json
+
+    lat = _to_float(defaults.get('latitude'))
+    lng = _to_float(defaults.get('longitude'))
+    if lat is not None:
+        usuario.latitude = lat
+    if lng is not None:
+        usuario.longitude = lng
 
     db.session.commit()
     return usuario
@@ -173,9 +198,17 @@ def verify_otp_email():
     nome = data.get('nome', '').strip()
     telefone = data.get('telefone', '').strip()
     tipo = data.get('tipo', '').strip() or 'cliente'
+    endereco_principal = (data.get('endereco_principal') or '').strip()
+    endereco_json = data.get('endereco_json') if isinstance(data.get('endereco_json'), dict) else None
+    latitude = _to_float(data.get('latitude'))
+    longitude = _to_float(data.get('longitude'))
 
     if not email or not codigo:
         return jsonify({'erro': 'Email e código obrigatórios'}), 400
+    if data.get('latitude') not in (None, '') and latitude is None:
+        return jsonify({'erro': 'Latitude inválida'}), 400
+    if data.get('longitude') not in (None, '') and longitude is None:
+        return jsonify({'erro': 'Longitude inválida'}), 400
 
     otp = AuthOtpRequest.query.filter_by(
         tipo='email',
@@ -210,7 +243,12 @@ def verify_otp_email():
             nome=nome or email.split('@')[0],
             email=email,
             telefone=normalize_phone(telefone) if telefone else None,
-            tipo=tipo
+            tipo=tipo,
+            endereco_principal=endereco_principal or None,
+            endereco_json=endereco_json,
+            latitude=latitude,
+            longitude=longitude,
+            tem_endereco=bool(endereco_principal)
         )
         db.session.add(usuario)
         db.session.commit()
@@ -221,6 +259,15 @@ def verify_otp_email():
             usuario.telefone = normalize_phone(telefone)
         if tipo:
             usuario.tipo = tipo or usuario.tipo
+        if endereco_principal:
+            usuario.endereco_principal = endereco_principal
+            usuario.tem_endereco = True
+        if endereco_json:
+            usuario.endereco_json = endereco_json
+        if latitude is not None:
+            usuario.latitude = latitude
+        if longitude is not None:
+            usuario.longitude = longitude
         db.session.commit()
     
     token = gerar_token(usuario.id, usuario.tipo)
@@ -315,10 +362,18 @@ def verify_otp_sms():
     nome = data.get('nome', '').strip()
     email = data.get('email', '').strip().lower()
     tipo = data.get('tipo', '').strip() or 'cliente'
+    endereco_principal = (data.get('endereco_principal') or '').strip()
+    endereco_json = data.get('endereco_json') if isinstance(data.get('endereco_json'), dict) else None
+    latitude = _to_float(data.get('latitude'))
+    longitude = _to_float(data.get('longitude'))
     telefone_normalizado = normalize_phone(telefone)
 
     if not telefone_normalizado or not codigo:
         return jsonify({'erro': 'Telefone e código obrigatórios'}), 400
+    if data.get('latitude') not in (None, '') and latitude is None:
+        return jsonify({'erro': 'Latitude inválida'}), 400
+    if data.get('longitude') not in (None, '') and longitude is None:
+        return jsonify({'erro': 'Longitude inválida'}), 400
 
     provider = current_app.config.get('SMS_PROVIDER', 'supabase')
 
@@ -333,7 +388,16 @@ def verify_otp_sms():
                     user_data,
                     email=email,
                     telefone=telefone_normalizado,
-                    defaults={'nome': nome, 'email': email, 'telefone': telefone_normalizado, 'tipo': tipo}
+                    defaults={
+                        'nome': nome,
+                        'email': email,
+                        'telefone': telefone_normalizado,
+                        'tipo': tipo,
+                        'endereco_principal': endereco_principal,
+                        'endereco_json': endereco_json,
+                        'latitude': latitude,
+                        'longitude': longitude
+                    }
                 )
                 token = gerar_token(usuario.id, usuario.tipo)
                 return jsonify({'token': token, 'usuario': usuario.to_dict()}), 200
@@ -384,7 +448,12 @@ def verify_otp_sms():
             nome=nome or 'Usuário',
             email=email or f'phone_{telefone_normalizado.replace("+", "")}@kifome.local',
             telefone=telefone_normalizado,
-            tipo=tipo
+            tipo=tipo,
+            endereco_principal=endereco_principal or None,
+            endereco_json=endereco_json,
+            latitude=latitude,
+            longitude=longitude,
+            tem_endereco=bool(endereco_principal)
         )
         db.session.add(usuario)
         db.session.commit()
@@ -396,6 +465,15 @@ def verify_otp_sms():
         usuario.telefone = telefone_normalizado
         if tipo:
             usuario.tipo = tipo or usuario.tipo
+        if endereco_principal:
+            usuario.endereco_principal = endereco_principal
+            usuario.tem_endereco = True
+        if endereco_json:
+            usuario.endereco_json = endereco_json
+        if latitude is not None:
+            usuario.latitude = latitude
+        if longitude is not None:
+            usuario.longitude = longitude
         db.session.commit()
     
     token = gerar_token(usuario.id, usuario.tipo)
@@ -456,8 +534,9 @@ def login_facebook():
     """Login with Facebook via Supabase OAuth"""
     data = request.get_json(silent=True) or {}
     access_token = data.get('access_token')
+    user_payload = data.get('user') or {}
 
-    if not access_token:
+    if not access_token and not user_payload:
         return jsonify({'erro': 'Token do Facebook obrigatório'}), 400
 
     sb = get_supabase()
@@ -465,33 +544,30 @@ def login_facebook():
         return jsonify({'erro': 'Supabase não configurado'}), 503
 
     try:
-        result = verify_oauth_token('facebook', access_token)
-        if not result['success']:
-            return jsonify({'erro': result['error']}), 401
-        
-        user_data = result['user']
+        if user_payload:
+            user_data = user_payload
+        else:
+            result = verify_oauth_token('facebook', access_token)
+            if not result['success']:
+                return jsonify({'erro': result['error']}), 401
+            user_data = result['user']
+
         email = user_data.get('email', '')
         if not email:
             return jsonify({'erro': 'Facebook account must have email'}), 400
         
         email = email.lower()
         
-        # Sync or create local user
-        usuario = Usuario.query.filter_by(email=email).first()
-        if not usuario:
-            usuario = Usuario(
-                nome=user_data.get('user_metadata', {}).get('full_name', email.split('@')[0]),
-                email=email,
-                tipo='cliente',
-                supabase_uid=user_data.get('id'),
-                avatar_url=user_data.get('user_metadata', {}).get('avatar_url', '')
-            )
-            db.session.add(usuario)
-            db.session.commit()
-        else:
-            usuario.supabase_uid = user_data.get('id')
-            usuario.avatar_url = user_data.get('user_metadata', {}).get('avatar_url', usuario.avatar_url or '')
-            db.session.commit()
+        metadata = user_data.get('user_metadata', {}) or {}
+        usuario = _sync_usuario_from_auth(
+            user_data,
+            email=email,
+            telefone=user_data.get('phone', ''),
+            defaults={
+                'nome': metadata.get('full_name') or metadata.get('name') or email.split('@')[0],
+                'tipo': metadata.get('tipo') or 'cliente',
+            }
+        )
         
         token = gerar_token(usuario.id, usuario.tipo)
         return jsonify({'token': token, 'usuario': usuario.to_dict()}), 200

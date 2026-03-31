@@ -1,5 +1,5 @@
 from flask import Blueprint
-from app.controllers import atualizar_usuario, listar_usuarios, obter_usuario, deletar_usuario
+from app.controllers import atualizar_usuario, atualizar_endereco_usuario, listar_usuarios, obter_usuario, deletar_usuario
 from app.utils.jwt_utils import token_requerido
 
 usuarios_bp = Blueprint('usuarios', __name__, url_prefix='/api/usuarios')
@@ -21,6 +21,12 @@ def rota_obter(u, uid):
 @token_requerido
 def rota_atualizar(u, uid):
 	return atualizar_usuario(u, uid)
+
+
+@usuarios_bp.route('/<int:uid>/endereco', methods=['PUT'])
+@token_requerido
+def rota_atualizar_endereco(u, uid):
+	return atualizar_endereco_usuario(u, uid)
 
 
 @usuarios_bp.route('/<int:uid>', methods=['DELETE'])

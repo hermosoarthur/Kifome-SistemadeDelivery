@@ -16,6 +16,11 @@ class Usuario(db.Model):
     google_id = db.Column(db.String(255), nullable=True, unique=True)
     facebook_id = db.Column(db.String(255), nullable=True, unique=True)
     avatar_url = db.Column(db.String(500), nullable=True)
+    endereco_principal = db.Column(db.String(500), nullable=True)
+    endereco_json = db.Column(db.JSON, nullable=True)
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
+    tem_endereco = db.Column(db.Boolean, default=False, nullable=False)
     ativo = db.Column(db.Boolean, default=True, nullable=False)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -36,6 +41,11 @@ class Usuario(db.Model):
         return {
             'id': self.id, 'nome': self.nome, 'email': self.email,
             'telefone': self.telefone, 'tipo': self.tipo,
+            'endereco_principal': self.endereco_principal,
+            'endereco_json': self.endereco_json,
+            'latitude': self.latitude,
+            'longitude': self.longitude,
+            'tem_endereco': self.tem_endereco,
             'avatar_url': self.avatar_url, 'ativo': self.ativo,
             'criado_em': self.criado_em.isoformat() if self.criado_em else None,
         }
@@ -96,6 +106,9 @@ class Pedido(db.Model):
     entregador_id = db.Column(db.Integer, db.ForeignKey('entregadores.id', ondelete='SET NULL'), nullable=True)
     status = db.Column(db.String(30), default='pendente')
     endereco_entrega = db.Column(db.String(500), nullable=False)
+    endereco_detalhes = db.Column(db.JSON, nullable=True)
+    endereco_latitude = db.Column(db.Float, nullable=True)
+    endereco_longitude = db.Column(db.Float, nullable=True)
     total = db.Column(db.Float, nullable=False, default=0.0)
     observacao = db.Column(db.Text, nullable=True)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
@@ -108,6 +121,9 @@ class Pedido(db.Model):
             'id': self.id, 'cliente_id': self.cliente_id,
             'restaurante_id': self.restaurante_id, 'entregador_id': self.entregador_id,
             'status': self.status, 'endereco_entrega': self.endereco_entrega,
+            'endereco_detalhes': self.endereco_detalhes,
+            'endereco_latitude': self.endereco_latitude,
+            'endereco_longitude': self.endereco_longitude,
             'total': self.total, 'observacao': self.observacao,
             'criado_em': self.criado_em.isoformat() if self.criado_em else None,
             'restaurante': self.restaurante.to_dict() if self.restaurante else None,

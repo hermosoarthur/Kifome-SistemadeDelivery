@@ -4,6 +4,15 @@ from app import db
 from app.models import Usuario, Restaurante, Produto, Pedido, ItemPedido, Entregador
 
 
+def _to_float(value):
+    if value is None or value == '':
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
 # ── USUARIO ──────────────────────────────────────────────
 def atualizar_usuario(usuario_atual, usuario_id):
     if usuario_atual.id != usuario_id:
@@ -14,12 +23,63 @@ def atualizar_usuario(usuario_atual, usuario_id):
         u.nome = data['nome'].strip()
     if 'telefone' in data:
         u.telefone = data['telefone'].strip()
+    if 'endereco_principal' in data:
+        u.endereco_principal = (data.get('endereco_principal') or '').strip() or None
+    if 'endereco_json' in data:
+        endereco_json = data.get('endereco_json')
+        u.endereco_json = endereco_json if isinstance(endereco_json, dict) else None
+    if 'latitude' in data:
+        lat = _to_float(data.get('latitude'))
+        if data.get('latitude') not in (None, '') and lat is None:
+            return jsonify({'erro': 'Latitude inválida'}), 400
+        u.latitude = lat
+    if 'longitude' in data:
+        lng = _to_float(data.get('longitude'))
+        if data.get('longitude') not in (None, '') and lng is None:
+            return jsonify({'erro': 'Longitude inválida'}), 400
+        u.longitude = lng
+    u.tem_endereco = bool(u.endereco_principal)
     try:
         db.session.commit()
         return jsonify({'usuario': u.to_dict()}), 200
     except Exception:
         db.session.rollback()
         return jsonify({'erro': 'Erro ao atualizar'}), 500
+
+
+def atualizar_endereco_usuario(usuario_atual, usuario_id):
+    if usuario_atual.id != usuario_id:
+        return jsonify({'erro': 'Sem permissão'}), 403
+
+    u = Usuario.query.get_or_404(usuario_id)
+    data = request.get_json(silent=True) or {}
+
+    endereco_principal = (data.get('endereco_principal') or '').strip()
+    endereco_json = data.get('endereco_json')
+    latitude = _to_float(data.get('latitude'))
+    longitude = _to_float(data.get('longitude'))
+
+    if not endereco_principal:
+        return jsonify({'erro': 'Endereço principal é obrigatório'}), 400
+    if endereco_json is not None and not isinstance(endereco_json, dict):
+        return jsonify({'erro': 'endereco_json deve ser um objeto JSON'}), 400
+    if data.get('latitude') not in (None, '') and latitude is None:
+        return jsonify({'erro': 'Latitude inválida'}), 400
+    if data.get('longitude') not in (None, '') and longitude is None:
+        return jsonify({'erro': 'Longitude inválida'}), 400
+
+    u.endereco_principal = endereco_principal
+    u.endereco_json = endereco_json if isinstance(endereco_json, dict) else u.endereco_json
+    u.latitude = latitude
+    u.longitude = longitude
+    u.tem_endereco = True
+
+    try:
+        db.session.commit()
+        return jsonify({'usuario': u.to_dict()}), 200
+    except Exception:
+        db.session.rollback()
+        return jsonify({'erro': 'Erro ao atualizar endereço'}), 500
 
 
 # ── USUÁRIOS (CRUD) ─────────────────────────────────────
@@ -230,10 +290,18 @@ def criar_pedido(usuario_atual):
     data = request.get_json(silent=True) or {}
     rid = data.get('restaurante_id')
     itens = data.get('itens', [])
-    endereco = data.get('endereco_entrega', '').strip()
+    endereco = data.get('endereco_entrega', '').strip() or (usuario_atual.endereco_principal or '').strip()
+    endereco_detalhes = data.get('endereco_detalhes') if isinstance(data.get('endereco_detalhes'), dict) else None
+    endereco_coords = data.get('endereco_coords') if isinstance(data.get('endereco_coords'), dict) else {}
+    endereco_latitude = _to_float(endereco_coords.get('lat'))
+    endereco_longitude = _to_float(endereco_coords.get('lng'))
 
     if not rid or not itens or not endereco:
         return jsonify({'erro': 'restaurante_id, itens e endereco_entrega são obrigatórios'}), 400
+    if usuario_atual.tipo == 'cliente' and not (usuario_atual.tem_endereco or data.get('endereco_entrega', '').strip()):
+        return jsonify({'erro': 'Cadastre ou informe um endereço para concluir o pedido'}), 400
+    if endereco_coords and (endereco_latitude is None or endereco_longitude is None):
+        return jsonify({'erro': 'endereco_coords inválido. Use { lat, lng } numéricos'}), 400
 
     Restaurante.query.get_or_404(rid)
     total = 0.0
@@ -252,6 +320,9 @@ def criar_pedido(usuario_atual):
             restaurante_id=rid,
             status='pendente',
             endereco_entrega=endereco,
+            endereco_detalhes=endereco_detalhes,
+            endereco_latitude=endereco_latitude,
+            endereco_longitude=endereco_longitude,
             total=total,
             observacao=data.get('observacao', '')
         )

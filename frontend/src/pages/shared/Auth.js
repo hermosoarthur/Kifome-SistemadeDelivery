@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
+import AddressModal from '../../components/address/AddressModal';
 import './Auth.css';
 
 const AUTH_METHODS = {
@@ -394,6 +395,8 @@ export function Registro() {
   const [sucesso, setSucesso] = useState('');
   const [tipoSelecionado, setTipoSelecionado] = useState('cliente');
   const [step, setStep] = useState(1); // 1: form, 2: otp verify
+  const [abrirEndereco, setAbrirEndereco] = useState(false);
+  const [enderecoCadastro, setEnderecoCadastro] = useState(null);
 
   // Form
   const [form, setForm] = useState({ nome: '', email: '', telefone: '' });
@@ -409,6 +412,10 @@ export function Registro() {
     e.preventDefault();
     if (!form.nome.trim() || !form.email.trim() || !form.telefone.trim()) {
       setErro('Preencha todos os campos');
+      return;
+    }
+    if (tipoSelecionado === 'cliente' && !enderecoCadastro?.endereco_principal) {
+      setErro('Para cliente, selecione um endereço de entrega antes de continuar.');
       return;
     }
     
@@ -441,6 +448,10 @@ export function Registro() {
         nome: form.nome,
         telefone: normalizePhone(form.telefone),
         tipo: tipoSelecionado,
+        endereco_principal: enderecoCadastro?.endereco_principal || '',
+        endereco_json: enderecoCadastro || null,
+        latitude: enderecoCadastro?.lat ?? null,
+        longitude: enderecoCadastro?.lng ?? null,
       });
       navigate('/');
     } catch (err) {
@@ -490,6 +501,18 @@ export function Registro() {
             <input type="tel" placeholder="+55 11 99999-9999" value={form.telefone} onChange={e => setForm({ ...form, telefone: e.target.value })} className="form-input" required />
           </AuthField>
 
+          {tipoSelecionado === 'cliente' && (
+            <div className="auth-info-banner" style={{ background: 'rgba(239,68,68,.08)', borderColor: 'rgba(239,68,68,.25)' }}>
+              <strong>📍 Endereço principal</strong>
+              <p style={{ marginBottom: 10 }}>
+                {enderecoCadastro?.endereco_principal ? enderecoCadastro.endereco_principal : 'Você ainda não selecionou seu endereço de entrega.'}
+              </p>
+              <button type="button" className="btn btn-secondary" onClick={() => setAbrirEndereco(true)}>
+                {enderecoCadastro?.endereco_principal ? 'Alterar endereço' : 'Selecionar endereço'}
+              </button>
+            </div>
+          )}
+
           <div className="auth-info-banner gradient">
             <strong>Sem senha, menos fricção</strong>
             <p>O cadastro usa OTP por e-mail e já guarda o telefone para futuras jornadas com SMS.</p>
@@ -519,6 +542,19 @@ export function Registro() {
       <div className="form-footer auth-footer-note">
         <p>Já tem conta? <Link to="/login" className="link">Entrar</Link></p>
       </div>
+
+      <AddressModal
+        isOpen={abrirEndereco}
+        title="Defina seu endereço principal"
+        confirmLabel="Salvar endereço"
+        initialValue={enderecoCadastro}
+        required={tipoSelecionado === 'cliente'}
+        onClose={() => setAbrirEndereco(false)}
+        onSave={(address) => {
+          setEnderecoCadastro(address);
+          setAbrirEndereco(false);
+        }}
+      />
     </AuthShell>
   );
 }

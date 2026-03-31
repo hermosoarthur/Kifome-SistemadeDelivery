@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { usuarioService } from '../../services';
+import AddressModal from '../../components/address/AddressModal';
 import './Perfil.css';
 
 const TE = { cliente: '', restaurante: '🍽️', entregador: '🛵' };
@@ -14,6 +15,7 @@ export default function Perfil() {
   const [form, setForm] = useState({ nome: usuario?.nome || '', telefone: usuario?.telefone || '' });
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ tipo: '', texto: '' });
+  const [abrirEndereco, setAbrirEndereco] = useState(false);
   const cor = COR[usuario?.tipo] || 'var(--primaria)';
 
   async function salvar(e) {
@@ -46,6 +48,29 @@ export default function Perfil() {
     } catch (err) {
       setMsg({ tipo: 'erro', texto: err.response?.data?.erro || 'Erro ao desativar conta' });
     } finally { setLoading(false); }
+  }
+
+  async function salvarEndereco(address) {
+    if (!usuario?.id) return;
+    setLoading(true);
+    setMsg({ tipo: '', texto: '' });
+    try {
+      const payload = {
+        endereco_principal: address?.endereco_principal || '',
+        endereco_json: address || null,
+        latitude: address?.lat ?? null,
+        longitude: address?.lng ?? null,
+      };
+      const d = await usuarioService.atualizarEndereco(usuario.id, payload);
+      atualizarUsuario(d.usuario);
+      setAbrirEndereco(false);
+      setMsg({ tipo: 'sucesso', texto: '✅ Endereço atualizado!' });
+      setTimeout(() => setMsg({ tipo: '', texto: '' }), 3000);
+    } catch (err) {
+      setMsg({ tipo: 'erro', texto: err.response?.data?.erro || 'Erro ao salvar endereço' });
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -92,12 +117,15 @@ export default function Perfil() {
               </form>
             ) : (
               <div className="p-dados">
-                {[{ i: '👤', l: 'Nome', v: usuario?.nome }, { i: '📧', l: 'Email', v: usuario?.email }, { i: '📞', l: 'Telefone', v: usuario?.telefone || 'Não informado' }, { i: '🏷️', l: 'Tipo de conta', v: usuario?.tipo }].map(d => (
+                {[{ i: '👤', l: 'Nome', v: usuario?.nome }, { i: '📧', l: 'Email', v: usuario?.email }, { i: '📞', l: 'Telefone', v: usuario?.telefone || 'Não informado' }, { i: '📍', l: 'Endereço principal', v: usuario?.endereco_principal || 'Não informado' }, { i: '🏷️', l: 'Tipo de conta', v: usuario?.tipo }].map(d => (
                   <div key={d.l} className="p-row">
                     <span className="p-ic">{d.i}</span>
                     <div><span className="p-label">{d.l}</span><span className="p-val">{d.v}</span></div>
                   </div>
                 ))}
+                <button className="btn btn-secondary" onClick={() => setAbrirEndereco(true)} style={{ marginTop: 12, width: 'auto' }}>
+                  {usuario?.endereco_principal ? 'Alterar endereço' : 'Adicionar endereço'}
+                </button>
               </div>
             )}
           </div>
@@ -139,6 +167,20 @@ export default function Perfil() {
           </div>
         </div>
       </div>
+
+      <AddressModal
+        isOpen={abrirEndereco}
+        title="Atualizar endereço principal"
+        confirmLabel="Salvar endereço"
+        initialValue={usuario?.endereco_json || {
+          formatted_address: usuario?.endereco_principal || '',
+          lat: usuario?.latitude ?? null,
+          lng: usuario?.longitude ?? null,
+          details: usuario?.endereco_json?.details || {},
+        }}
+        onClose={() => setAbrirEndereco(false)}
+        onSave={salvarEndereco}
+      />
     </div>
   );
 }

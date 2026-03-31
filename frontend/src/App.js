@@ -30,6 +30,9 @@ import PedidosRestaurante from './pages/restaurante/PedidosRestaurante';
 import EntregadorDash from './pages/entregador/EntregadorDash';
 import { PedidosDisponiveis, MinhasEntregas } from './pages/entregador/Entregas';
 
+// Procure onde estão os outros imports de páginas e adicione este:
+import CuponsPage from './pages/cliente/CuponsPage';
+
 import './styles/global.css';
 import './components/Layout.css';
 
@@ -63,48 +66,46 @@ function SoPublica({ children }) {
 
 // Renderiza o dashboard correto conforme tipo de usuario
 function HomeRouter() {
-  const { usuario } = useAuth();
+  const { usuario, carregando } = useAuth();
+  if (carregando) return <Carregando />;
+
   if (usuario?.tipo === 'restaurante') return <RestauranteDash />;
   if (usuario?.tipo === 'entregador') return <EntregadorDash />;
   return <ClienteHome />;
 }
 
 function AppRoutes() {
-  const { usuario } = useAuth();
-  const tipo = usuario?.tipo;
-
+  // Removida a trava de 'tipo' aqui para garantir que os links do Layout funcionem sempre
   return (
     <Routes>
       {/* Públicas */}
       <Route path="/login" element={<SoPublica><Login /></SoPublica>} />
       <Route path="/registro" element={<SoPublica><Registro /></SoPublica>} />
-  <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
 
       {/* Autenticadas — home dinâmica */}
+      // O ':tipo?' significa que o tipo é opcional.
+      // Se for só "/", mostra tudo. Se for "/categoria/mercados", ele filtra.
+      <Route path="/:tipo?" element={<Protegida><Layout><HomeRouter /></Layout></Protegida>} />
       <Route path="/" element={<Protegida><Layout><HomeRouter /></Layout></Protegida>} />
 
       {/* Compartilhadas */}
       <Route path="/perfil" element={<Protegida><Layout><Perfil /></Layout></Protegida>} />
+      <Route path="/cupons" element={<Protegida><Layout><CuponsPage /></Layout></Protegida>} />
 
       {/* ── CLIENTE ── */}
-      {tipo === 'cliente' && <>
-        <Route path="/meus-pedidos" element={<Protegida><Layout><MeusPedidos /></Layout></Protegida>} />
-        <Route path="/carrinho" element={<Protegida><Layout><Carrinho /></Layout></Protegida>} />
-        <Route path="/restaurante/:id" element={<Protegida><Layout><RestaurantePage /></Layout></Protegida>} />
-      </>}
+      <Route path="/meus-pedidos" element={<Protegida><Layout><MeusPedidos /></Layout></Protegida>} />
+      <Route path="/carrinho" element={<Protegida><Layout><Carrinho /></Layout></Protegida>} />
+      <Route path="/restaurante/:id" element={<Protegida><Layout><RestaurantePage /></Layout></Protegida>} />
 
       {/* ── RESTAURANTE ── */}
-      {tipo === 'restaurante' && <>
-        <Route path="/meu-restaurante" element={<Protegida><Layout><MeuRestaurante /></Layout></Protegida>} />
-        <Route path="/produtos" element={<Protegida><Layout><Produtos /></Layout></Protegida>} />
-        <Route path="/pedidos" element={<Protegida><Layout><PedidosRestaurante /></Layout></Protegida>} />
-      </>}
+      <Route path="/meu-restaurante" element={<Protegida><Layout><MeuRestaurante /></Layout></Protegida>} />
+      <Route path="/produtos" element={<Protegida><Layout><Produtos /></Layout></Protegida>} />
+      <Route path="/pedidos" element={<Protegida><Layout><PedidosRestaurante /></Layout></Protegida>} />
 
       {/* ── ENTREGADOR ── */}
-      {tipo === 'entregador' && <>
-        <Route path="/disponivel" element={<Protegida><Layout><PedidosDisponiveis /></Layout></Protegida>} />
-        <Route path="/minhas-entregas" element={<Protegida><Layout><MinhasEntregas /></Layout></Protegida>} />
-      </>}
+      <Route path="/disponivel" element={<Protegida><Layout><PedidosDisponiveis /></Layout></Protegida>} />
+      <Route path="/minhas-entregas" element={<Protegida><Layout><MinhasEntregas /></Layout></Protegida>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -116,7 +117,6 @@ export default function App() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthProvider>
-        {/* CartProvider fornece estado do carrinho para toda a aplicação */}
         <CartProvider>
           <AppRoutesWrapper />
         </CartProvider>
@@ -125,7 +125,6 @@ export default function App() {
   );
 }
 
-// Wrapper para ter acesso ao useAuth dentro do BrowserRouter
 function AppRoutesWrapper() {
   return <AppRoutes />;
 }

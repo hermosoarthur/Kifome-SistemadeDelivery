@@ -21,3 +21,59 @@
   .rest-hero { height: 320px; border-radius: 0 0 28px 28px; overflow:hidden; }
   .rest-body { max-width: 980px; margin: -28px auto 0; }
 }
+/* Container principal da imagem de destaque */
+.rest-hero {
+  position: relative;
+  width: 100%;
+  height: 300px; /* Ajuste a altura conforme preferir */
+  background-size: cover;
+  background-position: center;
+  border-radius: 16px; /* Para acompanhar o design arredondado */
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+/* Overlay escuro para garantir contraste do texto branco */
+.rest-hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Gradiente: começa transparente no topo e fica escuro embaixo onde está o texto */
+  background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.7) 100%);
+  z-index: 1;
+}
+
+/* Container do conteúdo (texto) dentro do hero */
+.rest-hero-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 25px; /* Espaço generoso para o texto não encostar na borda */
+  z-index: 2; /* Fica acima do overlay */
+  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Ajuste específico para o nome do restaurante não quebrar torto */
+.rest-hero-content h1 {
+  font-size: 32px;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.04em;
+  /* Garante que o nome ocupe no máximo 80% da largura para não bater nos ícones da direita se houver */
+  max-width: 80%; 
+  line-height: 1.1;
+}
+
+/* Ajuste para endereço e nota */
+.rest-hero-content p, 
+.rest-hero-content .rest-rating {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.9;
+}

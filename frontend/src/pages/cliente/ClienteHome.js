@@ -1,185 +1,197 @@
-// Arquivo: frontend/src/pages/cliente/ClienteHome.js
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { restauranteService } from '../../services';
 import RestaurantCard from '../../components/RestaurantCard';
-import CategoryCarousel from '../../components/CategoryCarousel';
 import './ClienteHome.css';
 
+// Lista de categorias completa e restaurada
 const CATS = [
-  { id: '', l: 'Todos', e: '🍽️' }, { id: 'Pizza', l: 'Pizza', e: '🍕' },
-  { id: 'Burger', l: 'Burger', e: '🍔' }, { id: 'Sushi', l: 'Sushi', e: '🍱' },
-  { id: 'Açaí', l: 'Açaí', e: '🍧' }, { id: 'Fitness', l: 'Fitness', e: '🥗' },
-  { id: 'Árabe', l: 'Árabe', e: '🥙' }, { id: 'Doces', l: 'Doces', e: '🍰' },
+  { id: 1, nome: 'Lanches', icon: '🍔' },
+  { id: 2, nome: 'Marmita', icon: '🍱' },
+  { id: 3, nome: 'Italiana', icon: '🍝' },
+  { id: 4, nome: 'Promoções', icon: '🏷️' },
+  { id: 5, nome: 'Salgados', icon: '🥐' },
+  { id: 6, nome: 'Saudável', icon: '🥗' },
+  { id: 7, nome: 'Açaí', icon: '🍧' },
+  { id: 8, nome: 'Árabe', icon: '🥙' },
+  { id: 9, nome: 'Chinesa', icon: '🥢' },
+  { id: 10, nome: 'Carnes', icon: '🥩' },
+  { id: 11, nome: 'Pizza', icon: '🍕' },
+  { id: 12, nome: 'Doces & Bolos', icon: '🍰' },
+  { id: 13, nome: 'Padarias', icon: '🥖' },
+  { id: 14, nome: 'Pastel', icon: '🥟' },
 ];
 
 export default function ClienteHome() {
+  const { tipo } = useParams();
   const { usuario } = useAuth();
   const navigate = useNavigate();
+
+  // Refs para os dois carrosséis
+  const scrollRefCats = useRef(null);
+  const scrollRefUltimas = useRef(null);
+
   const [restaurantes, setRestaurantes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [busca] = useState('');
   const [catAtiva, setCatAtiva] = useState('');
   const [cartCount, setCartCount] = useState(0);
 
-  useEffect(() => {
-    try {
-      const c = JSON.parse(localStorage.getItem('@kifome:carrinho') || '{}');
-      const count = Object.values(c).reduce((s, v) => s + (Number(v) || 0), 0);
-      setCartCount(count);
-    } catch (e) { setCartCount(0); }
-  }, []);
-
-  const carregar = useCallback(async (params = {}) => {
+  const carregar = useCallback(async (filtros = {}) => {
     setLoading(true);
-    try { const d = await restauranteService.listar({ per_page: 20, ...params }); setRestaurantes(d.restaurantes || []); }
-    catch { setRestaurantes([]); }
-    finally { setLoading(false); }
+    try {
+      // Prioriza o filtro do clique (filtros.categoria) ou da URL (tipo)
+      const categoriaFiltro = filtros.categoria || tipo;
+      const params = { per_page: 20 };
+
+      if (categoriaFiltro && categoriaFiltro !== 'restaurantes') {
+        params.categoria = categoriaFiltro;
+      }
+
+      const response = await restauranteService.listar(params);
+      setRestaurantes(response.restaurantes || []);
+    } catch (err) {
+      console.error('Erro ao carregar:', err);
+      setRestaurantes([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [tipo]);
+
+  useEffect(() => {
+    carregar();
+    if (!tipo) setCatAtiva(''); // Reseta a bolinha ativa se voltar para o início
+  }, [tipo, carregar]);
+
+  useEffect(() => {
+    const atualizar = () => {
+      const c = JSON.parse(localStorage.getItem('@kifome:carrinho') || '{}');
+      setCartCount(Object.values(c).reduce((a, b) => a + Number(b), 0));
+    };
+    atualizar();
+    window.addEventListener('storage', atualizar);
+    return () => window.removeEventListener('storage', atualizar);
   }, []);
 
-  useEffect(() => { carregar(); }, [carregar]);
-
-
-  function handleCat(id) {
-    setCatAtiva(id);
-    carregar(id ? { categoria: id } : {});
-  }
+  // Função de Scroll genérica
+  const handleScroll = (ref, direction) => {
+    if (ref.current) {
+      const amt = ref.current.clientWidth * 0.7;
+      ref.current.scrollBy({ left: direction === 'left' ? -amt : amt, behavior: 'smooth' });
+    }
+  };
 
   return (
     <div className="cliente-home">
-      <div className="page">
-        <div className="ch-page">
-          <div className="ch-hero">
-            <div className="ch-hero-inner">
-              <div className="ch-hero-copy">
-                <span className="ch-brand-chip">Kifome</span>
-                <div className="ch-hero-badges">
-                  <span>🍔 Restaurantes perto de você</span>
-                  <span>🧭 Busca rápida</span>
-                  <span>🛵 Entrega prática</span>
-                </div>
-                <h1>Olá, {usuario?.nome?.split(' ')[0]} 👋<br />O que você quer pedir hoje?</h1>
-                <p>Escolha restaurantes, filtre por categoria e abra o cardápio com uma navegação mais direta, limpa e no estilo de app de delivery.</p>
-                {/* busca centralizada foi movida para o header global */}
-              </div>
-
-              <div className="ch-highlight-card">
-                <strong>Peça no seu ritmo</strong>
-                <p>Sem poluição visual: busque, filtre, escolha um restaurante e monte seu pedido de forma simples.</p>
-                <div className="ch-highlight-list">
-                  <div className="ch-highlight-item">
-                    <div className="chi-icon">📍</div>
-                    <div className="chi-text">
-                      <span className="chi-title">Endereço e categoria</span>
-                      <span className="chi-sub">decisão mais rápida</span>
-                    </div>
-                  </div>
-                  <div className="ch-highlight-item">
-                    <div className="chi-icon">⭐</div>
-                    <div className="chi-text">
-                      <span className="chi-title">Nota, tempo e entrega</span>
-                      <span className="chi-sub">tudo no mesmo card</span>
-                    </div>
-                  </div>
-                  <div className="ch-highlight-item">
-                    <div className="chi-icon">🧾</div>
-                    <div className="chi-text">
-                      <span className="chi-title">Pedido direto</span>
-                      <span className="chi-sub">cardápio com total visível</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          {/* Banner de cupons bem parecido com iFood */}
+      {/* Hero */}
+      <div className="ch-hero">
+        <div className="ch-hero-inner">
+          <h1 className="ch-greeting">Oi, {usuario?.nome?.split(' ')[0] || 'Rafael'}! 👋</h1>
+          <p className="ch-subtitle">{tipo ? `Explorando ${tipo}` : 'O que vamos pedir hoje?'}</p>
+        </div>
+      </div>
+      {/* Banner de Cupons */}
+      {!tipo && (
+        <div className="coupon-container" onClick={() => navigate('/cupons')} style={{ cursor: 'pointer' }}>
           <div className="coupon-banner">
             <div className="coupon-inner">
-              <div className="coupon-left">🎁 Você tem <strong>203 cupons!</strong> Aproveite seus descontos</div>
-              <div className="coupon-cta">▾</div>
+              <div className="coupon-content">
+                <span className="coupon-icon">🎟️</span>
+                <span>Você tem <strong>1 cupom</strong> disponível</span>
+              </div>
+              {/* O clique no container já resolve, mas o botão reforça a ação */}
+              <button className="coupon-cta">Ver todos →</button>
             </div>
           </div>
-
-          <div className="ch-top-grid">
-            <div className="card ch-section-card">
-              <div className="section-heading">
-                <h2>Categorias</h2>
-                <span className="page-subtitle">Navegue por estilos de cozinha</span>
-              </div>
-              <CategoryCarousel categories={CATS} activeId={catAtiva} onSelect={handleCat} />
-            </div>
-
-            <div className="card ch-section-card">
-              <div className="section-heading">
-                <h2>Visão rápida</h2>
-              </div>
-              <div className="ch-mini-list">
-                <div className="ch-mini-item"><span>🏪</span><div><strong>{restaurantes.length} restaurantes</strong><p>Opções encontradas na sua busca atual.</p></div></div>
-                <div className="ch-mini-item"><span>⚡</span><div><strong>Fluxo rápido</strong><p>Abra o restaurante e faça o pedido sem etapas desnecessárias.</p></div></div>
-                <div className="ch-mini-item"><span>📦</span><div><strong>Pedidos organizados</strong><p>Acompanhe depois tudo em uma linha do tempo simples.</p></div></div>
-              </div>
-            </div>
+        </div>
+      )}
+      {/* Seção Categorias */}
+      <div className="section">
+        <div className="section-header"><h2>Categorias</h2></div>
+        <div className="carousel-wrapper">
+          <button className="nav-arrow left" onClick={() => handleScroll(scrollRefCats, 'left')}>‹</button>
+          <div className="cats-scroll" ref={scrollRefCats}>
+            {CATS.map(c => (
+              <button
+                key={c.id}
+                className={`cat-btn ${catAtiva === c.nome ? 'ativo' : ''}`}
+                onClick={() => {
+                  const novoFiltro = catAtiva === c.nome ? '' : c.nome;
+                  setCatAtiva(novoFiltro);
+                  carregar(novoFiltro ? { categoria: novoFiltro } : {});
+                }}
+              >
+                <span className="cat-circle">{c.icon}</span>
+                <span className="cat-text">{c.nome}</span>
+              </button>
+            ))}
           </div>
-
-          <div className="card ch-section-card">
-            <div className="section-heading">
-              <h2>Seu momento no Kifome</h2>
-              <span className="page-subtitle">Uma home limpa, sem cupons e focada em busca, categorias e restaurantes</span>
-            </div>
-            <div className="ch-stat-strip">
-              <div className="ch-stat-item"><strong>{restaurantes.length}</strong><span>Restaurantes disponíveis</span></div>
-              <div className="ch-stat-item"><strong>{catAtiva || 'Todos'}</strong><span>Categoria em destaque</span></div>
-              <div className="ch-stat-item"><strong>{busca ? 'Busca ativa' : 'Exploração livre'}</strong><span>Contexto da vitrine atual</span></div>
-            </div>
-          </div>
-
-          <div>
-            <div className="sec-header">
-              <h2 className="sec-title">Restaurantes</h2>
-              <span className="page-subtitle">{restaurantes.length} disponíveis para pedir agora</span>
-            </div>
-
-            {/* Últimas Lojas - exemplo similar ao iFood */}
-            <div className="ultimas-lojas">
-              <h3>Últimas Lojas</h3>
-              <div className="ultimas-list">
-                <div className="ultimas-card" onClick={() => { /* navegar para restaurante de exemplo */ navigate('/restaurante/1'); }}>
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/4/4c/Burger_King_Logo.svg" alt="Burger King" />
-                  <div className="ultimas-info"><strong>Burger King - Jk Iguatemi</strong></div>
-                </div>
-                <div className="ultimas-card" onClick={() => { navigate('/restaurante/2'); }}>
-                  <img src="https://seeklogo.com/images/P/popeyes-logo-2B39F4C4B6-seeklogo.com.png" alt="Popeyes" />
-                  <div className="ultimas-info"><strong>Popeyes - Frango Frito - Vila Olímpia</strong></div>
-                </div>
-              </div>
-              <div style={{ textAlign: 'right', marginTop: 8 }}><button className="link-like" onClick={() => navigate('/restaurantes')}>Ver mais</button></div>
-            </div>
-
-            {loading ? (
-              <div className="r-grid">{[1,2,3,4,5,6].map(i => <div key={i} className="r-skeleton" />)}</div>
-            ) : restaurantes.length === 0 ? (
-              <div className="empty-state">
-                <span className="empty-state-emoji">🍽️</span>
-                <h3>Nenhum restaurante encontrado</h3>
-                <p>Tente outro termo de busca ou remova o filtro de categoria para explorar o marketplace.</p>
-              </div>
-            ) : (
-              <div className="r-grid">
-                {restaurantes.map((r, i) => (
-                  <RestaurantCard key={r.id} restaurante={r} index={i} onSelect={(rest) => navigate(`/restaurante/${rest.id}`)} />
-                ))}
-              </div>
-            )}
-          </div>
+          <button className="nav-arrow right" onClick={() => handleScroll(scrollRefCats, 'right')}>›</button>
         </div>
       </div>
 
-      {/* Botão flutuante do carrinho (estilo iFood) */}
-      <button className="cart-float" onClick={() => navigate('/carrinho')} aria-label="Abrir carrinho">
-        <span className="cart-emoji">🛒</span>
-        {cartCount > 0 && <span className="cart-count">{cartCount}</span>}
-      </button>
+      {/* SEÇÃO: ÚLTIMAS LOJAS (Com setas e scroll corrigido) */}
+      {!tipo && (
+        <div className="section">
+          <div className="section-header">
+            <h2>Últimas lojas</h2>
+            <span className="see-more" onClick={() => navigate('/restaurantes')}>Ver todas</span>
+          </div>
+
+          <div className="carousel-wrapper">
+            <button className="nav-arrow left" onClick={() => handleScroll(scrollRefUltimas, 'left')}>‹</button>
+
+            <div className="ultimas-list" ref={scrollRefUltimas}>
+              {[
+                { id: 1, n: 'Burger King', t: '20-30 min', img: 'https://images.seeklogo.com/logo-png/2/1/burger-king-logo-png_seeklogo-23687.png' },
+                { id: 2, n: 'Popeyes', t: '25-35 min', img: 'https://images.seeklogo.com/logo-png/38/1/popeyes-louisiana-kitchen-logo-png_seeklogo-389123.png' },
+                { id: 3, n: 'Habib\'s', t: '15-25 min', img: 'https://images.seeklogo.com/logo-png/19/1/habibs-logo-png_seeklogo-193930.png' },
+                { id: 4, n: 'McDonald\'s', t: '10-20 min', img: 'https://images.seeklogo.com/logo-png/16/1/mcdonalds-logo-png_seeklogo-168472.png' },
+                { id: 5, n: 'Subway', t: '20-40 min', img: 'https://upload.wikimedia.org/wikipedia/commons/5/5c/Subway_2016_logo.svg' },
+                { id: 6, n: 'Giraffas', t: '30-40 min', img: 'https://images.seeklogo.com/logo-png/33/1/giraffas-logo-png_seeklogo-334483.png' }
+              ].map(loja => (
+                <div key={loja.id} className="ultimas-card" onClick={() => navigate(`/restaurante/${loja.id}`)}>
+                  <div className="ultimas-img-container">
+                    <img src={loja.img} alt={loja.n} onError={(e) => e.target.src = '🍔'} />
+                  </div>
+                  <div className="ultimas-info">
+                    <strong>{loja.n}</strong>
+                    <span>{loja.t}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button className="nav-arrow right" onClick={() => handleScroll(scrollRefUltimas, 'right')}>›</button>
+          </div>
+        </div>
+      )}
+
+      {/* SEÇÃO: RESTAURANTES PARA VOCÊ */}
+      <div className="section">
+        <div className="section-header">
+          <h2>{tipo ? `Destaques em ${tipo}` : 'Restaurantes para você'}</h2>
+          <span className="results-count">{restaurantes.length} lojas</span>
+        </div>
+
+        {loading ? (
+          <div className="r-grid">
+            {[1, 2, 3, 4].map(i => <div key={i} className="r-skeleton" />)}
+          </div>
+        ) : (
+          <div className="r-grid">
+            {restaurantes.map(r => (
+              <RestaurantCard key={r.id} restaurante={r} onSelect={() => navigate(`/restaurante/${r.id}`)} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {cartCount > 0 && (
+        <button className="cart-float" onClick={() => navigate('/carrinho')}>
+          🛒 <span>{cartCount}</span>
+        </button>
+      )}
     </div>
   );
 }

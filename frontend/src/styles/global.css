@@ -172,11 +172,11 @@ img { max-width: 100%; display: block; }
 /* Badges */
 .badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: capitalize; letter-spacing: .02em; }
 .badge-verde { background: #D1FAE5; color: #065F46; }
-.badge-amarelo { background: #FEF3C7; color: #92400E; }
-.badge-vermelho { background: #FEE2E2; color: #B91C1C; }
+.badge-amarelo { background: #FEF3C7; color: #c20c0c; }
+.badge-vermelho { background: #FEE2E2; color: #c20c0c; }
 .badge-azul { background: #DBEAFE; color: #1E40AF; }
 .badge-cinza { background: #f8fafc; color: var(--texto-sec); border: 1px solid var(--bordas); }
-.badge-laranja { background: #FFEDD5; color: #C2410C; }
+.badge-laranja { background: #FFEDD5; color: #c20c0c; }
 
 /* Cards */
 .card {

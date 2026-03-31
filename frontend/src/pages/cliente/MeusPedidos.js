@@ -34,7 +34,7 @@ export default function MeusPedidos() {
       <div className="section-heading">
         <div>
           <h1 className="page-title">Meus Pedidos</h1>
-          <p className="page-subtitle">Acompanhe status, itens, endereço e progresso de cada pedido de forma rápida.</p>
+          <p className="page-subtitle">Acompanhe status e progresso de cada pedido</p>
         </div>
       </div>
 

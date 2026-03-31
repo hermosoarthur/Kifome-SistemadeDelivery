@@ -2,14 +2,88 @@
 
 .ch-page { display: grid; gap: 24px; }
 
+/* ====================== HERO - "OI" NO CANTO ESQUERDO ====================== */
 .ch-hero {
   position: relative;
   overflow: hidden;
   background: linear-gradient(135deg, #2e333b 0%, #4a505d 35%, var(--primaria-dark) 100%);
-  border-radius: 32px;
-  padding: clamp(22px, 4vw, 34px);
   color: #fff;
-  box-shadow: var(--sombra-md);
+  padding: 72px 20px 50px;
+  border-radius: 0 0 32px 32px;
+  min-height: 200px;
+}
+
+.ch-hero-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+/* Saudação no canto esquerdo */
+.ch-greeting-wrapper {
+  text-align: left;
+}
+
+.ch-greeting {
+  font-size: clamp(32px, 7.2vw, 44px);
+  font-weight: 800;
+  line-height: 1.05;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.02em;
+}
+
+.ch-subtitle {
+  font-size: 16px;
+  color: rgba(255,255,255,0.88);
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* Círculos decorativos leves */
+.ch-hero::before,
+.ch-hero::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.07);
+}
+
+.ch-hero::before { 
+  width: 240px; 
+  height: 240px; 
+  top: -95px; 
+  right: -55px; 
+}
+
+.ch-hero::after { 
+  width: 155px; 
+  height: 155px; 
+  bottom: -75px; 
+  left: -45px; 
+}
+
+/* Círculos decorativos (suaves) */
+.ch-hero::before,
+.ch-hero::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.07);
+}
+
+.ch-hero::before { 
+  width: 250px; 
+  height: 250px; 
+  top: -100px; 
+  right: -60px; 
+}
+
+.ch-hero::after { 
+  width: 160px; 
+  height: 160px; 
+  bottom: -80px; 
+  left: -40px; 
 }
 
 .ch-hero::before,
@@ -32,13 +106,44 @@
   align-items: end;
 }
 
-/* banner de cupons estilo iFood */
-.coupon-banner { margin-top: 12px; border-radius: 10px; background: #2f9d67; color: #fff; padding: 12px 18px; box-shadow: var(--sombra-sm); }
-.coupon-inner { display:flex; align-items:center; justify-content:space-between; max-width:1200px; margin:0 auto; }
-.coupon-left { font-weight:700; display:flex; align-items:center; gap:12px; }
-.coupon-left strong { font-weight:900; margin:0 6px; }
-.coupon-cta { opacity:0.95; font-size:18px; transform: rotate(0deg); }
-.coupon-banner { border-radius: 0; padding: 14px 20px; }
+/*  BARRA DE CUPONS - ARREDONDADA */
+.coupon-banner {
+  margin: 12px 20px 20px;
+  background: #41c484;
+  color: #fff;
+  padding: 15px 20px;
+  border-radius: 16px;           /* ← principal mudança */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 10;
+}
+
+.coupon-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.coupon-left {
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+}
+
+.coupon-left strong {
+  font-weight: 900;
+}
+
+.coupon-cta {
+  font-size: 15px;
+  font-weight: 600;
+  opacity: 0.95;
+  cursor: pointer;
+}
 
 /* Últimas lojas */
 .ultimas-lojas { margin: 18px 0 12px; }
@@ -90,7 +195,7 @@
   width: 100%;
   padding: 20px;
   border-radius: 26px;
-  background: linear-gradient(180deg, #c13d48 0%, #a62833 100%);
+  background: linear-gradient(180deg, #cc1b1b 0%, #cc1b1b 100%);
   border: 1px solid rgba(255,255,255,0.12);
   box-shadow: 0 18px 30px rgba(0,0,0,0.22);
 }
@@ -215,4 +320,356 @@
   .r-footer { flex-direction: column; align-items: stretch; }
   .r-pedir-btn { width: 100%; }
   .order-side { text-align: left; }
+}
+.ch-page {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Carrossel de Categorias */
+.cats-scroll {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto; /* Permite scroll lateral */
+  padding-bottom: 20px;
+  scrollbar-width: none; /* Esconde barra no Firefox */
+}
+
+.cats-scroll::-webkit-scrollbar {
+  display: none; /* Esconde barra no Chrome/Safari */
+}
+
+.cat-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  min-width: 90px; /* Largura mínima para os itens do carrossel */
+  flex-shrink: 0;
+}
+
+.cat-btn span:first-child {
+  width: 80px;
+  height: 80px;
+  background: #f7f7f700;
+  border-radius: 50%; /* Círculos perfeitos do iFood */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  transition: transform 0.2s;
+}
+
+.cat-btn:hover span:first-child {
+  transform: scale(1.05);
+  background: #f0f0f0;
+}
+
+.cat-btn span:last-child {
+  font-size: 14px;
+  font-weight: 600;
+  color: #66666600;
+}
+
+/* Ajuste de imagens para não ficarem gigantes */
+.r-img {
+  width: 100%;
+  height: 160px;
+  object-fit: contain; /* Ajusta a logo sem esticar */
+  background: #fafafa;
+  padding: 20px;
+}
+.cliente-home {
+  padding-bottom: 100px;
+}
+
+.section {
+  padding: 0 24px;
+  margin-bottom: 40px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.sec-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #3e3e3e;
+}
+
+/* CONTAINER DO CARROSSEL */
+.cats-scroll {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto; /* Habilita o scroll lateral */
+  overflow-y: hidden;
+  padding: 10px 0 25px 0;
+  cursor: grab;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; /* Scroll suave no iOS */
+  scrollbar-width: none; /* Esconde barra no Firefox */
+}
+
+.cats-scroll::-webkit-scrollbar {
+  display: none; /* Esconde barra no Chrome/Safari */
+}
+
+/* BOTÃO DA CATEGORIA */
+.cat-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 88px; /* Garante que os itens não esmaguem */
+  background: none;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0; /* Impede que o flexbox diminua o botão */
+  transition: transform 0.2s ease;
+}
+
+.cat-btn .cat-icon-wrapper {
+  width: 72px;
+  height: 72px;
+  background: #fff;
+  border-radius: 50%; /* Redondo estilo iFood */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.04);
+  margin-bottom: 8px;
+  border: 1px solid #f2f2f2;
+}
+
+.cat-btn.ativo .cat-icon-wrapper {
+  border: 2px solid #ea1d2c;
+  background: #fff0f1;
+}
+
+.cat-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #666;
+}
+.carousel-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.nav-arrow {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #eee;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  z-index: 10;
+  cursor: pointer;
+  font-size: 24px;
+  color: #ea1d2c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-arrow.left { left: -20px; }
+.nav-arrow.right { right: -20px; }
+
+.cats-scroll {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+  padding: 10px 5px;
+}
+
+.cats-scroll::-webkit-scrollbar { display: none; }
+
+.cat-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 90px;
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.cat-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50% !important; /* Círculo iFood */
+  background: #f7f7f7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  margin-bottom: 8px;
+  transition: 0.2s;
+}
+
+.cat-btn:hover .cat-circle { background: #eee; }
+.cat-btn.ativo .cat-circle { border: 2px solid #ea1d2c; background: #fff0f1; }
+
+/* Container que segura as setas e a lista */
+.carousel-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+/* Lista horizontal */
+.ultimas-list {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 10px 0;
+  scrollbar-width: none; /* Firefox */
+}
+
+.ultimas-list::-webkit-scrollbar {
+  display: none; /* Chrome */
+}
+
+/* Card das últimas lojas */
+.ultimas-card {
+  min-width: 280px; /* Importante: impede que os cards fiquem pequenos */
+  flex-shrink: 0;
+  background: #fff;
+  border: 1px solid #f2f2f2;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+/* Ajuste das Setas Flutuantes */
+.nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background: #fff;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ea1d2c;
+  font-size: 20px;
+}
+
+.nav-arrow.left { left: -16px; }
+.nav-arrow.right { right: -16px; }
+
+.nav-arrow:hover { background: #fdfdfd; scale: 1.1; }
+.coupon-container {
+  padding: 10px 0;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.coupon-banner {
+  background: #00a082; /* Verde iFood ou a cor que preferir */
+  background: linear-gradient(90deg, #00a082 0%, #00c8a0 100%);
+  border-radius: 8px;
+  color: white;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.coupon-banner:hover {
+  transform: scale(1.01);
+}
+
+.coupon-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.coupon-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+}
+
+.coupon-icon {
+  font-size: 20px;
+}
+
+.coupon-cta {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.coupon-cta:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+/* AJUSTE DE POSICIONAMENTO E ESPAÇAMENTO */
+
+.cliente-home {
+    display: block; /* Garante que os elementos ocupem a largura toda e fiquem à esquerda */
+    text-align: left; /* Alinha todos os textos para a esquerda */
+}
+
+.section {
+    width: 100%;
+    margin-top: 50px !important; /* Mantém o respiro da curva do Hero */
+    padding: 0 4%; /* Margem lateral suave para não colar na ponta da tela */
+}
+
+.section-header {
+    display: flex;
+    justify-content: flex-start; /* Alinha o título e o "Ver todos" à esquerda */
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.section-header h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: #3e3e3e;
+}
+
+/* Garante que o carrossel comece da esquerda */
+.carousel-wrapper {
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+    position: relative;
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Adicionado useEffect
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import './Layout.css';
@@ -25,43 +25,42 @@ const NAV_ENTREGADOR = [
   { to: '/perfil', label: 'Perfil', icon: '👤' },
 ];
 
-const TIPO_NAV = {
-  cliente: NAV_CLIENTE,
-  restaurante: NAV_RESTAURANTE,
-  entregador: NAV_ENTREGADOR,
-};
-
-const TIPO_COR = {
-  cliente: '#FF6B35',
-  restaurante: '#6C63FF',
-  entregador: '#00B894',
-};
+const TIPO_NAV = { restaurante: NAV_RESTAURANTE, entregador: NAV_ENTREGADOR };
+const TIPO_COR = { restaurante: '#6C63FF', entregador: '#00B894', cliente: '#ea1d2c' };
 
 const TIPO_LABEL = {
-  cliente: '🛒 Cliente',
   restaurante: '🍽️ Restaurante',
   entregador: '🛵 Entregador',
+  cliente: '😋 Cliente' // Adicionado para não ficar vazio
 };
-
-// TIPO_TITULO removed: header now handles topbar copy
 
 export default function Layout({ children }) {
   const { usuario, sair } = useAuth();
   const navigate = useNavigate();
-  const [aberto, setAberto] = useState(false);
+  const [aberto, setAberto] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const tipo = usuario?.tipo || 'cliente';
   const navItems = TIPO_NAV[tipo] || NAV_CLIENTE;
   const cor = TIPO_COR[tipo];
 
+  // Monitora redimensionamento da tela
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (!mobile) setAberto(true); // Garante que a barra abre ao voltar pro desktop
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   async function handleSair() {
     if (window.confirm('Deseja sair?')) { await sair(); navigate('/login'); }
   }
 
-  // Header displays user name, greeting and cart summary now.
-
   return (
-    <div className="layout">
+    <div className={`layout ${!aberto ? 'sidebar-closed' : ''}`}>
       <aside className={`sidebar ${aberto ? 'open' : ''}`} style={{ '--cor-tipo': cor }}>
         <div className="sb-brand">
           <span className="sb-brand-mark">K</span>
@@ -75,9 +74,13 @@ export default function Layout({ children }) {
 
         <nav className="sb-nav">
           {navItems.map(n => (
-            <NavLink key={n.to} to={n.to} end={n.end}
+            <NavLink 
+              key={n.to} 
+              to={n.to} 
+              end={n.end}
               className={({ isActive }) => `sb-link ${isActive ? 'active' : ''}`}
-              onClick={() => setAberto(false)}>
+              onClick={() => { if(isMobile) setAberto(false) }}
+            >
               <span className="sb-icon">{n.icon}</span>
               <span>{n.label}</span>
             </NavLink>
@@ -92,19 +95,23 @@ export default function Layout({ children }) {
               <span className="sb-user-tipo" style={{ color: cor }}>{tipo}</span>
             </div>
           </div>
-          <button className="sb-sair" onClick={handleSair} title="Sair">🚪</button>
+          <button className="sb-sair" onClick={handleSair} title="Sair">✕</button>
         </div>
       </aside>
 
       <header className="mob-header">
         <button className="mob-menu" onClick={() => setAberto(!aberto)}>☰</button>
         <span className="mob-brand" style={{ color: cor }}>Kifome</span>
-        <button className="mob-menu" onClick={() => navigate('/perfil')} aria-label="Ir para perfil">👤</button>
+        <button className="mob-menu" onClick={() => navigate('/perfil')}>👤</button>
       </header>
 
-      {aberto && <div className="mob-overlay" onClick={() => setAberto(false)} />}
+      {/* Overlay corrigido com isMobile */}
+      {aberto && isMobile && (
+        <div className="mob-overlay" onClick={() => setAberto(false)} />
+      )}
+
       <main className="layout-main">
-        <Header />
+        <Header onToggleSidebar={() => setAberto(!aberto)} />
         <div className="layout-content">{children}</div>
       </main>
     </div>

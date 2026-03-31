@@ -7,7 +7,7 @@ export default function SearchBar({ placeholder = 'Busque por item ou loja' }) {
 
   return (
     <div className="ifood-search-chip">
-      <span className="search-icon">🔍</span>
+      <span className="search-icon"></span>
       <input className="ifood-search-input" placeholder={placeholder} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/buscar?q=${encodeURIComponent(e.target.value)}`); }} />
     </div>
   );

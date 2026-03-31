@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { usuarioService } from '../../services';
 import './Perfil.css';
 
-const TE = { cliente: '🛒', restaurante: '🍽️', entregador: '🛵' };
+const TE = { cliente: '', restaurante: '🍽️', entregador: '🛵' };
 const COR = { cliente: 'var(--primaria)', restaurante: '#6C63FF', entregador: 'var(--sucesso)' };
 
 export default function Perfil() {
@@ -133,8 +133,8 @@ export default function Perfil() {
             </div>
 
             <div className="perfil-actions">
-              <button className="btn btn-danger" onClick={handleSair} style={{ width: '100%' }}>🚪 Sair da conta</button>
-              <button className="btn btn-danger-outline" onClick={deletarConta} disabled={loading} style={{ width: '100%' }}>🗑️ Desativar conta</button>
+              <button className="btn btn-danger" onClick={handleSair} style={{ width: '100%' }}> Sair da conta</button>
+              <button className="btn btn-danger-outline" onClick={deletarConta} disabled={loading} style={{ width: '100%' }}>Desativar conta</button>
             </div>
           </div>
         </div>

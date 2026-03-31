@@ -90,6 +90,7 @@ export default function ClienteHome() {
           <p className="ch-subtitle">{tipo ? `Explorando ${tipo}` : 'O que vamos pedir hoje?'}</p>
         </div>
       </div>
+
       {/* Banner de Cupons */}
       {!tipo && (
         <div className="coupon-container" onClick={() => navigate('/cupons')} style={{ cursor: 'pointer' }}>

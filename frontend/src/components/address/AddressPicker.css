@@ -9,6 +9,13 @@
   color: var(--texto, #111827);
 }
 
+.address-search-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
 .address-input {
   width: 100%;
   border: 1px solid var(--borda, #d1d5db);
@@ -21,6 +28,11 @@
 .address-input:focus {
   border-color: var(--primaria, #ef4444);
   box-shadow: 0 0 0 3px rgba(239, 68, 68, .15);
+}
+
+.address-search-btn {
+  height: 44px;
+  white-space: nowrap;
 }
 
 .address-map-wrap {
@@ -194,6 +206,10 @@
   }
 
   .address-manual-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .address-search-row {
     grid-template-columns: 1fr;
   }
 }

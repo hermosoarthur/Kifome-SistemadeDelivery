@@ -73,10 +73,25 @@ function composeGeocodeQuery(details = {}) {
   ].filter(Boolean).join(', ');
 }
 
+function parseNominatimAddressDetails(result = {}) {
+  const adr = result?.address || {};
+  return {
+    logradouro: adr.road || adr.pedestrian || adr.residential || '',
+    numero: adr.house_number || '',
+    bairro: adr.suburb || adr.neighbourhood || adr.quarter || '',
+    cidade: adr.city || adr.town || adr.village || adr.municipality || '',
+    uf: (adr.state_code || adr.state || '').slice(0, 2).toUpperCase(),
+    cep: adr.postcode || '',
+  };
+}
+
 export default function AddressPicker({ value, onChange }) {
   const [address, setAddress] = useState(normalizeAddress(value));
   const [autocomplete, setAutocomplete] = useState(null);
   const [mapsAuthError, setMapsAuthError] = useState('');
+  const [searchStatus, setSearchStatus] = useState('');
+  const [searchError, setSearchError] = useState('');
+  const [locating, setLocating] = useState(false);
   const [geoStatus, setGeoStatus] = useState('');
   const [geoError, setGeoError] = useState('');
   const [cepStatus, setCepStatus] = useState('');
@@ -184,34 +199,164 @@ export default function AddressPicker({ value, onChange }) {
     panMap(address.lat, address.lng);
   }, [address.lat, address.lng]);
 
-  function geocodeAddress(query, onSuccess) {
-    if (!query || !window.google?.maps?.Geocoder) return;
-    const geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode({ address: query }, (results, status) => {
-      if (status !== 'OK' || !results?.length) return;
-      const first = results[0];
-      const lat = first.geometry?.location?.lat?.();
-      const lng = first.geometry?.location?.lng?.();
-      if (typeof lat !== 'number' || typeof lng !== 'number') return;
+  async function geocodeAddress(query, onSuccess) {
+    if (!query) return false;
+
+    if (window.google?.maps?.Geocoder) {
+      const googleResult = await new Promise((resolve) => {
+        const geocoder = new window.google.maps.Geocoder();
+        geocoder.geocode({ address: query }, (results, status) => {
+          if (status !== 'OK' || !results?.length) {
+            resolve(null);
+            return;
+          }
+          const first = results[0];
+          const lat = first.geometry?.location?.lat?.();
+          const lng = first.geometry?.location?.lng?.();
+          if (typeof lat !== 'number' || typeof lng !== 'number') {
+            resolve(null);
+            return;
+          }
+
+          resolve({
+            lat,
+            lng,
+            formatted_address: first.formatted_address,
+            place_id: first.place_id,
+            raw: first,
+          });
+        });
+      });
+
+      if (googleResult) {
+        setAddress((prev) => normalizeAddress({
+          ...prev,
+          lat: googleResult.lat,
+          lng: googleResult.lng,
+          formatted_address: googleResult.formatted_address || prev.formatted_address,
+          place_id: googleResult.place_id || prev.place_id,
+        }));
+        panMap(googleResult.lat, googleResult.lng);
+        onSuccess?.(googleResult.raw);
+        return true;
+      }
+    }
+
+    try {
+      const endpoint = `https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&countrycodes=br&q=${encodeURIComponent(query)}`;
+      const response = await fetch(endpoint, {
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+      const results = await response.json();
+      const first = Array.isArray(results) ? results[0] : null;
+      const lat = coerceNumber(first?.lat);
+      const lng = coerceNumber(first?.lon);
+      if (typeof lat !== 'number' || typeof lng !== 'number') return false;
+      const parsed = parseNominatimAddressDetails(first);
 
       setAddress((prev) => normalizeAddress({
         ...prev,
         lat,
         lng,
-        formatted_address: first.formatted_address || prev.formatted_address,
-        place_id: first.place_id || prev.place_id,
+        formatted_address: first?.display_name || prev.formatted_address,
+        place_id: first?.place_id ? String(first.place_id) : prev.place_id,
+        details: {
+          ...prev.details,
+          ...parsed,
+          cep: prev.details.cep || parsed.cep,
+        },
       }));
       panMap(lat, lng);
-      onSuccess?.(first);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async function reverseGeocodeCoordinates(lat, lng) {
+    if (window.google?.maps?.Geocoder) {
+      const fromGoogle = await new Promise((resolve) => {
+        const geocoder = new window.google.maps.Geocoder();
+        geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+          if (status !== 'OK' || !results?.length) {
+            resolve(null);
+            return;
+          }
+          const place = results[0];
+          resolve({
+            formatted_address: place.formatted_address || '',
+            place_id: place.place_id || '',
+            details: parseAddressComponents(place),
+          });
+        });
+      });
+      if (fromGoogle) return fromGoogle;
+    }
+
+    try {
+      const endpoint = `https://nominatim.openstreetmap.org/reverse?format=json&addressdetails=1&zoom=18&lat=${encodeURIComponent(String(lat))}&lon=${encodeURIComponent(String(lng))}`;
+      const response = await fetch(endpoint, { headers: { Accept: 'application/json' } });
+      const data = await response.json();
+      if (!data) return null;
+      return {
+        formatted_address: data.display_name || '',
+        place_id: data.place_id ? String(data.place_id) : '',
+        details: parseNominatimAddressDetails(data),
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  function getCurrentPositionWithOptions(options) {
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, options);
     });
   }
 
-  function handlePlaceChanged() {
+  async function getCurrentPositionWithRetry() {
+    try {
+      return await getCurrentPositionWithOptions({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+    } catch (error) {
+      if (error?.code !== 3) throw error;
+      return await getCurrentPositionWithOptions({ enableHighAccuracy: false, timeout: 14000, maximumAge: 60000 });
+    }
+  }
+
+  async function handleSearchAddress(rawQuery) {
+    const query = rawQuery?.trim();
+    if (!query) return;
+    setSearchError('');
+    setSearchStatus('Buscando endereço...');
+
+    const success = await geocodeAddress(query);
+    if (success) {
+      setSearchStatus('Endereço localizado. Ajuste o pin se necessário.');
+      return;
+    }
+
+    setSearchStatus('');
+    setSearchError('Não foi possível localizar este endereço. Tente com número, bairro e cidade.');
+  }
+
+  async function handlePlaceChanged() {
     if (!autocomplete) return;
     const place = autocomplete.getPlace();
+    if (!place) {
+      await handleSearchAddress(address.formatted_address);
+      return;
+    }
     const parsed = parseAddressComponents(place);
     const lat = place?.geometry?.location?.lat?.();
     const lng = place?.geometry?.location?.lng?.();
+    const hasPlaceData = Boolean(place?.place_id || place?.formatted_address || (typeof lat === 'number' && typeof lng === 'number'));
+
+    if (!hasPlaceData) {
+      await handleSearchAddress(address.formatted_address);
+      return;
+    }
 
     const next = normalizeAddress({
       ...address,
@@ -232,7 +377,7 @@ export default function AddressPicker({ value, onChange }) {
     }
 
     const fallbackQuery = place?.formatted_address || composeMainAddress(next);
-    geocodeAddress(fallbackQuery);
+    await handleSearchAddress(fallbackQuery);
   }
 
   function updateManualField(field, fieldValue) {
@@ -286,11 +431,15 @@ export default function AddressPicker({ value, onChange }) {
         },
       }));
 
-      const query = composeGeocodeQuery({
-        ...addressSnapshotRef.current.details,
-        ...updatedDetails,
-      });
-      geocodeAddress(query);
+      const cepOnlyQuery = `${cepDigits}, Brasil`;
+      const foundByCep = await geocodeAddress(cepOnlyQuery);
+      if (!foundByCep) {
+        const query = composeGeocodeQuery({
+          ...addressSnapshotRef.current.details,
+          ...updatedDetails,
+        });
+        await geocodeAddress(query);
+      }
 
       setCepStatus('Endereço preenchido pelo CEP. Confira número e complemento.');
       setCepError('');
@@ -300,7 +449,7 @@ export default function AddressPicker({ value, onChange }) {
     }
   }
 
-  function updateFromCoordinates(lat, lng, fallback = '') {
+  async function updateFromCoordinates(lat, lng, fallback = '') {
     setAddress((prev) => normalizeAddress({
       ...prev,
       lat,
@@ -308,27 +457,24 @@ export default function AddressPicker({ value, onChange }) {
       formatted_address: fallback || prev.formatted_address,
     }));
 
-    if (!window.google?.maps?.Geocoder) return;
-    const geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-      if (status !== 'OK' || !results?.length) return;
-      const place = results[0];
-      const parsed = parseAddressComponents(place);
-      setAddress((prev) => normalizeAddress({
-        ...prev,
-        formatted_address: place.formatted_address || prev.formatted_address,
-        place_id: place.place_id || prev.place_id,
-        lat,
-        lng,
-        details: {
-          ...prev.details,
-          ...parsed,
-        },
-      }));
-    });
+    const parsed = await reverseGeocodeCoordinates(lat, lng);
+    if (!parsed) return;
+    setAddress((prev) => normalizeAddress({
+      ...prev,
+      formatted_address: parsed.formatted_address || prev.formatted_address,
+      place_id: parsed.place_id || prev.place_id,
+      lat,
+      lng,
+      details: {
+        ...prev.details,
+        ...(parsed.details || {}),
+      },
+    }));
   }
 
-  function useCurrentLocation() {
+  async function useCurrentLocation() {
+    if (locating) return;
+    setLocating(true);
     setGeoError('');
     setGeoStatus('Buscando sua localização atual...');
 
@@ -341,36 +487,32 @@ export default function AddressPicker({ value, onChange }) {
     if (!navigator.geolocation) {
       setGeoStatus('');
       setGeoError('Seu navegador não suporta geolocalização.');
+      setLocating(false);
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        updateFromCoordinates(lat, lng, 'Localização atual');
-        panMap(lat, lng);
-        setGeoStatus('Localização capturada com sucesso.');
-        setGeoError('');
-      },
-      (error) => {
-        setGeoStatus('');
-        if (error?.code === 1) {
-          setGeoError('Permissão de localização negada no navegador.');
-          return;
-        }
-        if (error?.code === 2) {
-          setGeoError('Não foi possível determinar sua localização.');
-          return;
-        }
-        if (error?.code === 3) {
-          setGeoError('Tempo esgotado para obter localização atual.');
-          return;
-        }
+    try {
+      const pos = await getCurrentPositionWithRetry();
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      await updateFromCoordinates(lat, lng, 'Localização atual');
+      panMap(lat, lng);
+      setGeoStatus('Localização capturada com sucesso.');
+      setGeoError('');
+    } catch (error) {
+      setGeoStatus('');
+      if (error?.code === 1) {
+        setGeoError('Permissão de localização negada no navegador.');
+      } else if (error?.code === 2) {
+        setGeoError('Não foi possível determinar sua localização.');
+      } else if (error?.code === 3) {
+        setGeoError('Tempo esgotado para obter localização atual.');
+      } else {
         setGeoError('Falha ao usar localização atual.');
-      },
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
-    );
+      }
+    } finally {
+      setLocating(false);
+    }
   }
 
   const mapCenter = useMemo(() => {
@@ -385,19 +527,34 @@ export default function AddressPicker({ value, onChange }) {
       {hasMaps ? (
         <>
           <label className="address-label">Buscar endereço</label>
-          <Autocomplete onLoad={setAutocomplete} onPlaceChanged={handlePlaceChanged} options={AUTOCOMPLETE_OPTIONS}>
-            <input
-              className="address-input"
-              placeholder="Rua, número, bairro"
-              value={address.formatted_address}
-              onChange={(e) => setAddress((prev) => ({ ...prev, formatted_address: e.target.value }))}
-              onKeyDown={(e) => {
-                if (e.key !== 'Enter') return;
-                const query = e.currentTarget.value?.trim();
-                if (query) geocodeAddress(query);
-              }}
-            />
-          </Autocomplete>
+          <div className="address-search-row">
+            <Autocomplete onLoad={setAutocomplete} onPlaceChanged={handlePlaceChanged} options={AUTOCOMPLETE_OPTIONS}>
+              <input
+                className="address-input"
+                placeholder="Rua, número, bairro"
+                value={address.formatted_address}
+                onChange={(e) => {
+                  setSearchError('');
+                  setAddress((prev) => ({ ...prev, formatted_address: e.target.value }));
+                }}
+                onKeyDown={(e) => {
+                  if (e.key !== 'Enter') return;
+                  e.preventDefault();
+                  handleSearchAddress(e.currentTarget.value);
+                }}
+              />
+            </Autocomplete>
+            <button
+              type="button"
+              className="btn btn-secondary address-search-btn"
+              onClick={() => handleSearchAddress(address.formatted_address)}
+            >
+              Buscar
+            </button>
+          </div>
+
+          {searchStatus && <p className="address-status-info">{searchStatus}</p>}
+          {searchError && <p className="address-status-error">{searchError}</p>}
 
           <div className="address-map-wrap">
             <GoogleMap
@@ -433,8 +590,8 @@ export default function AddressPicker({ value, onChange }) {
             </GoogleMap>
           </div>
 
-          <button type="button" className="btn btn-secondary" onClick={useCurrentLocation}>
-            Usar minha localização
+          <button type="button" className="btn btn-secondary" onClick={useCurrentLocation} disabled={locating}>
+            {locating ? 'Obtendo localização...' : 'Usar minha localização'}
           </button>
 
           {geoStatus && <p className="address-status-info">{geoStatus}</p>}

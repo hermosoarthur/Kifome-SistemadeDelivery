@@ -4,13 +4,13 @@ import bcrypt
 from datetime import datetime, timedelta
 from flask import request, jsonify, current_app
 from app import db, get_supabase
-from app.models import Usuario, AuthOtpRequest, ResetPasswordToken
+from app.models import Usuario, AuthOtpRequest
 from app.utils.jwt_utils import gerar_token
-from app.utils.validators import validar_email, validar_senha
+from app.utils.validators import validar_email
 from app.utils.otp_utils import send_email_otp_message
 from app.utils.supabase_utils import (
-    send_magic_link, send_email_otp, send_sms_otp, verify_otp,
-    verify_oauth_token, reset_password_email, update_password, normalize_phone
+    send_magic_link, send_sms_otp, verify_otp,
+    verify_oauth_token, normalize_phone
 )
 
 
@@ -79,6 +79,59 @@ def _sync_usuario_from_auth(user_data, *, email=None, telefone=None, defaults=No
     db.session.commit()
     return usuario
 
+
+def _validate_local_otp(tipo, destino, codigo):
+    otp = AuthOtpRequest.query.filter_by(
+        tipo=tipo,
+        destino=destino
+    ).order_by(AuthOtpRequest.criado_em.desc()).first()
+
+    if not otp:
+        return None, (jsonify({'erro': 'Código não encontrado ou expirado'}), 401)
+
+    if datetime.utcnow() > otp.expiracao:
+        db.session.delete(otp)
+        db.session.commit()
+        return None, (jsonify({'erro': 'Código expirado'}), 401)
+
+    if otp.tentativas >= otp.max_tentativas:
+        db.session.delete(otp)
+        db.session.commit()
+        return None, (jsonify({'erro': 'Muitas tentativas. Solicite um novo código'}), 401)
+
+    otp.tentativas += 1
+    if not bcrypt.checkpw(codigo.encode(), otp.codigo_hash.encode()):
+        db.session.commit()
+        return None, (jsonify({'erro': f'Código incorreto ({otp.max_tentativas - otp.tentativas} tentativas restantes)'}), 401)
+
+    otp.verificado_em = datetime.utcnow()
+    db.session.commit()
+    return otp, None
+
+
+def _apply_usuario_profile_updates(
+    usuario, *, nome='', email='', telefone='', tipo='',
+    endereco_principal='', endereco_json=None, latitude=None, longitude=None,
+    allow_email_update=False
+):
+    if nome:
+        usuario.nome = nome
+    if allow_email_update and email:
+        usuario.email = email
+    if telefone:
+        usuario.telefone = normalize_phone(telefone)
+    if tipo:
+        usuario.tipo = tipo or usuario.tipo
+    if endereco_principal:
+        usuario.endereco_principal = endereco_principal
+        usuario.tem_endereco = True
+    if endereco_json:
+        usuario.endereco_json = endereco_json
+    if latitude is not None:
+        usuario.latitude = latitude
+    if longitude is not None:
+        usuario.longitude = longitude
+
 # ============================================================================
 # MAGIC LINK (Passwordless)
 # ============================================================================
@@ -105,7 +158,7 @@ def request_magic_link():
     return jsonify({'erro': 'Supabase não configurado'}), 503
 
 
-def verify_magic_link(token):
+def verify_magic_link():
     """
     Verify magic link token and return JWT for backend
     Note: Frontend should handle Supabase session from magic link
@@ -139,7 +192,7 @@ def verify_magic_link(token):
             
             token = gerar_token(usuario.id, usuario.tipo)
             return jsonify({'token': token, 'usuario': usuario.to_dict()}), 200
-    except Exception as e:
+    except Exception:
         pass
 
     return jsonify({'erro': 'Falha ao verificar magic link'}), 401
@@ -210,31 +263,9 @@ def verify_otp_email():
     if data.get('longitude') not in (None, '') and longitude is None:
         return jsonify({'erro': 'Longitude inválida'}), 400
 
-    otp = AuthOtpRequest.query.filter_by(
-        tipo='email',
-        destino=email
-    ).order_by(AuthOtpRequest.criado_em.desc()).first()
-
-    if not otp:
-        return jsonify({'erro': 'Código não encontrado ou expirado'}), 401
-    
-    if datetime.utcnow() > otp.expiracao:
-        db.session.delete(otp)
-        db.session.commit()
-        return jsonify({'erro': 'Código expirado'}), 401
-    
-    if otp.tentativas >= otp.max_tentativas:
-        db.session.delete(otp)
-        db.session.commit()
-        return jsonify({'erro': 'Muitas tentativas. Solicite um novo código'}), 401
-    
-    otp.tentativas += 1
-    if not bcrypt.checkpw(codigo.encode(), otp.codigo_hash.encode()):
-        db.session.commit()
-        return jsonify({'erro': f'Código incorreto ({otp.max_tentativas - otp.tentativas} tentativas restantes)'}), 401
-    
-    otp.verificado_em = datetime.utcnow()
-    db.session.commit()
+    _, otp_error = _validate_local_otp('email', email, codigo)
+    if otp_error:
+        return otp_error
     
     # Find or create user
     usuario = Usuario.query.filter_by(email=email).first()
@@ -251,24 +282,19 @@ def verify_otp_email():
             tem_endereco=bool(endereco_principal)
         )
         db.session.add(usuario)
-        db.session.commit()
     else:
-        if nome:
-            usuario.nome = nome
-        if telefone:
-            usuario.telefone = normalize_phone(telefone)
-        if tipo:
-            usuario.tipo = tipo or usuario.tipo
-        if endereco_principal:
-            usuario.endereco_principal = endereco_principal
-            usuario.tem_endereco = True
-        if endereco_json:
-            usuario.endereco_json = endereco_json
-        if latitude is not None:
-            usuario.latitude = latitude
-        if longitude is not None:
-            usuario.longitude = longitude
-        db.session.commit()
+        _apply_usuario_profile_updates(
+            usuario,
+            nome=nome,
+            telefone=telefone,
+            tipo=tipo,
+            endereco_principal=endereco_principal,
+            endereco_json=endereco_json,
+            latitude=latitude,
+            longitude=longitude
+        )
+
+    db.session.commit()
     
     token = gerar_token(usuario.id, usuario.tipo)
     return jsonify({'token': token, 'usuario': usuario.to_dict()}), 200
@@ -415,31 +441,9 @@ def verify_otp_sms():
             return jsonify({'erro': 'Supabase não configurado para verificar OTP por SMS'}), 503
 
     # Fallback: local OTP verification
-    otp = AuthOtpRequest.query.filter_by(
-        tipo='sms',
-        destino=telefone_normalizado
-    ).order_by(AuthOtpRequest.criado_em.desc()).first()
-
-    if not otp:
-        return jsonify({'erro': 'Código não encontrado ou expirado'}), 401
-    
-    if datetime.utcnow() > otp.expiracao:
-        db.session.delete(otp)
-        db.session.commit()
-        return jsonify({'erro': 'Código expirado'}), 401
-    
-    if otp.tentativas >= otp.max_tentativas:
-        db.session.delete(otp)
-        db.session.commit()
-        return jsonify({'erro': 'Muitas tentativas. Solicite um novo código'}), 401
-    
-    otp.tentativas += 1
-    if not bcrypt.checkpw(codigo.encode(), otp.codigo_hash.encode()):
-        db.session.commit()
-        return jsonify({'erro': f'Código incorreto ({otp.max_tentativas - otp.tentativas} tentativas restantes)'}), 401
-    
-    otp.verificado_em = datetime.utcnow()
-    db.session.commit()
+    _, otp_error = _validate_local_otp('sms', telefone_normalizado, codigo)
+    if otp_error:
+        return otp_error
     
     # Find or create user by phone
     usuario = Usuario.query.filter_by(telefone=telefone_normalizado).first()
@@ -456,25 +460,21 @@ def verify_otp_sms():
             tem_endereco=bool(endereco_principal)
         )
         db.session.add(usuario)
-        db.session.commit()
     else:
-        if nome:
-            usuario.nome = nome
-        if email:
-            usuario.email = email
-        usuario.telefone = telefone_normalizado
-        if tipo:
-            usuario.tipo = tipo or usuario.tipo
-        if endereco_principal:
-            usuario.endereco_principal = endereco_principal
-            usuario.tem_endereco = True
-        if endereco_json:
-            usuario.endereco_json = endereco_json
-        if latitude is not None:
-            usuario.latitude = latitude
-        if longitude is not None:
-            usuario.longitude = longitude
-        db.session.commit()
+        _apply_usuario_profile_updates(
+            usuario,
+            nome=nome,
+            email=email,
+            telefone=telefone_normalizado,
+            tipo=tipo,
+            endereco_principal=endereco_principal,
+            endereco_json=endereco_json,
+            latitude=latitude,
+            longitude=longitude,
+            allow_email_update=True
+        )
+
+    db.session.commit()
     
     token = gerar_token(usuario.id, usuario.tipo)
     return jsonify({'token': token, 'usuario': usuario.to_dict()}), 200
@@ -573,95 +573,6 @@ def login_facebook():
         return jsonify({'token': token, 'usuario': usuario.to_dict()}), 200
     except Exception as e:
         return jsonify({'erro': f'Erro Facebook: {str(e)}'}), 401
-
-
-# ============================================================================
-# PASSWORD RESET (Supabase Reset Email + Passwordless Alternative)
-# ============================================================================
-
-def request_password_reset():
-    """Request password reset link via Supabase"""
-    data = request.get_json(silent=True) or {}
-    email = data.get('email', '').strip().lower()
-
-    if not email or not validar_email(email):
-        return jsonify({'erro': 'Email inválido'}), 400
-
-    sb = get_supabase()
-    if not sb:
-        return jsonify({'erro': 'Supabase não configurado'}), 503
-
-    try:
-        result = reset_password_email(email)
-        if result['success']:
-            return jsonify({
-                'mensagem': 'Link de reset enviado para seu email'
-            }), 200
-        return jsonify({'erro': result['error']}), 400
-    except Exception as e:
-        return jsonify({'erro': str(e)}), 500
-
-
-def verify_password_reset():
-    """Verify reset token and update password"""
-    data = request.get_json(silent=True) or {}
-    token = data.get('token', '').strip()
-    nova_senha = data.get('nova_senha', '')
-
-    if not token or not nova_senha:
-        return jsonify({'erro': 'Token e nova senha obrigatórios'}), 400
-
-    ok, msg = validar_senha(nova_senha)
-    if not ok:
-        return jsonify({'erro': msg}), 400
-
-    try:
-        reset_token = ResetPasswordToken.query.filter_by(
-            token_hash=token,
-            usado=False
-        ).filter(
-            ResetPasswordToken.expiracao > datetime.utcnow()
-        ).first()
-
-        if not reset_token:
-            return jsonify({'erro': 'Token inválido ou expirado'}), 401
-
-        usuario = reset_token.usuario
-        usuario.set_senha(nova_senha)
-        reset_token.usado = True
-        reset_token.verificado_em = datetime.utcnow()
-        db.session.commit()
-
-        token_jwt = gerar_token(usuario.id, usuario.tipo)
-        return jsonify({
-            'mensagem': 'Senha atualizada com sucesso',
-            'token': token_jwt,
-            'usuario': usuario.to_dict()
-        }), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'erro': str(e)}), 500
-
-
-# ============================================================================
-# LEGACY PASSWORD LOGIN (Fallback)
-# ============================================================================
-
-def login():
-    """Traditional password login (legacy / fallback)"""
-    data = request.get_json(silent=True) or {}
-    email = data.get('email', '').strip().lower()
-    senha = data.get('senha', '')
-
-    if not email or not senha:
-        return jsonify({'erro': 'Email e senha obrigatórios'}), 400
-
-    usuario = Usuario.query.filter_by(email=email, ativo=True).first()
-    if not usuario or not usuario.verificar_senha(senha):
-        return jsonify({'erro': 'Email ou senha incorretos'}), 401
-
-    token = gerar_token(usuario.id, usuario.tipo)
-    return jsonify({'token': token, 'usuario': usuario.to_dict()}), 200
 
 
 # ============================================================================

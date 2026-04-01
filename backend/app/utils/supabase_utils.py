@@ -2,7 +2,6 @@
 Supabase Auth Utilities
 Wrapper for Supabase Auth operations with fallback handling
 """
-import os
 import re
 from flask import current_app
 
@@ -94,23 +93,6 @@ def get_supabase_client():
         return None
 
 
-def get_supabase_admin_client():
-    """Get Supabase Admin client for server-side operations"""
-    supabase_url = current_app.config.get('SUPABASE_URL')
-    supabase_service_key = current_app.config.get('SUPABASE_SERVICE_KEY')
-    
-    if not supabase_url or not supabase_service_key:
-        return None
-    
-    try:
-        patch_supabase_runtime_compat()
-        from supabase import create_client
-        return create_client(supabase_url, supabase_service_key)
-    except Exception as e:
-        print(f'[Supabase Admin] Failed to create client: {e}')
-        return None
-
-
 def send_magic_link(email):
     """
     Send magic link via Supabase Auth
@@ -128,31 +110,6 @@ def send_magic_link(email):
             {
                 'email': email,
                 'options': {'should_create_user': True}
-            }
-        )
-        return {'success': True, 'error': None, 'data': response}
-    except Exception as e:
-        return {'success': False, 'error': str(e), 'data': None}
-
-
-def send_email_otp(email):
-    """
-    Send OTP via email using Supabase Auth
-    
-    Returns:
-        dict: { 'success': bool, 'error': str|None, 'data': dict }
-    """
-    sb = get_supabase_client()
-    if not sb:
-        return {'success': False, 'error': 'Supabase não configurado', 'data': None}
-    
-    try:
-        response = sb.auth.sign_in_with_otp(
-            {
-                'email': email,
-                'options': {
-                    'should_create_user': True,
-                }
             }
         )
         return {'success': True, 'error': None, 'data': response}
@@ -260,39 +217,3 @@ def verify_oauth_token(provider, token):
         return {'success': False, 'error': 'Token inválido', 'user': None}
     except Exception as e:
         return {'success': False, 'error': str(e), 'user': None}
-
-
-def reset_password_email(email):
-    """
-    Send password reset email via Supabase Auth
-    
-    Returns:
-        dict: { 'success': bool, 'error': str|None }
-    """
-    sb = get_supabase_client()
-    if not sb:
-        return {'success': False, 'error': 'Supabase não configurado'}
-    
-    try:
-        sb.auth.reset_password_email(email)
-        return {'success': True, 'error': None}
-    except Exception as e:
-        return {'success': False, 'error': str(e)}
-
-
-def update_password(user_id, new_password):
-    """
-    Update user password (requires valid session)
-    
-    Returns:
-        dict: { 'success': bool, 'error': str|None }
-    """
-    sb = get_supabase_admin_client()
-    if not sb:
-        return {'success': False, 'error': 'Supabase Admin não configurado'}
-    
-    try:
-        sb.auth.admin.update_user_by_id(user_id, {'password': new_password})
-        return {'success': True, 'error': None}
-    except Exception as e:
-        return {'success': False, 'error': str(e)}

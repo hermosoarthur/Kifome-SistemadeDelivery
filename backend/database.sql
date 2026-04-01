@@ -11,7 +11,6 @@ CREATE TABLE usuarios (
     id SERIAL PRIMARY KEY,
     nome VARCHAR(150) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    senha VARCHAR(255),
     telefone VARCHAR(20),
     tipo VARCHAR(20) NOT NULL DEFAULT 'cliente',
     supabase_uid VARCHAR(255) UNIQUE,

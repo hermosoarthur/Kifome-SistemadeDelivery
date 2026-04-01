@@ -1,7 +1,6 @@
 # Arquivo: backend/app/models/__init__.py
 from datetime import datetime
 from app import db
-import bcrypt
 
 
 class Usuario(db.Model):
@@ -9,7 +8,6 @@ class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(150), nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)
-    senha = db.Column(db.String(255), nullable=True)
     telefone = db.Column(db.String(20), nullable=True)
     tipo = db.Column(db.String(20), nullable=False, default='cliente')
     supabase_uid = db.Column(db.String(255), nullable=True, unique=True)
@@ -28,14 +26,6 @@ class Usuario(db.Model):
     restaurantes = db.relationship('Restaurante', backref='dono', lazy='dynamic', cascade='all, delete-orphan')
     entregador = db.relationship('Entregador', backref='usuario', uselist=False, cascade='all, delete-orphan')
     pedidos = db.relationship('Pedido', backref='cliente', lazy='dynamic', foreign_keys='Pedido.cliente_id')
-
-    def set_senha(self, senha):
-        self.senha = bcrypt.hashpw(senha.encode(), bcrypt.gensalt()).decode()
-
-    def verificar_senha(self, senha):
-        if not self.senha:
-            return False
-        return bcrypt.checkpw(senha.encode(), self.senha.encode())
 
     def to_dict(self):
         return {
@@ -187,23 +177,4 @@ class AuthOtpRequest(db.Model):
             'id': self.id, 'tipo': self.tipo, 'destino': self.destino,
             'tentativas': self.tentativas, 'max_tentativas': self.max_tentativas,
             'expiracao': self.expiracao.isoformat() if self.expiracao else None,
-        }
-
-
-class ResetPasswordToken(db.Model):
-    """Password reset tokens"""
-    __tablename__ = 'reset_password_tokens'
-    id = db.Column(db.Integer, primary_key=True)
-    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='CASCADE'), nullable=False, index=True)
-    token_hash = db.Column(db.String(255), nullable=False, unique=True)
-    expiracao = db.Column(db.DateTime, nullable=False, index=True)
-    usado = db.Column(db.Boolean, default=False)
-    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
-    usuario = db.relationship('Usuario', backref='reset_tokens')
-
-    def to_dict(self):
-        return {
-            'id': self.id, 'usuario_id': self.usuario_id,
-            'expiracao': self.expiracao.isoformat() if self.expiracao else None,
-            'usado': self.usado,
         }

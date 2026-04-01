@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
-import AddressModal from '../../components/address/AddressModal';
 import { AUTH_METHODS, normalizePhone, getErrorMessage } from './authUtils';
 import './Auth.css';
 
@@ -210,8 +209,8 @@ function LoginOtpStep({ title, subtitle, code, setCode, loading, onSubmit, onBac
 }
 
 /**
- * 🔐 Login Kifome-style - 100% Passwordless
- * Apenas 2 opções: Email OTP, SMS OTP + Google/Facebook
+ * 🔐 Login estilo iFood - sem senha
+ * Opções: Email OTP + SMS OTP + Google/Facebook
  */
 export function Login() {
   const { requestOtpEmail, verifyOtpEmail, requestOtpSms, verifyOtpSms, loginGoogle, loginFacebook } = useAuth();
@@ -226,7 +225,7 @@ export function Login() {
   const [email, setEmail] = useState('');
   const [codigoEmail, setCodigoEmail] = useState('');
   const [enviouEmail, setEnviouEmail] = useState(false);
-  
+
   // SMS OTP
   const [telefone, setTelefone] = useState('');
   const [codigoSms, setCodigoSms] = useState('');
@@ -379,11 +378,9 @@ export function Registro() {
   const [sucesso, setSucesso] = useState('');
   const [tipoSelecionado, setTipoSelecionado] = useState('cliente');
   const [step, setStep] = useState(1); // 1: form, 2: otp verify
-  const [abrirEndereco, setAbrirEndereco] = useState(false);
-  const [enderecoCadastro, setEnderecoCadastro] = useState(null);
 
   // Form
-  const [form, setForm] = useState({ nome: '', email: '', telefone: '' });
+  const [form, setForm] = useState({ nome: '', email: '' });
   const [codigo, setCodigo] = useState('');
 
   const TIPOS = [
@@ -394,12 +391,8 @@ export function Registro() {
 
   async function handleSubmitForm(e) {
     e.preventDefault();
-    if (!form.nome.trim() || !form.email.trim() || !form.telefone.trim()) {
+    if (!form.nome.trim() || !form.email.trim()) {
       setErro('Preencha todos os campos');
-      return;
-    }
-    if (tipoSelecionado === 'cliente' && !enderecoCadastro?.endereco_principal) {
-      setErro('Para cliente, selecione um endereço de entrega antes de continuar.');
       return;
     }
     
@@ -430,12 +423,7 @@ export function Registro() {
     try {
       await verifyOtpEmail(form.email.trim().toLowerCase(), codigo, {
         nome: form.nome,
-        telefone: normalizePhone(form.telefone),
         tipo: tipoSelecionado,
-        endereco_principal: enderecoCadastro?.endereco_principal || '',
-        endereco_json: enderecoCadastro || null,
-        latitude: enderecoCadastro?.lat ?? null,
-        longitude: enderecoCadastro?.lng ?? null,
       });
       navigate('/');
     } catch (err) {
@@ -473,25 +461,9 @@ export function Registro() {
             <input type="email" placeholder="seu@email.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} autoComplete="email" className="form-input" required />
           </AuthField>
 
-          <AuthField label="Celular" icon="📱">
-            <input type="tel" placeholder="+55 11 99999-9999" value={form.telefone} onChange={e => setForm({ ...form, telefone: e.target.value })} className="form-input" required />
-          </AuthField>
-
-          {tipoSelecionado === 'cliente' && (
-            <div className="auth-info-banner" style={{ background: 'rgba(239,68,68,.08)', borderColor: 'rgba(239,68,68,.25)' }}>
-              <strong>📍 Endereço principal</strong>
-              <p style={{ marginBottom: 10 }}>
-                {enderecoCadastro?.endereco_principal ? enderecoCadastro.endereco_principal : 'Você ainda não selecionou seu endereço de entrega.'}
-              </p>
-              <button type="button" className="btn btn-secondary" onClick={() => setAbrirEndereco(true)}>
-                {enderecoCadastro?.endereco_principal ? 'Alterar endereço' : 'Selecionar endereço'}
-              </button>
-            </div>
-          )}
-
           <div className="auth-info-banner gradient">
             <strong>Sem senha, menos fricção</strong>
-            <p>O cadastro usa OTP por e-mail e já guarda o telefone para futuras jornadas com SMS.</p>
+            <p>Seu acesso é por e-mail com código OTP, sem necessidade de senha ou celular.</p>
           </div>
 
           <button type="submit" className="btn-submit" disabled={loading}>
@@ -518,19 +490,6 @@ export function Registro() {
       <div className="form-footer auth-footer-note">
         <p>Já tem conta? <Link to="/login" className="link">Entrar</Link></p>
       </div>
-
-      <AddressModal
-        isOpen={abrirEndereco}
-        title="Defina seu endereço principal"
-        confirmLabel="Salvar endereço"
-        initialValue={enderecoCadastro}
-        required={tipoSelecionado === 'cliente'}
-        onClose={() => setAbrirEndereco(false)}
-        onSave={(address) => {
-          setEnderecoCadastro(address);
-          setAbrirEndereco(false);
-        }}
-      />
     </AuthShell>
   );
 }

@@ -29,12 +29,9 @@ export default api;
 
 // Auth
 export const authService = {
-  // Legacy password login
-  login: (email, senha) => api.post('/api/auth/login', { email, senha }).then(r => r.data),
-  
   // Magic Link (Passwordless)
   requestMagicLink: (email) => api.post('/api/auth/request_magic_link', { email }).then(r => r.data),
-  verifyMagicLink: (token) => api.post('/api/auth/verify_magic_link', { token }).then(r => r.data),
+  verifyMagicLink: () => api.post('/api/auth/verify_magic_link', {}).then(r => r.data),
   
   // Email OTP
   requestOtpEmail: (email) => api.post('/api/auth/request_otp_email', { email }).then(r => r.data),
@@ -48,10 +45,6 @@ export const authService = {
   // Social Login
   loginGoogle: (accessToken, idToken, user = null) => api.post('/api/auth/login_google', { access_token: accessToken, id_token: idToken, user }).then(r => r.data),
   loginFacebook: (accessToken, user = null) => api.post('/api/auth/login_facebook', { access_token: accessToken, user }).then(r => r.data),
-  
-  // Password Reset
-  requestPasswordReset: (email) => api.post('/api/auth/request_password_reset', { email }).then(r => r.data),
-  verifyPasswordReset: (token, novaSenha) => api.post('/api/auth/verify_password_reset', { token, nova_senha: novaSenha }).then(r => r.data),
   
   // Current user
   me: () => api.get('/api/auth/me').then(r => r.data),

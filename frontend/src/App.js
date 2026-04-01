@@ -30,7 +30,6 @@ import PedidosRestaurante from './pages/restaurante/PedidosRestaurante';
 import EntregadorDash from './pages/entregador/EntregadorDash';
 import { PedidosDisponiveis, MinhasEntregas } from './pages/entregador/Entregas';
 
-// Procure onde estão os outros imports de páginas e adicione este:
 import CuponsPage from './pages/cliente/CuponsPage';
 
 import './styles/global.css';
@@ -84,8 +83,6 @@ function AppRoutes() {
       <Route path="/auth/callback" element={<AuthCallback />} />
 
       {/* Autenticadas — home dinâmica */}
-      // O ':tipo?' significa que o tipo é opcional.
-      // Se for só "/", mostra tudo. Se for "/categoria/mercados", ele filtra.
       <Route path="/:tipo?" element={<Protegida><Layout><HomeRouter /></Layout></Protegida>} />
       <Route path="/" element={<Protegida><Layout><HomeRouter /></Layout></Protegida>} />
 
@@ -118,13 +115,9 @@ export default function App() {
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthProvider>
         <CartProvider>
-          <AppRoutesWrapper />
+          <AppRoutes />
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>
   );
-}
-
-function AppRoutesWrapper() {
-  return <AppRoutes />;
 }

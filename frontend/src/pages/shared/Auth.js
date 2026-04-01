@@ -4,24 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
 import AddressModal from '../../components/address/AddressModal';
+import { AUTH_METHODS, normalizePhone, getErrorMessage } from './authUtils';
 import './Auth.css';
-
-const AUTH_METHODS = {
-  EMAIL_OTP: 'email_otp',
-  SMS_OTP: 'sms_otp',
-};
-
-function normalizePhone(phone) {
-  const digits = (phone || '').replace(/\D/g, '');
-  if (!digits) return '';
-  if (digits.startsWith('55')) return `+${digits}`;
-  if (digits.length === 10 || digits.length === 11) return `+55${digits}`;
-  return digits.startsWith('+') ? digits : `+${digits}`;
-}
-
-function getErrorMessage(err, fallback) {
-  return err?.response?.data?.erro || err?.message || fallback;
-}
 
 function AuthShell({ children }) {
   return (
@@ -462,15 +446,7 @@ export function Registro() {
   }
 
   return (
-    <AuthShell
-      eyebrow="Cadastro inteligente"
-      title="Crie sua conta em minutos"
-      subtitle={step === 1 ? 'Escolha seu perfil e confirme os dados com validação por e-mail.' : 'Estamos quase lá. Falta confirmar seu código.'}
-      heroBadge="Onboarding com foco em clareza"
-      heroTitle="Uma jornada de cadastro simples para todo o ecossistema Kifome"
-      heroText="Clientes, restaurantes e entregadores entram pela mesma base visual, com etapas claras e sensação de produto pronto para uso."
-      heroAside={{ title: 'Cada perfil no lugar certo', text: 'Você escolhe seu papel e já cai no painel certo com uma experiência consistente em todo o app.' }}
-    >
+    <AuthShell>
       {erro && <AuthAlert type="error">{erro}</AuthAlert>}
       {sucesso && <AuthAlert type="success">{sucesso}</AuthAlert>}
 
@@ -556,22 +532,6 @@ export function Registro() {
         }}
       />
     </AuthShell>
-  );
-}
-
-/**
- * 🔑 Não precisa mais dessa página
- */
-export function EsqueceuSenha() {
-  return (
-    <div className="page-loader">
-      <div className="page-loader-card">
-        <span className="logo-mark">🔐</span>
-        <h2 style={{ fontSize: 24, margin: '18px 0 8px' }}>Aqui não tem senha</h2>
-        <p style={{ color: 'var(--texto-sec)', marginBottom: 18 }}>O acesso do Kifome funciona por e-mail ou SMS com OTP, então você sempre entra de forma simples e segura.</p>
-        <Link to="/login" className="btn btn-primary" style={{ width: 'auto' }}>← Voltar ao login</Link>
-      </div>
-    </div>
   );
 }
 

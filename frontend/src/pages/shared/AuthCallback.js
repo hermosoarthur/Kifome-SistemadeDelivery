@@ -30,10 +30,9 @@ export function AuthCallback() {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
         if (!session) throw new Error('Nenhuma sessão encontrada');
-  if (!session.access_token) throw new Error('Sessão OAuth inválida ou incompleta');
+    if (!session.access_token) throw new Error('Sessão OAuth inválida ou incompleta');
 
         const user = session.user;
-        console.log('[AuthCallback] Supabase user:', user.email);
 
         // 2. Trocar por JWT backend
         const identities = user.identities || [];
@@ -54,11 +53,10 @@ export function AuthCallback() {
         if (!token || !usuario) {
           throw new Error('Resposta inválida do backend durante o login social');
         }
-        console.log('[AuthCallback] Backend JWT recebido para:', usuario.email);
 
         // 3. Salvar session local
         salvarSessao(token, usuario);
-  setCarregando(false);
+    setCarregando(false);
 
         // 4. Redirecionar
         setTimeout(() => navigate('/'), 1000);

@@ -41,18 +41,12 @@ export function AuthProvider({ children }) {
     setUsuario(usuario);
   };
 
-  const login = useCallback(async (email, senha) => {
-    const data = await authService.login(email, senha);
-    salvarSessao(data.token, data.usuario);
-    return data;
-  }, []);
-
   const requestMagicLink = useCallback(async (email) => {
     return await authService.requestMagicLink(email);
   }, []);
 
-  const verifyMagicLink = useCallback(async (token) => {
-    const data = await authService.verifyMagicLink(token);
+  const verifyMagicLink = useCallback(async () => {
+    const data = await authService.verifyMagicLink();
     salvarSessao(data.token, data.usuario);
     return data;
   }, []);
@@ -95,16 +89,6 @@ export function AuthProvider({ children }) {
     if (error) throw error;
   }, []);
 
-  const requestPasswordReset = useCallback(async (email) => {
-    return await authService.requestPasswordReset(email);
-  }, []);
-
-  const verifyPasswordReset = useCallback(async (token, novaSenha) => {
-    const data = await authService.verifyPasswordReset(token, novaSenha);
-    salvarSessao(data.token, data.usuario);
-    return data;
-  }, []);
-
   const sair = useCallback(async () => {
     localStorage.removeItem('@kifome:token');
     localStorage.removeItem('@kifome:usuario');
@@ -121,11 +105,10 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{
       usuario, carregando, autenticado: !!usuario,
-      login, loginGoogle, loginFacebook,
+      loginGoogle, loginFacebook,
       requestMagicLink, verifyMagicLink,
       requestOtpEmail, verifyOtpEmail,
       requestOtpSms, verifyOtpSms,
-      requestPasswordReset, verifyPasswordReset,
       sair, atualizarUsuario, salvarSessao
     }}>
       {children}

@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { pedidoService } from '../../services';
 
 const STATUS_INFO = {
-  pendente: { label: 'Pendente', cls: 'badge status-pendente', icon: '⏳' },
+  aguardando: { label: 'Aguardando', cls: 'badge status-pendente', icon: '⏳' },
   confirmado: { label: 'Confirmado', cls: 'badge status-confirmado', icon: '✅' },
   preparando: { label: 'Preparando', cls: 'badge status-preparando', icon: '👨‍🍳' },
-  saiu_entrega: { label: 'Saiu para entrega', cls: 'badge status-saiu_entrega', icon: '🛵' },
+  saiu_para_entrega: { label: 'Saiu para entrega', cls: 'badge status-saiu_entrega', icon: '🛵' },
   entregue: { label: 'Entregue', cls: 'badge status-entregue', icon: '🎉' },
   cancelado: { label: 'Cancelado', cls: 'badge status-cancelado', icon: '❌' },
 };
@@ -47,7 +47,7 @@ export default function MeusPedidos() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {pedidos.map(p => {
-            const info = STATUS_INFO[p.status] || STATUS_INFO.pendente;
+            const info = STATUS_INFO[p.status] || STATUS_INFO.aguardando;
             return (
               <div key={p.id} className="card order-card">
                 <div className="order-card-head">
@@ -74,8 +74,8 @@ export default function MeusPedidos() {
 
                 <div className="order-progress">
                   <div className="order-progress-track">
-                    {['pendente', 'confirmado', 'preparando', 'saiu_entrega', 'entregue'].map(s => {
-                      const ordem = ['pendente','confirmado','preparando','saiu_entrega','entregue'];
+                    {['aguardando', 'confirmado', 'preparando', 'saiu_para_entrega', 'entregue'].map(s => {
+                      const ordem = ['aguardando','confirmado','preparando','saiu_para_entrega','entregue'];
                       const atual = ordem.indexOf(p.status);
                       const este = ordem.indexOf(s);
                       return (

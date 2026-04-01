@@ -6,9 +6,9 @@ from app import db
 class Usuario(db.Model):
     __tablename__ = 'usuarios'
     id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(150), nullable=False)
-    email = db.Column(db.String(255), unique=True, nullable=False, index=True)
-    telefone = db.Column(db.String(20), nullable=True)
+    nome = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(150), unique=True, nullable=False, index=True)
+    telefone = db.Column(db.String(15), nullable=True)
     tipo = db.Column(db.String(20), nullable=False, default='cliente')
     supabase_uid = db.Column(db.String(255), nullable=True, unique=True)
     google_id = db.Column(db.String(255), nullable=True, unique=True)
@@ -44,13 +44,13 @@ class Usuario(db.Model):
 class Restaurante(db.Model):
     __tablename__ = 'restaurantes'
     id = db.Column(db.Integer, primary_key=True)
-    nome_fantasia = db.Column(db.String(200), nullable=False)
-    descricao = db.Column(db.Text, nullable=True)
-    endereco = db.Column(db.String(500), nullable=False)
+    nome_fantasia = db.Column(db.String(100), nullable=False)
+    descricao = db.Column(db.String(500), nullable=True)
+    endereco = db.Column(db.String(200), nullable=False)
     telefone = db.Column(db.String(20), nullable=True)
     categoria = db.Column(db.String(100), nullable=True)
     imagem_url = db.Column(db.String(500), nullable=True)
-    status = db.Column(db.String(20), default='aprovado')
+    status = db.Column(db.String(20), default='pendente')
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='CASCADE'), nullable=False)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -71,9 +71,9 @@ class Produto(db.Model):
     __tablename__ = 'produtos'
     id = db.Column(db.Integer, primary_key=True)
     restaurante_id = db.Column(db.Integer, db.ForeignKey('restaurantes.id', ondelete='CASCADE'), nullable=False)
-    nome = db.Column(db.String(200), nullable=False)
-    descricao = db.Column(db.Text, nullable=True)
-    preco = db.Column(db.Float, nullable=False)
+    nome = db.Column(db.String(50), nullable=False)
+    descricao = db.Column(db.String(100), nullable=True)
+    preco = db.Column(db.Numeric(10, 2), nullable=False)
     categoria = db.Column(db.String(100), nullable=True)
     imagem_url = db.Column(db.String(500), nullable=True)
     disponivel = db.Column(db.Boolean, default=True)
@@ -83,7 +83,7 @@ class Produto(db.Model):
         return {
             'id': self.id, 'restaurante_id': self.restaurante_id,
             'nome': self.nome, 'descricao': self.descricao,
-            'preco': self.preco, 'categoria': self.categoria,
+            'preco': float(self.preco), 'categoria': self.categoria,
             'imagem_url': self.imagem_url, 'disponivel': self.disponivel,
         }
 
@@ -94,12 +94,12 @@ class Pedido(db.Model):
     cliente_id = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='CASCADE'), nullable=False)
     restaurante_id = db.Column(db.Integer, db.ForeignKey('restaurantes.id', ondelete='CASCADE'), nullable=False)
     entregador_id = db.Column(db.Integer, db.ForeignKey('entregadores.id', ondelete='SET NULL'), nullable=True)
-    status = db.Column(db.String(30), default='pendente')
+    status = db.Column(db.String(20), default='aguardando')
     endereco_entrega = db.Column(db.String(500), nullable=False)
     endereco_detalhes = db.Column(db.JSON, nullable=True)
     endereco_latitude = db.Column(db.Float, nullable=True)
     endereco_longitude = db.Column(db.Float, nullable=True)
-    total = db.Column(db.Float, nullable=False, default=0.0)
+    total = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)
     observacao = db.Column(db.Text, nullable=True)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -114,7 +114,7 @@ class Pedido(db.Model):
             'endereco_detalhes': self.endereco_detalhes,
             'endereco_latitude': self.endereco_latitude,
             'endereco_longitude': self.endereco_longitude,
-            'total': self.total, 'observacao': self.observacao,
+            'total': float(self.total), 'observacao': self.observacao,
             'criado_em': self.criado_em.isoformat() if self.criado_em else None,
             'restaurante': self.restaurante.to_dict() if self.restaurante else None,
             'itens': [i.to_dict() for i in self.itens],
@@ -127,14 +127,14 @@ class ItemPedido(db.Model):
     pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id', ondelete='CASCADE'), nullable=False)
     produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id', ondelete='CASCADE'), nullable=False)
     quantidade = db.Column(db.Integer, nullable=False, default=1)
-    preco_unitario = db.Column(db.Float, nullable=False)
+    preco_unitario = db.Column(db.Numeric(10, 2), nullable=False)
 
     produto = db.relationship('Produto')
 
     def to_dict(self):
         return {
             'id': self.id, 'produto_id': self.produto_id, 'quantidade': self.quantidade,
-            'preco_unitario': self.preco_unitario,
+            'preco_unitario': float(self.preco_unitario),
             'produto': self.produto.to_dict() if self.produto else None,
         }
 

@@ -17,7 +17,7 @@ def rota_meus(u): return meus_restaurantes(u)
 def rota_criar(u): return criar_restaurante(u)
 
 @restaurantes_bp.route('/<int:rid>', methods=['PUT'])
-@requer_tipo('restaurante')
+@token_requerido
 def rota_atualizar(u, rid): return atualizar_restaurante(u, rid)
 
 @restaurantes_bp.route('/<int:rid>', methods=['DELETE'])

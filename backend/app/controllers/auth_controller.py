@@ -6,7 +6,7 @@ from flask import request, jsonify, current_app
 from app import db, get_supabase
 from app.models import Usuario, AuthOtpRequest
 from app.utils.jwt_utils import gerar_token
-from app.utils.validators import validar_email
+from app.utils.validators import validar_email, validar_telefone, validar_tipo_usuario, normalizar_telefone
 from app.utils.otp_utils import send_email_otp_message
 from app.utils.supabase_utils import (
     send_magic_link, send_sms_otp, verify_otp,
@@ -23,11 +23,29 @@ def _to_float(value):
         return None
 
 
+def _sanitize_nome(nome, default='Usuário'):
+    nome = (nome or '').strip()
+    if not nome:
+        nome = default
+    return nome[:100]
+
+
+def _sanitize_tipo(tipo):
+    tipo = (tipo or '').strip().lower()
+    return tipo if validar_tipo_usuario(tipo) else 'cliente'
+
+
 def _sync_usuario_from_auth(user_data, *, email=None, telefone=None, defaults=None):
     defaults = defaults or {}
     metadata = user_data.get('user_metadata') or {}
     provider_email = (user_data.get('email') or email or '').strip().lower()
+    if not validar_email(provider_email):
+        provider_email = ''
+
     provider_phone = normalize_phone(user_data.get('phone') or telefone or '') if (user_data.get('phone') or telefone) else None
+    provider_phone = normalizar_telefone(provider_phone)
+    if provider_phone and not validar_telefone(provider_phone):
+        provider_phone = None
 
     usuario = None
     if provider_email:
@@ -35,13 +53,13 @@ def _sync_usuario_from_auth(user_data, *, email=None, telefone=None, defaults=No
     if not usuario and provider_phone:
         usuario = Usuario.query.filter_by(telefone=provider_phone).first()
 
-    nome_default = defaults.get('nome') or metadata.get('full_name') or metadata.get('name') or (provider_email.split('@')[0] if provider_email else 'Usuário')
-    tipo_default = defaults.get('tipo') or metadata.get('tipo') or 'cliente'
+    nome_default = _sanitize_nome(defaults.get('nome') or metadata.get('full_name') or metadata.get('name') or (provider_email.split('@')[0] if provider_email else 'Usuário'))
+    tipo_default = _sanitize_tipo(defaults.get('tipo') or metadata.get('tipo') or 'cliente')
 
     if not usuario:
         usuario = Usuario(
             nome=nome_default,
-            email=provider_email or f'phone_{provider_phone.replace("+", "")}@kifome.local',
+            email=provider_email or f'phone_{provider_phone}@kifome.local',
             telefone=provider_phone,
             tipo=tipo_default,
             supabase_uid=user_data.get('id'),
@@ -49,8 +67,8 @@ def _sync_usuario_from_auth(user_data, *, email=None, telefone=None, defaults=No
         )
         db.session.add(usuario)
     else:
-        usuario.nome = defaults.get('nome') or usuario.nome or nome_default
-        usuario.tipo = defaults.get('tipo') or usuario.tipo or tipo_default
+        usuario.nome = _sanitize_nome(defaults.get('nome') or usuario.nome or nome_default)
+        usuario.tipo = _sanitize_tipo(defaults.get('tipo') or usuario.tipo or tipo_default)
         usuario.supabase_uid = user_data.get('id')
         if provider_phone:
             usuario.telefone = provider_phone
@@ -58,7 +76,9 @@ def _sync_usuario_from_auth(user_data, *, email=None, telefone=None, defaults=No
             usuario.avatar_url = metadata.get('avatar_url')
 
     if defaults.get('telefone'):
-        usuario.telefone = normalize_phone(defaults['telefone'])
+        telefone = normalizar_telefone(normalize_phone(defaults['telefone']))
+        if telefone and validar_telefone(telefone):
+            usuario.telefone = telefone
 
     endereco_principal = (defaults.get('endereco_principal') or '').strip() if defaults.get('endereco_principal') else ''
     if endereco_principal:
@@ -115,13 +135,15 @@ def _apply_usuario_profile_updates(
     allow_email_update=False
 ):
     if nome:
-        usuario.nome = nome
+        usuario.nome = _sanitize_nome(nome)
     if allow_email_update and email:
         usuario.email = email
     if telefone:
-        usuario.telefone = normalize_phone(telefone)
+        telefone_norm = normalizar_telefone(normalize_phone(telefone))
+        if telefone_norm and validar_telefone(telefone_norm):
+            usuario.telefone = telefone_norm
     if tipo:
-        usuario.tipo = tipo or usuario.tipo
+        usuario.tipo = _sanitize_tipo(tipo) or usuario.tipo
     if endereco_principal:
         usuario.endereco_principal = endereco_principal
         usuario.tem_endereco = True
@@ -258,6 +280,15 @@ def verify_otp_email():
 
     if not email or not codigo:
         return jsonify({'erro': 'Email e código obrigatórios'}), 400
+    if nome and len(nome) > 100:
+        return jsonify({'erro': 'Nome deve ter no máximo 100 caracteres'}), 400
+    if telefone:
+        telefone_norm = normalizar_telefone(telefone)
+        if not validar_telefone(telefone_norm):
+            return jsonify({'erro': 'Telefone deve conter entre 10 e 15 dígitos'}), 400
+        telefone = telefone_norm
+    if not validar_tipo_usuario(tipo):
+        return jsonify({'erro': 'Tipo de usuário inválido'}), 400
     if data.get('latitude') not in (None, '') and latitude is None:
         return jsonify({'erro': 'Latitude inválida'}), 400
     if data.get('longitude') not in (None, '') and longitude is None:
@@ -273,8 +304,8 @@ def verify_otp_email():
         usuario = Usuario(
             nome=nome or email.split('@')[0],
             email=email,
-            telefone=normalize_phone(telefone) if telefone else None,
-            tipo=tipo,
+            telefone=telefone if telefone else None,
+            tipo=_sanitize_tipo(tipo),
             endereco_principal=endereco_principal or None,
             endereco_json=endereco_json,
             latitude=latitude,
@@ -392,10 +423,16 @@ def verify_otp_sms():
     endereco_json = data.get('endereco_json') if isinstance(data.get('endereco_json'), dict) else None
     latitude = _to_float(data.get('latitude'))
     longitude = _to_float(data.get('longitude'))
-    telefone_normalizado = normalize_phone(telefone)
+    telefone_normalizado = normalizar_telefone(normalize_phone(telefone))
 
     if not telefone_normalizado or not codigo:
         return jsonify({'erro': 'Telefone e código obrigatórios'}), 400
+    if not validar_telefone(telefone_normalizado):
+        return jsonify({'erro': 'Telefone deve conter entre 10 e 15 dígitos'}), 400
+    if nome and len(nome) > 100:
+        return jsonify({'erro': 'Nome deve ter no máximo 100 caracteres'}), 400
+    if not validar_tipo_usuario(tipo):
+        return jsonify({'erro': 'Tipo de usuário inválido'}), 400
     if data.get('latitude') not in (None, '') and latitude is None:
         return jsonify({'erro': 'Latitude inválida'}), 400
     if data.get('longitude') not in (None, '') and longitude is None:
@@ -450,9 +487,9 @@ def verify_otp_sms():
     if not usuario:
         usuario = Usuario(
             nome=nome or 'Usuário',
-            email=email or f'phone_{telefone_normalizado.replace("+", "")}@kifome.local',
+            email=email or f'phone_{telefone_normalizado}@kifome.local',
             telefone=telefone_normalizado,
-            tipo=tipo,
+            tipo=_sanitize_tipo(tipo),
             endereco_principal=endereco_principal or None,
             endereco_json=endereco_json,
             latitude=latitude,

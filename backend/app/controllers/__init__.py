@@ -2,6 +2,7 @@
 from flask import request, jsonify
 from app import db
 from app.models import Usuario, Restaurante, Produto, Pedido, ItemPedido, Entregador
+from app.utils.validators import validar_telefone, normalizar_telefone
 
 
 def _to_float(value):
@@ -13,6 +14,14 @@ def _to_float(value):
         return None
 
 
+def _to_bool(value):
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    return str(value).strip().lower() in {'1', 'true', 'sim', 'yes'}
+
+
 # ── USUARIO ──────────────────────────────────────────────
 def atualizar_usuario(usuario_atual, usuario_id):
     if usuario_atual.id != usuario_id:
@@ -20,9 +29,15 @@ def atualizar_usuario(usuario_atual, usuario_id):
     u = Usuario.query.get_or_404(usuario_id)
     data = request.get_json(silent=True) or {}
     if 'nome' in data and data['nome'].strip():
-        u.nome = data['nome'].strip()
+        nome = data['nome'].strip()
+        if len(nome) > 100:
+            return jsonify({'erro': 'nome deve ter no máximo 100 caracteres'}), 400
+        u.nome = nome
     if 'telefone' in data:
-        u.telefone = data['telefone'].strip()
+        telefone = normalizar_telefone(data.get('telefone'))
+        if telefone and not validar_telefone(telefone):
+            return jsonify({'erro': 'telefone deve conter entre 10 e 15 dígitos'}), 400
+        u.telefone = telefone
     if 'endereco_principal' in data:
         u.endereco_principal = (data.get('endereco_principal') or '').strip() or None
     if 'endereco_json' in data:
@@ -138,19 +153,29 @@ def meus_restaurantes(usuario_atual):
 
 def criar_restaurante(usuario_atual):
     data = request.get_json(silent=True) or {}
-    if not data.get('nome_fantasia', '').strip():
+    nome_fantasia = (data.get('nome_fantasia') or '').strip()
+    descricao = (data.get('descricao') or '').strip()
+    endereco = (data.get('endereco') or '').strip()
+
+    if not nome_fantasia:
         return jsonify({'erro': 'Nome é obrigatório'}), 400
-    if not data.get('endereco', '').strip():
+    if len(nome_fantasia) > 100:
+        return jsonify({'erro': 'nome_fantasia deve ter no máximo 100 caracteres'}), 400
+    if len(descricao) > 500:
+        return jsonify({'erro': 'descricao deve ter no máximo 500 caracteres'}), 400
+    if not endereco:
         return jsonify({'erro': 'Endereço é obrigatório'}), 400
+    if len(endereco) < 10 or len(endereco) > 200:
+        return jsonify({'erro': 'endereco deve ter entre 10 e 200 caracteres'}), 400
     try:
         r = Restaurante(
-            nome_fantasia=data['nome_fantasia'].strip(),
-            descricao=data.get('descricao', ''),
-            endereco=data['endereco'].strip(),
+            nome_fantasia=nome_fantasia,
+            descricao=descricao,
+            endereco=endereco,
             telefone=data.get('telefone', ''),
             categoria=data.get('categoria', ''),
             imagem_url=data.get('imagem_url', ''),
-            status='aprovado',
+            status='pendente',
             usuario_id=usuario_atual.id
         )
         db.session.add(r)
@@ -163,12 +188,47 @@ def criar_restaurante(usuario_atual):
 
 def atualizar_restaurante(usuario_atual, rid):
     r = Restaurante.query.get_or_404(rid)
-    if r.usuario_id != usuario_atual.id:
+    is_owner = r.usuario_id == usuario_atual.id
+    is_admin = usuario_atual.tipo == 'administrador'
+    if not is_owner and not is_admin:
         return jsonify({'erro': 'Sem permissão'}), 403
     data = request.get_json(silent=True) or {}
-    for c in ['nome_fantasia', 'descricao', 'endereco', 'telefone', 'categoria', 'imagem_url', 'status']:
+    if 'status' in data and not is_admin:
+        return jsonify({'erro': 'Apenas administradores podem alterar o status do restaurante'}), 403
+
+    if 'status' in data:
+        status = (data.get('status') or '').strip().lower()
+        if status not in {'pendente', 'aprovado', 'rejeitado'}:
+            return jsonify({'erro': 'status inválido. Use: pendente, aprovado, rejeitado'}), 400
+        r.status = status
+
+    nome_fantasia = (data.get('nome_fantasia') or '').strip() if 'nome_fantasia' in data else None
+    descricao = (data.get('descricao') or '').strip() if 'descricao' in data else None
+    endereco = (data.get('endereco') or '').strip() if 'endereco' in data else None
+
+    if nome_fantasia is not None:
+        if not nome_fantasia:
+            return jsonify({'erro': 'nome_fantasia é obrigatório'}), 400
+        if len(nome_fantasia) > 100:
+            return jsonify({'erro': 'nome_fantasia deve ter no máximo 100 caracteres'}), 400
+
+    if descricao is not None and len(descricao) > 500:
+        return jsonify({'erro': 'descricao deve ter no máximo 500 caracteres'}), 400
+
+    if endereco is not None:
+        if len(endereco) < 10 or len(endereco) > 200:
+            return jsonify({'erro': 'endereco deve ter entre 10 e 200 caracteres'}), 400
+
+    for c in ['nome_fantasia', 'descricao', 'endereco', 'telefone', 'categoria', 'imagem_url']:
         if c in data:
-            setattr(r, c, data[c])
+            if c == 'nome_fantasia':
+                setattr(r, c, nome_fantasia)
+            elif c == 'descricao':
+                setattr(r, c, descricao)
+            elif c == 'endereco':
+                setattr(r, c, endereco)
+            else:
+                setattr(r, c, data[c])
     try:
         db.session.commit()
         return jsonify({'restaurante': r.to_dict()}), 200
@@ -222,22 +282,32 @@ def criar_produto(usuario_atual, rid):
     r = Restaurante.query.get_or_404(rid)
     if r.usuario_id != usuario_atual.id:
         return jsonify({'erro': 'Sem permissão'}), 403
+    if r.status != 'aprovado':
+        return jsonify({'erro': 'Restaurante precisa estar aprovado para cadastrar produtos'}), 403
     data = request.get_json(silent=True) or {}
-    if not data.get('nome', '').strip():
+    nome = (data.get('nome') or '').strip()
+    descricao = (data.get('descricao') or '').strip()
+    if not nome:
         return jsonify({'erro': 'Nome é obrigatório'}), 400
+    if len(nome) > 50:
+        return jsonify({'erro': 'nome deve ter no máximo 50 caracteres'}), 400
+    if len(descricao) > 100:
+        return jsonify({'erro': 'descricao deve ter no máximo 100 caracteres'}), 400
     try:
         preco = float(data.get('preco', 0))
     except:
         return jsonify({'erro': 'Preço inválido'}), 400
+    if preco < 0:
+        return jsonify({'erro': 'preco deve ser maior ou igual a zero'}), 400
     try:
         p = Produto(
             restaurante_id=rid,
-            nome=data['nome'].strip(),
-            descricao=data.get('descricao', ''),
+            nome=nome,
+            descricao=descricao,
             preco=preco,
             categoria=data.get('categoria', ''),
             imagem_url=data.get('imagem_url', ''),
-            disponivel=data.get('disponivel', True)
+            disponivel=_to_bool(data.get('disponivel', True))
         )
         db.session.add(p)
         db.session.commit()
@@ -253,16 +323,31 @@ def atualizar_produto(usuario_atual, rid, pid):
         return jsonify({'erro': 'Sem permissão'}), 403
     p = Produto.query.get_or_404(pid)
     data = request.get_json(silent=True) or {}
-    for c in ['nome', 'descricao', 'categoria', 'imagem_url']:
+    if 'nome' in data:
+        nome = (data.get('nome') or '').strip()
+        if not nome:
+            return jsonify({'erro': 'nome é obrigatório'}), 400
+        if len(nome) > 50:
+            return jsonify({'erro': 'nome deve ter no máximo 50 caracteres'}), 400
+        p.nome = nome
+    if 'descricao' in data:
+        descricao = (data.get('descricao') or '').strip()
+        if len(descricao) > 100:
+            return jsonify({'erro': 'descricao deve ter no máximo 100 caracteres'}), 400
+        p.descricao = descricao
+    for c in ['categoria', 'imagem_url']:
         if c in data:
             setattr(p, c, data[c])
     if 'preco' in data:
         try:
-            p.preco = float(data['preco'])
+            preco = float(data['preco'])
+            if preco < 0:
+                return jsonify({'erro': 'preco deve ser maior ou igual a zero'}), 400
+            p.preco = preco
         except:
-            pass
+            return jsonify({'erro': 'Preço inválido'}), 400
     if 'disponivel' in data:
-        p.disponivel = bool(data['disponivel'])
+        p.disponivel = _to_bool(data['disponivel'])
     try:
         db.session.commit()
         return jsonify({'produto': p.to_dict()}), 200
@@ -303,22 +388,31 @@ def criar_pedido(usuario_atual):
     if endereco_coords and (endereco_latitude is None or endereco_longitude is None):
         return jsonify({'erro': 'endereco_coords inválido. Use { lat, lng } numéricos'}), 400
 
-    Restaurante.query.get_or_404(rid)
+    restaurante = Restaurante.query.get_or_404(rid)
+    if restaurante.status != 'aprovado':
+        return jsonify({'erro': 'Restaurante indisponível para receber pedidos'}), 400
     total = 0.0
     itens_obj = []
+    produto_restaurantes = set()
     for item in itens:
         p = Produto.query.get(item.get('produto_id'))
         if not p or not p.disponivel:
             return jsonify({'erro': f'Produto {item.get("produto_id")} indisponível'}), 400
         qtd = int(item.get('quantidade', 1))
-        total += p.preco * qtd
+        if qtd < 1:
+            return jsonify({'erro': 'Quantidade mínima por item é 1'}), 400
+        produto_restaurantes.add(p.restaurante_id)
+        total += float(p.preco) * qtd
         itens_obj.append({'produto': p, 'quantidade': qtd, 'preco': p.preco})
+
+    if len(produto_restaurantes) != 1 or rid not in produto_restaurantes:
+        return jsonify({'erro': 'Todos os produtos devem pertencer ao mesmo restaurante do pedido'}), 400
 
     try:
         pedido = Pedido(
             cliente_id=usuario_atual.id,
             restaurante_id=rid,
-            status='pendente',
+            status='aguardando',
             endereco_entrega=endereco,
             endereco_detalhes=endereco_detalhes,
             endereco_latitude=endereco_latitude,
@@ -361,21 +455,54 @@ def pedidos_restaurante(usuario_atual, rid):
 
 def atualizar_status_pedido(usuario_atual, pid):
     pedido = Pedido.query.get_or_404(pid)
-    # Restaurante pode atualizar seus pedidos, entregador também
+    # Restaurante, cliente e entregador podem atualizar conforme regras
     r = Restaurante.query.get(pedido.restaurante_id)
     e = Entregador.query.filter_by(usuario_id=usuario_atual.id).first()
-    if (not r or r.usuario_id != usuario_atual.id) and (not e or e.id != pedido.entregador_id):
-        return jsonify({'erro': 'Sem permissão'}), 403
+    is_restaurante_dono = bool(r and r.usuario_id == usuario_atual.id)
+    is_cliente_dono = pedido.cliente_id == usuario_atual.id
+    is_entregador_do_pedido = bool(e and pedido.entregador_id == e.id)
+    is_entregador_livre = bool(e and pedido.entregador_id is None)
 
     data = request.get_json(silent=True) or {}
-    status_validos = ['pendente', 'confirmado', 'preparando', 'saiu_entrega', 'entregue', 'cancelado']
+    status_validos = ['aguardando', 'confirmado', 'preparando', 'saiu_para_entrega', 'entregue', 'cancelado']
     novo_status = data.get('status', '')
     if novo_status not in status_validos:
         return jsonify({'erro': f'Status inválido. Use: {", ".join(status_validos)}'}), 400
 
-    pedido.status = novo_status
-    if novo_status == 'saiu_entrega' and e:
+    transicoes_permitidas = {
+        'aguardando': {'confirmado', 'cancelado'},
+        'confirmado': {'preparando'},
+        'preparando': {'saiu_para_entrega'},
+        'saiu_para_entrega': {'entregue'},
+        'entregue': set(),
+        'cancelado': set(),
+    }
+    if novo_status not in transicoes_permitidas.get(pedido.status, set()):
+        return jsonify({'erro': f'Transição inválida: {pedido.status} -> {novo_status}'}), 400
+
+    if novo_status in {'confirmado', 'preparando'} and not is_restaurante_dono:
+        return jsonify({'erro': 'Apenas o restaurante pode confirmar ou preparar pedidos'}), 403
+
+    if novo_status == 'cancelado':
+        if not (is_cliente_dono and pedido.status == 'aguardando'):
+            return jsonify({'erro': 'Cliente só pode cancelar pedido em status aguardando'}), 403
+
+    if novo_status == 'saiu_para_entrega':
+        if not (is_entregador_do_pedido or is_entregador_livre):
+            return jsonify({'erro': 'Apenas entregador pode iniciar entrega'}), 403
+        entrega_ativa = Pedido.query.filter(
+            Pedido.entregador_id == e.id,
+            Pedido.status == 'saiu_para_entrega',
+            Pedido.id != pedido.id
+        ).first()
+        if entrega_ativa:
+            return jsonify({'erro': 'Entregador já possui uma entrega ativa'}), 409
         pedido.entregador_id = e.id
+
+    if novo_status == 'entregue' and not is_entregador_do_pedido:
+        return jsonify({'erro': 'Apenas o entregador responsável pode concluir a entrega'}), 403
+
+    pedido.status = novo_status
     try:
         db.session.commit()
         return jsonify({'pedido': pedido.to_dict()}), 200
@@ -388,13 +515,16 @@ def entregas_entregador(usuario_atual):
     e = Entregador.query.filter_by(usuario_id=usuario_atual.id).first()
     if not e:
         return jsonify({'erro': 'Perfil de entregador não encontrado'}), 404
-    status = request.args.get('status', 'saiu_entrega')
-    ps = Pedido.query.filter_by(entregador_id=e.id).order_by(Pedido.criado_em.desc()).all()
+    status = request.args.get('status', 'saiu_para_entrega')
+    q = Pedido.query.filter_by(entregador_id=e.id)
+    if status:
+        q = q.filter_by(status=status)
+    ps = q.order_by(Pedido.criado_em.desc()).all()
     return jsonify({'entregas': [p.to_dict() for p in ps]}), 200
 
 
 def pedidos_disponiveis(usuario_atual):
-    ps = Pedido.query.filter_by(status='confirmado', entregador_id=None).order_by(Pedido.criado_em.desc()).all()
+    ps = Pedido.query.filter_by(status='preparando', entregador_id=None).order_by(Pedido.criado_em.desc()).all()
     return jsonify({'pedidos': [p.to_dict() for p in ps]}), 200
 
 

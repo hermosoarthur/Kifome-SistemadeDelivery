@@ -9,9 +9,9 @@ DROP TABLE IF EXISTS usuarios CASCADE;
 
 CREATE TABLE usuarios (
     id SERIAL PRIMARY KEY,
-    nome VARCHAR(150) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    telefone VARCHAR(20),
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    telefone VARCHAR(15),
     tipo VARCHAR(20) NOT NULL DEFAULT 'cliente',
     supabase_uid VARCHAR(255) UNIQUE,
     google_id VARCHAR(255) UNIQUE,
@@ -29,13 +29,13 @@ CREATE TABLE usuarios (
 
 CREATE TABLE restaurantes (
     id SERIAL PRIMARY KEY,
-    nome_fantasia VARCHAR(200) NOT NULL,
-    descricao TEXT,
-    endereco VARCHAR(500) NOT NULL,
+    nome_fantasia VARCHAR(100) NOT NULL,
+    descricao VARCHAR(500),
+    endereco VARCHAR(200) NOT NULL,
     telefone VARCHAR(20),
     categoria VARCHAR(100),
     imagem_url VARCHAR(500),
-    status VARCHAR(20) NOT NULL DEFAULT 'aprovado',
+    status VARCHAR(20) NOT NULL DEFAULT 'pendente',
     usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     criado_em TIMESTAMP NOT NULL DEFAULT NOW(),
     atualizado_em TIMESTAMP NOT NULL DEFAULT NOW()
@@ -44,9 +44,9 @@ CREATE TABLE restaurantes (
 CREATE TABLE produtos (
     id SERIAL PRIMARY KEY,
     restaurante_id INTEGER NOT NULL REFERENCES restaurantes(id) ON DELETE CASCADE,
-    nome VARCHAR(200) NOT NULL,
-    descricao TEXT,
-    preco FLOAT NOT NULL,
+    nome VARCHAR(50) NOT NULL,
+    descricao VARCHAR(100),
+    preco DECIMAL(10,2) NOT NULL,
     categoria VARCHAR(100),
     imagem_url VARCHAR(500),
     disponivel BOOLEAN NOT NULL DEFAULT TRUE,
@@ -68,12 +68,12 @@ CREATE TABLE pedidos (
     cliente_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     restaurante_id INTEGER NOT NULL REFERENCES restaurantes(id) ON DELETE CASCADE,
     entregador_id INTEGER REFERENCES entregadores(id) ON DELETE SET NULL,
-    status VARCHAR(30) NOT NULL DEFAULT 'pendente',
+    status VARCHAR(20) NOT NULL DEFAULT 'aguardando',
     endereco_entrega VARCHAR(500) NOT NULL,
     endereco_detalhes JSONB,
     endereco_latitude DOUBLE PRECISION,
     endereco_longitude DOUBLE PRECISION,
-    total FLOAT NOT NULL DEFAULT 0,
+    total DECIMAL(10,2) NOT NULL DEFAULT 0,
     observacao TEXT,
     criado_em TIMESTAMP NOT NULL DEFAULT NOW(),
     atualizado_em TIMESTAMP NOT NULL DEFAULT NOW()
@@ -84,7 +84,7 @@ CREATE TABLE itens_pedido (
     pedido_id INTEGER NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
     produto_id INTEGER NOT NULL REFERENCES produtos(id) ON DELETE CASCADE,
     quantidade INTEGER NOT NULL DEFAULT 1,
-    preco_unitario FLOAT NOT NULL
+    preco_unitario DECIMAL(10,2) NOT NULL
 );
 
 -- Indexes

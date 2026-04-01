@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { restauranteService, pedidoService } from '../../services';
 
-const STATUS_FLOW = ['pendente', 'confirmado', 'preparando', 'saiu_entrega', 'entregue'];
-const STATUS_LABEL = { pendente: 'Pendente', confirmado: 'Confirmado', preparando: 'Preparando', saiu_entrega: 'Saiu p/ entrega', entregue: 'Entregue', cancelado: 'Cancelado' };
-const STATUS_ICON = { pendente: '⏳', confirmado: '✅', preparando: '👨‍🍳', saiu_entrega: '🛵', entregue: '🎉', cancelado: '❌' };
-const STATUS_COR = { pendente: '#F59E0B', confirmado: '#3B82F6', preparando: '#F97316', saiu_entrega: '#8B5CF6', entregue: '#10B981', cancelado: '#EF4444' };
+const STATUS_FLOW = ['aguardando', 'confirmado', 'preparando', 'saiu_para_entrega', 'entregue'];
+const STATUS_LABEL = { aguardando: 'Aguardando', confirmado: 'Confirmado', preparando: 'Preparando', saiu_para_entrega: 'Saiu p/ entrega', entregue: 'Entregue', cancelado: 'Cancelado' };
+const STATUS_ICON = { aguardando: '⏳', confirmado: '✅', preparando: '👨‍🍳', saiu_para_entrega: '🛵', entregue: '🎉', cancelado: '❌' };
+const STATUS_COR = { aguardando: '#F59E0B', confirmado: '#3B82F6', preparando: '#F97316', saiu_para_entrega: '#8B5CF6', entregue: '#10B981', cancelado: '#EF4444' };
 
 export default function PedidosRestaurante() {
   const [pedidos, setPedidos] = useState([]);
@@ -56,7 +56,7 @@ export default function PedidosRestaurante() {
   }
 
   const filtrados = filtro ? pedidos.filter(p => p.status === filtro) : pedidos;
-  const pendentes = pedidos.filter(p => p.status === 'pendente').length;
+  const pendentes = pedidos.filter(p => p.status === 'aguardando').length;
 
   return (
     <div className="page">

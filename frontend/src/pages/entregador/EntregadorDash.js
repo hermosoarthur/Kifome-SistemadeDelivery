@@ -21,7 +21,7 @@ export default function EntregadorDash() {
 
   const stats = {
     total: entregas.length,
-    emAndamento: entregas.filter(e => e.status === 'saiu_entrega').length,
+    emAndamento: entregas.filter(e => e.status === 'saiu_para_entrega').length,
     concluidas: entregas.filter(e => e.status === 'entregue').length,
   };
 

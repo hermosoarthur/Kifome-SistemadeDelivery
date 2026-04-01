@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { pedidoService } from '../../services';
 
-const STATUS_COR = { saiu_entrega: '#8B5CF6', entregue: '#10B981', cancelado: '#EF4444' };
+const STATUS_COR = { saiu_para_entrega: '#8B5CF6', entregue: '#10B981', cancelado: '#EF4444' };
 
 export function PedidosDisponiveis() {
   const [pedidos, setPedidos] = useState([]);
@@ -20,7 +20,7 @@ export function PedidosDisponiveis() {
   async function aceitar(pedido) {
     setAceitando(pedido.id);
     try {
-      await pedidoService.atualizarStatus(pedido.id, 'saiu_entrega');
+      await pedidoService.atualizarStatus(pedido.id, 'saiu_para_entrega');
       setPedidos(prev => prev.filter(p => p.id !== pedido.id));
     } catch (err) { alert(err.response?.data?.erro || 'Erro ao aceitar entrega'); }
     finally { setAceitando(null); }
@@ -141,7 +141,7 @@ export function MinhasEntregas() {
                   </div>
                   <div className="restaurant-order-side">
                     <strong style={{ color: cor, fontSize: 18, display: 'block' }}>R$ {e.total.toFixed(2)}</strong>
-                    {e.status === 'saiu_entrega' && (
+                    {e.status === 'saiu_para_entrega' && (
                       <button className="btn btn-sm" style={{ marginTop: 10, background: '#10B981', color: '#fff', border: 'none' }} onClick={() => concluir(e)}>
                         ✅ Confirmar entrega
                       </button>

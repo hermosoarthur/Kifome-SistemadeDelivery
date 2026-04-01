@@ -4,8 +4,8 @@ import { restauranteService, pedidoService } from '../../services';
 import './RestauranteDash.css';
 
 const STATUS_COR = {
-  pendente: '#F59E0B', confirmado: '#3B82F6', preparando: '#F97316',
-  saiu_entrega: '#8B5CF6', entregue: '#10B981', cancelado: '#EF4444',
+  aguardando: '#F59E0B', confirmado: '#3B82F6', preparando: '#F97316',
+  saiu_para_entrega: '#8B5CF6', entregue: '#10B981', cancelado: '#EF4444',
 };
 
 export default function RestauranteDash() {
@@ -33,7 +33,7 @@ export default function RestauranteDash() {
 
   const stats = {
     total: pedidos.length,
-    pendentes: pedidos.filter(p => p.status === 'pendente').length,
+    pendentes: pedidos.filter(p => p.status === 'aguardando').length,
     preparando: pedidos.filter(p => ['confirmado', 'preparando'].includes(p.status)).length,
     entregues: pedidos.filter(p => p.status === 'entregue').length,
     faturamento: pedidos.filter(p => p.status === 'entregue').reduce((s, p) => s + p.total, 0),

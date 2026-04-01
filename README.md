@@ -153,20 +153,13 @@ npm run build
 
 ---
 
-## 🗄️ Banco de dados e migrações
+## 🗄️ Banco de dados
 
 Schema base:
 
 - `backend/database.sql`
 
-Migração incremental já disponível:
-
-- `backend/database_migrations/2026_03_endereco_usuario.sql`
-
-Essa migração adiciona:
-
-- dados de endereço principal em `usuarios`
-- metadados geográficos em `pedidos`
+Este projeto está configurado para usar **apenas** o `backend/database.sql` como fonte de verdade do schema.
 
 ---
 

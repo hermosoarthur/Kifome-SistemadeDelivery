@@ -1,7 +1,6 @@
 # Kifome — Sistema de Delivery
 
-Plataforma fullstack inspirada em apps de delivery (como iFood), com suporte a múltiplos perfis de usuário, autenticação moderna sem senha e fluxo completo de pedidos.
-
+Plataforma fullstack de delivery inspirada em aplicações consolidadas como iFood, projetada para oferecer uma experiência completa e intuitiva. O sistema suporta múltiplos perfis de usuário (cliente, restaurante e entregador), conta com autenticação moderna e segura (OTP e OAuth) e implementa um fluxo completo de pedidos, desde a descoberta de restaurantes até a entrega final.
 ---
 
 ## 📌 Visão geral do projeto
@@ -11,7 +10,7 @@ O **Kifome** é dividido em duas aplicações principais:
 - **Backend** (`backend/`) em Flask, responsável por autenticação, regras de negócio e API REST.
 - **Frontend** (`frontend/`) em React, responsável pela experiência do usuário (cliente, restaurante e entregador).
 
-O projeto já está estruturado para operar com autenticação **passwordless** (sem senha), usando OTP, login social e integração com Supabase.
+O projeto já está estruturado para operar com autenticação **passwordless**, usando OTP, login social e integração com Supabase.
 
 ---
 
@@ -19,8 +18,8 @@ O projeto já está estruturado para operar com autenticação **passwordless** 
 
 ### Autenticação e conta
 
-- Login sem senha via **OTP por e-mail**
-- Login sem senha via **OTP por SMS**
+- Login via **OTP por e-mail**
+- Login via **OTP por SMS**
 - Login social com **Google** e **Facebook** (via Supabase OAuth)
 - Sincronização de usuário autenticado com base local
 

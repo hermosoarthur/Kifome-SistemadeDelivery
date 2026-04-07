@@ -17,6 +17,7 @@ import ClienteHome from './pages/cliente/ClienteHome';
 import './pages/cliente/ClienteHome.css';
 import MeusPedidos from './pages/cliente/MeusPedidos';
 import RestaurantePage from './pages/cliente/Restaurante';
+import FinalizarPedido from './pages/cliente/FinalizarPedido';
 import './pages/cliente/Restaurante.css';
 
 // Restaurante
@@ -93,6 +94,7 @@ function AppRoutes() {
       {/* ── CLIENTE ── */}
       <Route path="/meus-pedidos" element={<Protegida><Layout><MeusPedidos /></Layout></Protegida>} />
       <Route path="/carrinho" element={<Protegida><Layout><Carrinho /></Layout></Protegida>} />
+  <Route path="/finalizar-pedido" element={<Protegida><Layout><FinalizarPedido /></Layout></Protegida>} />
       <Route path="/restaurante/:id" element={<Protegida><Layout><RestaurantePage /></Layout></Protegida>} />
 
       {/* ── RESTAURANTE ── */}

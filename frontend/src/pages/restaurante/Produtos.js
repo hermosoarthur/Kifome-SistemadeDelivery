@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { restauranteService, produtoService } from '../../services';
 
+const PER_PAGE = 12;
+
 export default function Produtos() {
   const [restaurante, setRestaurante] = useState(null);
   const [produtos, setProdutos] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [filtros, setFiltros] = useState({ busca: '', categoria: '', disponivel: 'todos' });
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
@@ -11,19 +16,31 @@ export default function Produtos() {
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
 
-  const carregar = useCallback(async () => {
+  const carregar = useCallback(async ({ pageOverride, filtrosOverride } = {}) => {
+    const paginaAtual = pageOverride ?? page;
+    const filtrosAtuais = filtrosOverride ?? filtros;
     setLoading(true);
     try {
       const dr = await restauranteService.meus();
       const rs = dr.restaurantes || [];
       if (rs.length > 0) {
         setRestaurante(rs[0]);
-        const dp = await produtoService.listar(rs[0].id);
+        const params = { page: paginaAtual, per_page: PER_PAGE };
+        if (filtrosAtuais.busca?.trim()) params.busca = filtrosAtuais.busca.trim();
+        if (filtrosAtuais.categoria?.trim()) params.categoria = filtrosAtuais.categoria.trim();
+        if (filtrosAtuais.disponivel !== 'todos') params.disponivel = filtrosAtuais.disponivel === 'disponivel';
+
+        const dp = await produtoService.listar(rs[0].id, params);
         setProdutos(dp.produtos || []);
+        setTotal(dp.total || 0);
+        setPage(paginaAtual);
       }
-    } catch { setProdutos([]); }
+    } catch {
+      setProdutos([]);
+      setTotal(0);
+    }
     finally { setLoading(false); }
-  }, []);
+  }, [filtros, page]);
 
   useEffect(() => { carregar(); }, [carregar]);
 
@@ -44,7 +61,8 @@ export default function Produtos() {
       const data = { ...form, preco };
       if (editItem?.id) await produtoService.atualizar(restaurante.id, editItem.id, data);
       else await produtoService.criar(restaurante.id, data);
-      setModal(false); carregar();
+      setModal(false);
+      carregar({ pageOverride: 1 });
     } catch (err) {
       setErro(err.response?.data?.erro || 'Erro ao salvar');
     } finally { setSalvando(false); }
@@ -52,18 +70,33 @@ export default function Produtos() {
 
   async function excluir(p) {
     if (!window.confirm(`Excluir "${p.nome}"?`)) return;
-    try { await produtoService.deletar(restaurante.id, p.id); setProdutos(prev => prev.filter(x => x.id !== p.id)); }
+    try {
+      await produtoService.deletar(restaurante.id, p.id);
+      carregar();
+    }
     catch (err) { alert(err.response?.data?.erro || 'Erro ao excluir'); }
   }
 
   async function toggleDisponivel(p) {
     try {
       await produtoService.atualizar(restaurante.id, p.id, { disponivel: !p.disponivel });
-      setProdutos(prev => prev.map(x => x.id === p.id ? { ...x, disponivel: !p.disponivel } : x));
+      carregar();
     } catch {}
   }
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+  const categorias = Array.from(new Set(produtos.map((p) => p.categoria).filter(Boolean))).sort();
+
+  function aplicarFiltros() {
+    carregar({ pageOverride: 1 });
+  }
+
+  function limparFiltros() {
+    const limpos = { busca: '', categoria: '', disponivel: 'todos' };
+    setFiltros(limpos);
+    carregar({ pageOverride: 1, filtrosOverride: limpos });
+  }
 
   if (loading) return <div className="page"><div className="loading-state"><h3>Carregando cardápio</h3><p>Estamos buscando os produtos do restaurante para montar a vitrine administrativa.</p></div></div>;
 
@@ -86,9 +119,47 @@ export default function Produtos() {
       <div className="section-heading">
         <div>
           <h1 className="page-title" style={{ margin: 0 }}>Cardápio</h1>
-          <p className="page-subtitle">{restaurante.nome_fantasia} • {produtos.length} produto{produtos.length !== 1 ? 's' : ''} com apresentação mais limpa e profissional.</p>
+          <p className="page-subtitle">{restaurante.nome_fantasia} • {total} produto{total !== 1 ? 's' : ''} encontrado{total !== 1 ? 's' : ''}.</p>
         </div>
         <button className="btn btn-primary" style={{ width: 'auto' }} onClick={() => abrirModal()}>+ Novo Produto</button>
+      </div>
+
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto auto', gap: 10, alignItems: 'end' }}>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label>Buscar</label>
+            <div className="input-box">
+              <input
+                type="text"
+                value={filtros.busca}
+                placeholder="Nome do produto..."
+                onChange={(e) => setFiltros((prev) => ({ ...prev, busca: e.target.value }))}
+                onKeyDown={(e) => e.key === 'Enter' && aplicarFiltros()}
+              />
+            </div>
+          </div>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label>Categoria</label>
+            <div className="input-box">
+              <select value={filtros.categoria} onChange={(e) => setFiltros((prev) => ({ ...prev, categoria: e.target.value }))}>
+                <option value="">Todas</option>
+                {categorias.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label>Disponibilidade</label>
+            <div className="input-box">
+              <select value={filtros.disponivel} onChange={(e) => setFiltros((prev) => ({ ...prev, disponivel: e.target.value }))}>
+                <option value="todos">Todos</option>
+                <option value="disponivel">Disponíveis</option>
+                <option value="indisponivel">Indisponíveis</option>
+              </select>
+            </div>
+          </div>
+          <button className="btn btn-primary" style={{ width: 'auto' }} onClick={aplicarFiltros}>Filtrar</button>
+          <button className="btn btn-secondary" style={{ width: 'auto' }} onClick={limparFiltros}>Limpar</button>
+        </div>
       </div>
 
       {produtos.length === 0 ? (
@@ -120,6 +191,14 @@ export default function Produtos() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div style={{ marginTop: 16, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
+          <button className="btn btn-secondary btn-sm" disabled={page <= 1 || loading} onClick={() => carregar({ pageOverride: page - 1 })}>Anterior</button>
+          <span style={{ fontSize: 13, fontWeight: 600 }}>Página {page} de {totalPages}</span>
+          <button className="btn btn-secondary btn-sm" disabled={page >= totalPages || loading} onClick={() => carregar({ pageOverride: page + 1 })}>Próxima</button>
         </div>
       )}
 

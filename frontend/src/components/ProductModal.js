@@ -19,7 +19,10 @@ export default function ProductModal({ produto, restauranteId, onClose, onAdd })
             <span>{qtd}</span>
             <button onClick={() => setQtd(qtd + 1)}>+</button>
           </div>
-          <button className="btn btn-primary full" onClick={() => { onAdd?.(produto, qtd, restauranteId); onClose?.(); }}>
+          <button className="btn btn-primary full" onClick={() => {
+            const added = onAdd?.(produto, qtd, restauranteId);
+            if (added !== false) onClose?.();
+          }}>
             Adicionar • R$ {(Number(produto.preco || 0) * qtd).toFixed(2)}
           </button>
         </div>

@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { pedidoService, usuarioService } from '../../services';
 import AddressModal from '../../components/address/AddressModal';
 import './Carrinho.css';
 
@@ -28,13 +27,12 @@ function CartItem({ item, onDec, onInc, onRemove }) {
 
 export default function Carrinho() {
   const { items, setItemQty, removeItem, clearCart, count, total } = useCart();
-  const { usuario, atualizarUsuario } = useAuth();
+  const { usuario } = useAuth();
   const [endereco, setEndereco] = useState('');
   const [enderecoInfo, setEnderecoInfo] = useState(null);
   const [abrirEndereco, setAbrirEndereco] = useState(false);
   const [salvarComoPrincipal, setSalvarComoPrincipal] = useState(true);
   const [obs, setObs] = useState('');
-  const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
   const navigate = useNavigate();
 
@@ -52,45 +50,36 @@ export default function Carrinho() {
     setEndereco(inicial?.endereco_principal || inicial?.formatted_address || usuario?.endereco_principal || '');
   }, [usuario]);
 
-  async function fazerPedido() {
+  async function irParaFinalizacao() {
     setErro('');
     const enderecoFinal = enderecoInfo?.endereco_principal || endereco.trim() || usuario?.endereco_principal || '';
     if (!enderecoFinal.trim()) { setErro('Informe o endereço de entrega'); return; }
     if (items.length === 0) { setErro('Carrinho vazio'); return; }
-    // Verifica se todos os itens são do mesmo restaurante
+
     const restaurantes = Array.from(new Set(items.map(i => i.restaurante_id)));
     if (restaurantes.length > 1) { setErro('Itens de restaurantes diferentes. Faça pedidos separados.'); return; }
 
-    const payload = {
-      restaurante_id: restaurantes[0],
-      itens: items.map(i => ({ produto_id: Number(i.produto.id), quantidade: Number(i.quantidade) })),
-      endereco_entrega: enderecoFinal,
-      endereco_coords: {
-        lat: enderecoInfo?.lat ?? null,
-        lng: enderecoInfo?.lng ?? null,
-      },
-      endereco_detalhes: enderecoInfo || null,
-      observacao: obs,
-    };
-
-    setLoading(true);
-    try {
-      if (salvarComoPrincipal && enderecoFinal && usuario?.id) {
-        const uResp = await usuarioService.atualizarEndereco(usuario.id, {
-          endereco_principal: enderecoFinal,
-          endereco_json: enderecoInfo || { formatted_address: enderecoFinal, details: {} },
-          latitude: enderecoInfo?.lat ?? null,
-          longitude: enderecoInfo?.lng ?? null,
-        });
-        atualizarUsuario(uResp.usuario);
+    navigate('/finalizar-pedido', {
+      state: {
+        endereco: enderecoFinal,
+        enderecoInfo,
+        salvarComoPrincipal,
+        observacao: obs,
       }
+    });
+  }
 
-      await pedidoService.criar(payload);
-      clearCart();
-      navigate('/meus-pedidos');
-    } catch (err) {
-      setErro(err.response?.data?.erro || 'Erro ao criar pedido');
-    } finally { setLoading(false); }
+  function limparCarrinho() {
+    if (items.length === 0) return;
+    const confirmar = window.confirm('Deseja limpar todos os itens da sua sacola?');
+    if (!confirmar) return;
+    clearCart();
+  }
+
+  function removerComConfirmacao(item) {
+    const confirmar = window.confirm(`Remover "${item?.produto?.nome || 'item'}" da sacola?`);
+    if (!confirmar) return;
+    removeItem(item.produto.id);
   }
 
   return (
@@ -102,7 +91,10 @@ export default function Carrinho() {
               <h2>Meu Carrinho</h2>
               <span className="cart-sub">{count} ite{count !== 1 ? 'ns' : 'm'}</span>
             </div>
-            <div className="cart-total">R$ {totalGeral.toFixed(2)}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div className="cart-total">R$ {totalGeral.toFixed(2)}</div>
+              <button className="btn btn-secondary btn-sm" onClick={limparCarrinho} disabled={items.length === 0}>Limpar sacola</button>
+            </div>
           </div>
 
           {erro && <div className="alert alert-erro" style={{ marginBottom: 12 }}>{erro}</div>}
@@ -116,7 +108,7 @@ export default function Carrinho() {
                 item={it}
                 onDec={() => setItemQty(it.produto.id, Math.max(0, (it.quantidade || 0) - 1))}
                 onInc={() => setItemQty(it.produto.id, (it.quantidade || 0) + 1)}
-                onRemove={() => removeItem(it.produto.id)}
+                onRemove={() => removerComConfirmacao(it)}
               />
             ))}
           </div>
@@ -128,8 +120,8 @@ export default function Carrinho() {
             <div className="cart-row"><span>Subtotal</span><strong>R$ {total.toFixed(2)}</strong></div>
             <div className="cart-row"><span>Taxa de entrega</span><strong>{taxaEntrega > 0 ? `R$ ${taxaEntrega.toFixed(2)}` : 'Grátis'}</strong></div>
             <div className="cart-row total"><span>Total</span><strong>R$ {totalGeral.toFixed(2)}</strong></div>
-            <button className="btn btn-primary full" onClick={fazerPedido} disabled={loading || items.length === 0}>
-              {loading ? 'Enviando...' : 'Confirmar pedido'}
+            <button className="btn btn-primary full" onClick={irParaFinalizacao} disabled={items.length === 0}>
+              Escolher forma de pagamento
             </button>
           </div>
 

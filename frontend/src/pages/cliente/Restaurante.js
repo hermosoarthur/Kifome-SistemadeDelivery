@@ -9,10 +9,11 @@ import './Restaurante.css';
 export default function RestaurantePage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addItems } = useCart();
+  const { addItems, items, clearCart, count, total } = useCart();
   const [restaurante, setRestaurante] = useState(null);
   const [produtos, setProdutos] = useState([]);
   const [catAtiva, setCatAtiva] = useState('');
+  const [busca, setBusca] = useState('');
   const [loading, setLoading] = useState(true);
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
 
@@ -23,7 +24,7 @@ export default function RestaurantePage() {
         // Busca os dados reais baseados no ID da URL
         const [r, p] = await Promise.all([
           restauranteService.obter(id).then(d => d.restaurante || d),
-          produtoService.listar(id).then(d => d.produtos || []),
+          produtoService.listar(id, { per_page: 100, disponivel: true, busca }).then(d => d.produtos || []),
         ]);
         setRestaurante(r);
         setProdutos(p.filter(x => x.disponivel !== false));
@@ -33,35 +34,7 @@ export default function RestaurantePage() {
       } finally { setLoading(false); }
     }
     carregar();
-  }, [id]);
-
-  // Procure o useEffect que faz o carregar()
-useEffect(() => {
-  async function carregar() {
-    try {
-      const [r, p] = await Promise.all([
-        restauranteService.obter(id).then(d => d.restaurante || d),
-        produtoService.listar(id).then(d => d.produtos || []),
-      ]);
-
-      let listaFinal = p;
-
-      // SE FOR O ID 1 (BURGER KING), ADICIONAMOS OS ITENS AQUI
-      if (id === '1') {
-        const itensBK = [
-          { id: 501, nome: 'Whopper de Plantas', descricao: 'Hambúrguer de plantas grelhado no fogo.', preco: 32.90, categoria: 'Hambúrguer', disponivel: true },
-          { id: 502, nome: 'BK Chicken 10 unid', descricao: 'Crocantes pedaços de frango.', preco: 19.90, categoria: 'Acompanhamentos', disponivel: true },
-          { id: 503, nome: 'Pepsi 500ml', descricao: 'Refresco gelado.', preco: 12.00, categoria: 'Bebidas', disponivel: true }
-        ];
-        listaFinal = [...p, ...itensBK];
-      }
-
-      setRestaurante(r);
-      setProdutos(listaFinal.filter(x => x.disponivel !== false));
-    } catch (e) { console.error(e); }
-  }
-  carregar();
-}, [id]);
+  }, [id, busca]);
 
   // Organiza os produtos por categoria (ex: Lanches, Bebidas, Acompanhamentos)
   const cats = useMemo(() => {
@@ -76,10 +49,20 @@ useEffect(() => {
 
   const selectedCat = catAtiva && cats.find(c => c.nome === catAtiva) ? catAtiva : (cats[0]?.nome || '');
   const lista = cats.find(c => c.nome === selectedCat)?.items || [];
+  const temItensDesteRestaurante = items.length > 0 && Number(items[0]?.restaurante_id) === Number(id);
 
   function handleAdd(produto, qtd = 1) {
+    const restauranteAtual = Number(id);
+    const restauranteNoCarrinho = items[0]?.restaurante_id;
+    if (restauranteNoCarrinho && restauranteNoCarrinho !== restauranteAtual) {
+      const confirmarTroca = window.confirm('Seu carrinho possui itens de outro restaurante. Deseja limpar o carrinho para continuar?');
+      if (!confirmarTroca) return false;
+      clearCart();
+    }
+
     addItems([{ produto, quantidade: qtd, restaurante_id: Number(id) }]);
     setProdutoSelecionado(null); // Fecha o modal após adicionar
+    return true;
   }
 
   if (loading) {
@@ -136,6 +119,20 @@ useEffect(() => {
       </div>
 
       <div className="rest-body">
+        <div className="card" style={{ marginBottom: 14 }}>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label>Buscar no cardápio</label>
+            <div className="input-box">
+              <input
+                type="text"
+                placeholder="Ex.: x-burger, batata, refrigerante..."
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Menu de Categorias (Tabs) */}
         <div className="rest-tabs-container">
           <div className="rest-tabs">
@@ -177,6 +174,17 @@ useEffect(() => {
           onClose={() => setProdutoSelecionado(null)}
           onAdd={(prod, qtd) => handleAdd(prod, qtd)}
         />
+      )}
+
+      {temItensDesteRestaurante && (
+        <button
+          className="cart-float"
+          onClick={() => navigate('/carrinho')}
+          style={{ minWidth: 220, justifyContent: 'space-between', padding: '10px 16px' }}
+        >
+          <span>🛒 Ver sacola ({count})</span>
+          <strong>R$ {Number(total || 0).toFixed(2)}</strong>
+        </button>
       )}
     </div>
   );

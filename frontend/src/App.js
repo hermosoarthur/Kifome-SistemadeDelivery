@@ -7,6 +7,7 @@ import Carrinho from './pages/cliente/Carrinho';
 
 // Shared
 import { Login, Registro } from './pages/shared/Auth';
+import LoginRestaurante from './pages/shared/LoginRestaurante';
 import { AuthCallback } from './pages/shared/AuthCallback';
 import './pages/shared/Auth.css';
 import Perfil from './pages/shared/Perfil';
@@ -80,6 +81,7 @@ function AppRoutes() {
     <Routes>
       {/* Públicas */}
       <Route path="/login" element={<SoPublica><Login /></SoPublica>} />
+      <Route path="/login/restaurante" element={<SoPublica><LoginRestaurante /></SoPublica>} />
       <Route path="/registro" element={<SoPublica><Registro /></SoPublica>} />
       <Route path="/auth/callback" element={<AuthCallback />} />
 

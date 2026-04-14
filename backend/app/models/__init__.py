@@ -47,6 +47,9 @@ class Restaurante(db.Model):
     nome_fantasia = db.Column(db.String(100), nullable=False)
     descricao = db.Column(db.String(500), nullable=True)
     endereco = db.Column(db.String(200), nullable=False)
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
+    endereco_json = db.Column(db.JSON, nullable=True)
     telefone = db.Column(db.String(20), nullable=True)
     categoria = db.Column(db.String(100), nullable=True)
     imagem_url = db.Column(db.String(500), nullable=True)
@@ -61,7 +64,9 @@ class Restaurante(db.Model):
     def to_dict(self):
         return {
             'id': self.id, 'nome_fantasia': self.nome_fantasia, 'descricao': self.descricao,
-            'endereco': self.endereco, 'telefone': self.telefone, 'categoria': self.categoria,
+            'endereco': self.endereco, 'latitude': self.latitude, 'longitude': self.longitude,
+            'endereco_json': self.endereco_json,
+            'telefone': self.telefone, 'categoria': self.categoria,
             'imagem_url': self.imagem_url, 'status': self.status, 'usuario_id': self.usuario_id,
             'criado_em': self.criado_em.isoformat() if self.criado_em else None,
         }
@@ -101,6 +106,9 @@ class Pedido(db.Model):
     endereco_longitude = db.Column(db.Float, nullable=True)
     total = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)
     observacao = db.Column(db.Text, nullable=True)
+    avaliacao_nota = db.Column(db.Integer, nullable=True)
+    avaliacao_comentario = db.Column(db.Text, nullable=True)
+    avaliacao_em = db.Column(db.DateTime, nullable=True)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -115,7 +123,11 @@ class Pedido(db.Model):
             'endereco_latitude': self.endereco_latitude,
             'endereco_longitude': self.endereco_longitude,
             'total': float(self.total), 'observacao': self.observacao,
+            'avaliacao_nota': self.avaliacao_nota,
+            'avaliacao_comentario': self.avaliacao_comentario,
+            'avaliacao_em': self.avaliacao_em.isoformat() if self.avaliacao_em else None,
             'criado_em': self.criado_em.isoformat() if self.criado_em else None,
+            'atualizado_em': self.atualizado_em.isoformat() if self.atualizado_em else None,
             'restaurante': self.restaurante.to_dict() if self.restaurante else None,
             'itens': [i.to_dict() for i in self.itens],
         }

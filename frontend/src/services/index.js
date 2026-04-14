@@ -74,6 +74,7 @@ export const pedidoService = {
   meus: () => api.get('/api/pedidos/meus').then(r => r.data),
   doRestaurante: (rid, params) => api.get(`/api/pedidos/restaurante/${rid}`, { params }).then(r => r.data),
   atualizarStatus: (pid, status) => api.put(`/api/pedidos/${pid}/status`, { status }).then(r => r.data),
+  avaliar: (pid, nota, comentario) => api.post(`/api/pedidos/${pid}/avaliar`, { nota, comentario }).then(r => r.data),
   disponiveis: () => api.get('/api/pedidos/disponiveis').then(r => r.data),
   minhasEntregas: () => api.get('/api/pedidos/entregas').then(r => r.data),
 };

@@ -1,6 +1,6 @@
 from flask import Blueprint
 from app.controllers import (criar_pedido, meus_pedidos_cliente, pedidos_restaurante,
-    atualizar_status_pedido, entregas_entregador, pedidos_disponiveis)
+    atualizar_status_pedido, entregas_entregador, pedidos_disponiveis, avaliar_pedido)
 from app.utils.jwt_utils import token_requerido, requer_tipo
 
 pedidos_bp = Blueprint('pedidos', __name__, url_prefix='/api/pedidos')
@@ -20,6 +20,10 @@ def rota_restaurante(u, rid): return pedidos_restaurante(u, rid)
 @pedidos_bp.route('/<int:pid>/status', methods=['PUT'])
 @token_requerido
 def rota_status(u, pid): return atualizar_status_pedido(u, pid)
+
+@pedidos_bp.route('/<int:pid>/avaliar', methods=['POST'])
+@requer_tipo('cliente')
+def rota_avaliar(u, pid): return avaliar_pedido(u, pid)
 
 @pedidos_bp.route('/entregas', methods=['GET'])
 @requer_tipo('entregador')

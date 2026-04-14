@@ -156,6 +156,9 @@ def criar_restaurante(usuario_atual):
     nome_fantasia = (data.get('nome_fantasia') or '').strip()
     descricao = (data.get('descricao') or '').strip()
     endereco = (data.get('endereco') or '').strip()
+    latitude = data.get('latitude')
+    longitude = data.get('longitude')
+    endereco_json = data.get('endereco_json') if isinstance(data.get('endereco_json'), dict) else None
 
     if not nome_fantasia:
         return jsonify({'erro': 'Nome é obrigatório'}), 400
@@ -167,11 +170,25 @@ def criar_restaurante(usuario_atual):
         return jsonify({'erro': 'Endereço é obrigatório'}), 400
     if len(endereco) < 10 or len(endereco) > 200:
         return jsonify({'erro': 'endereco deve ter entre 10 e 200 caracteres'}), 400
+
+    # Parse lat/lng
+    try:
+        latitude = float(latitude) if latitude not in (None, '') else None
+    except (TypeError, ValueError):
+        latitude = None
+    try:
+        longitude = float(longitude) if longitude not in (None, '') else None
+    except (TypeError, ValueError):
+        longitude = None
+
     try:
         r = Restaurante(
             nome_fantasia=nome_fantasia,
             descricao=descricao,
             endereco=endereco,
+            latitude=latitude,
+            longitude=longitude,
+            endereco_json=endereco_json,
             telefone=data.get('telefone', ''),
             categoria=data.get('categoria', ''),
             imagem_url=data.get('imagem_url', ''),
@@ -229,6 +246,21 @@ def atualizar_restaurante(usuario_atual, rid):
                 setattr(r, c, endereco)
             else:
                 setattr(r, c, data[c])
+
+    # Geo fields
+    if 'latitude' in data:
+        try:
+            r.latitude = float(data['latitude']) if data['latitude'] not in (None, '') else None
+        except (TypeError, ValueError):
+            pass
+    if 'longitude' in data:
+        try:
+            r.longitude = float(data['longitude']) if data['longitude'] not in (None, '') else None
+        except (TypeError, ValueError):
+            pass
+    if 'endereco_json' in data and isinstance(data['endereco_json'], dict):
+        r.endereco_json = data['endereco_json']
+
     try:
         db.session.commit()
         return jsonify({'restaurante': r.to_dict()}), 200
@@ -526,6 +558,44 @@ def entregas_entregador(usuario_atual):
 def pedidos_disponiveis(usuario_atual):
     ps = Pedido.query.filter_by(status='preparando', entregador_id=None).order_by(Pedido.criado_em.desc()).all()
     return jsonify({'pedidos': [p.to_dict() for p in ps]}), 200
+
+
+# ── AVALIAÇÃO DE PEDIDO ───────────────────────────────────
+def avaliar_pedido(usuario_atual, pid):
+    pedido = Pedido.query.get_or_404(pid)
+    if pedido.cliente_id != usuario_atual.id:
+        return jsonify({'erro': 'Sem permissão'}), 403
+    if pedido.status != 'entregue':
+        return jsonify({'erro': 'Apenas pedidos entregues podem ser avaliados'}), 400
+    if pedido.avaliacao_nota is not None:
+        return jsonify({'erro': 'Este pedido já foi avaliado'}), 409
+
+    data = request.get_json(silent=True) or {}
+    nota = data.get('nota')
+    comentario = (data.get('comentario') or '').strip()
+
+    if nota is None:
+        return jsonify({'erro': 'Nota é obrigatória (1 a 5)'}), 400
+    try:
+        nota = int(nota)
+    except (TypeError, ValueError):
+        return jsonify({'erro': 'Nota deve ser um número inteiro de 1 a 5'}), 400
+    if nota < 1 or nota > 5:
+        return jsonify({'erro': 'Nota deve ser entre 1 e 5'}), 400
+    if len(comentario) > 500:
+        return jsonify({'erro': 'Comentário deve ter no máximo 500 caracteres'}), 400
+
+    from datetime import datetime
+    pedido.avaliacao_nota = nota
+    pedido.avaliacao_comentario = comentario or None
+    pedido.avaliacao_em = datetime.utcnow()
+
+    try:
+        db.session.commit()
+        return jsonify({'pedido': pedido.to_dict()}), 200
+    except Exception:
+        db.session.rollback()
+        return jsonify({'erro': 'Erro ao salvar avaliação'}), 500
 
 
 # ── ENTREGADOR ────────────────────────────────────────────

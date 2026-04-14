@@ -70,10 +70,8 @@ def _sync_usuario_from_auth(user_data, *, email=None, telefone=None, defaults=No
         )
         db.session.add(usuario)
     else:
-        usuario.nome = _sanitize_nome(defaults.get(
-            'nome') or usuario.nome or nome_default)
-        usuario.tipo = _sanitize_tipo(defaults.get(
-            'tipo') or usuario.tipo or tipo_default)
+        usuario.nome = _sanitize_nome(defaults.get('nome') or usuario.nome or nome_default)
+        # Não alterar o tipo de um usuário já existente para proteger a conta
         usuario.supabase_uid = user_data.get('id')
         if provider_phone:
             usuario.telefone = provider_phone
@@ -138,7 +136,7 @@ def _validate_local_otp(tipo, destino, codigo):
 def _apply_usuario_profile_updates(
     usuario, *, nome='', email='', telefone='', tipo='',
     endereco_principal='', endereco_json=None, latitude=None, longitude=None,
-    allow_email_update=False
+    allow_email_update=False, allow_tipo_update=False
 ):
     if nome:
         usuario.nome = _sanitize_nome(nome)
@@ -148,7 +146,7 @@ def _apply_usuario_profile_updates(
         telefone_norm = normalizar_telefone(normalize_phone(telefone))
         if telefone_norm and validar_telefone(telefone_norm):
             usuario.telefone = telefone_norm
-    if tipo:
+    if tipo and allow_tipo_update:
         usuario.tipo = _sanitize_tipo(tipo) or usuario.tipo
     if endereco_principal:
         usuario.endereco_principal = endereco_principal

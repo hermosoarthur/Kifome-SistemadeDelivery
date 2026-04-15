@@ -92,6 +92,33 @@ export default function Header({ onToggleSidebar }) {
   const enderecoPreview = useMemo(() => getAddressPreview(usuario), [usuario]);
   const enderecoBairro = useMemo(() => getAddressDistrict(usuario), [usuario]);
   const temEnderecoPrincipal = Boolean(usuario?.endereco_principal || usuario?.endereco_json?.formatted_address);
+  const tipoUsuario = usuario?.tipo || 'cliente';
+  const ehCliente = tipoUsuario === 'cliente';
+
+  const navPorTipo = useMemo(() => ({
+    cliente: [
+      { label: 'Início', to: '/' },
+      { label: 'Restaurantes', to: '/restaurantes' },
+      { label: 'Mercados', to: '/mercados' },
+      { label: 'Bebidas', to: '/bebidas' },
+      { label: 'Farmácias', to: '/farmacias' },
+      { label: 'Pets', to: '/pets' },
+      { label: 'Shopping', to: '/shopping' },
+    ],
+    restaurante: [
+      { label: 'Dashboard', to: '/' },
+      { label: 'Meu Restaurante', to: '/meu-restaurante' },
+      { label: 'Cardápio', to: '/produtos' },
+      { label: 'Pedidos', to: '/pedidos' },
+    ],
+    entregador: [
+      { label: 'Dashboard', to: '/' },
+      { label: 'Disponíveis', to: '/disponivel' },
+      { label: 'Minhas Entregas', to: '/minhas-entregas' },
+    ],
+  }), []);
+
+  const navTopo = navPorTipo[tipoUsuario] || navPorTipo.cliente;
 
   const enderecosFiltrados = useMemo(() => {
     const termo = buscaEndereco.trim().toLowerCase();
@@ -234,53 +261,54 @@ export default function Header({ onToggleSidebar }) {
 
           <div className="topbrand" onClick={() => navigate('/')} title="Kifome">Kifome</div>
           <nav className="top-links">
-            <button className="top-link" onClick={() => navigate('/')}>Início</button>
-
-            <button className="top-link" onClick={() => navigate('/restaurantes')}>Restaurantes</button>
-            <button className="top-link" onClick={() => navigate('/mercados')}>Mercados</button>
-            <button className="top-link" onClick={() => navigate('/bebidas')}>Bebidas</button>
-            <button className="top-link" onClick={() => navigate('/farmacias')}>Farmácias</button>
-            <button className="top-link" onClick={() => navigate('/pets')}>Pets</button>
-            <button className="top-link" onClick={() => navigate('/shopping')}>Shopping</button>
+            {navTopo.map((item) => (
+              <button key={`${tipoUsuario}-${item.to}`} className="top-link" onClick={() => navigate(item.to)}>{item.label}</button>
+            ))}
           </nav>
         </div>
 
         <div className="layout-topbar-center">
-          <div className="ifood-search-chip">
-            <span className="search-icon"></span>
-            <input
-              className="ifood-search-input"
-              placeholder="Busque por item ou loja"
-              onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/buscar?q=${encodeURIComponent(e.target.value)}`); }}
-            />
-          </div>
+          {ehCliente && (
+            <div className="ifood-search-chip">
+              <span className="search-icon"></span>
+              <input
+                className="ifood-search-input"
+                placeholder="Busque por item ou loja"
+                onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/buscar?q=${encodeURIComponent(e.target.value)}`); }}
+              />
+            </div>
+          )}
         </div>
 
         <div className="layout-topbar-right">
-          <button
-            type="button"
-            className={`top-location-chip ${temEnderecoPrincipal ? 'has-address' : ''}`}
-            onClick={abrirSeletor}
-            title="Alterar local de entrega"
-          >
-            <span className="top-location-icon">📍</span>
-            <span className="top-location-copy">
-              <small>{temEnderecoPrincipal ? 'Entregar em' : 'Informe seu endereço'}</small>
-              <strong>{enderecoPreview}</strong>
-            </span>
-            {temEnderecoPrincipal && <span className="top-location-badge">⚡ {enderecoBairro}</span>}
-            <span className="top-location-arrow">▾</span>
-          </button>
+          {ehCliente && (
+            <button
+              type="button"
+              className={`top-location-chip ${temEnderecoPrincipal ? 'has-address' : ''}`}
+              onClick={abrirSeletor}
+              title="Alterar local de entrega"
+            >
+              <span className="top-location-icon">📍</span>
+              <span className="top-location-copy">
+                <small>{temEnderecoPrincipal ? 'Entregar em' : 'Informe seu endereço'}</small>
+                <strong>{enderecoPreview}</strong>
+              </span>
+              {temEnderecoPrincipal && <span className="top-location-badge">⚡ {enderecoBairro}</span>}
+              <span className="top-location-arrow">▾</span>
+            </button>
+          )}
           <button className="icon-btn" onClick={() => navigate('/perfil')}>👤</button>
-          <button className="icon-btn" onClick={() => navigate('/carrinho')}>
-            🛒 {cartCount > 0 ? `${cartCount} • R$ ${cartTotal.toFixed(2)}` : <span className="cart-small">R$ 0,00</span>}
-          </button>
+          {ehCliente && (
+            <button className="icon-btn" onClick={() => navigate('/carrinho')}>
+              🛒 {cartCount > 0 ? `${cartCount} • R$ ${cartTotal.toFixed(2)}` : <span className="cart-small">R$ 0,00</span>}
+            </button>
+          )}
         </div>
       </div>
 
       {erroEndereco && <div className="topbar-inline-error">{erroEndereco}</div>}
 
-      {abrirSeletorEndereco && (
+      {ehCliente && abrirSeletorEndereco && (
         <div className="address-selector-backdrop" role="dialog" aria-modal="true">
           <div className="address-selector-card">
             <div className="address-selector-hero">
@@ -362,16 +390,18 @@ export default function Header({ onToggleSidebar }) {
         </div>
       )}
 
-      <AddressModal
-        isOpen={abrirEnderecoMapa}
-        title="Atualizar endereço principal"
-        subtitle="Escolha no mapa ou preencha manualmente para definir o local de entrega."
-        confirmLabel={salvandoEndereco ? 'Salvando...' : 'Salvar endereço'}
-        initialValue={enderecoInicial}
-        required
-        onClose={() => !salvandoEndereco && setAbrirEnderecoMapa(false)}
-        onSave={salvarEnderecoHeader}
-      />
+      {ehCliente && (
+        <AddressModal
+          isOpen={abrirEnderecoMapa}
+          title="Atualizar endereço principal"
+          subtitle="Escolha no mapa ou preencha manualmente para definir o local de entrega."
+          confirmLabel={salvandoEndereco ? 'Salvando...' : 'Salvar endereço'}
+          initialValue={enderecoInicial}
+          required
+          onClose={() => !salvandoEndereco && setAbrirEnderecoMapa(false)}
+          onSave={salvarEnderecoHeader}
+        />
+      )}
     </>
   );
 }

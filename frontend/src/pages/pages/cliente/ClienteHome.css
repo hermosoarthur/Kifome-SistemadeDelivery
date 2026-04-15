@@ -310,6 +310,27 @@
 .order-progress-icon { font-size: 11px; color: var(--texto-claro); }
 .order-progress-step.active .order-progress-icon { color: var(--primaria); }
 
+/* Avaliação do Pedido */
+.order-avaliacao { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--bordas); }
+
+.star-rating { display: flex; gap: 4px; }
+.star-btn { background: none; border: none; font-size: 28px; color: var(--bordas-strong); cursor: pointer; transition: color .15s, transform .15s; padding: 2px; line-height: 1; }
+.star-btn.active { color: #f59e0b; }
+.star-btn:not(.active):hover { color: #fbbf24; transform: scale(1.15); }
+.star-btn:disabled { cursor: default; }
+.star-rating.disabled .star-btn { cursor: default; font-size: 20px; }
+
+.avaliacao-form { display: flex; flex-direction: column; gap: 8px; }
+.avaliacao-titulo { font-size: 14px; font-weight: 700; color: var(--texto); }
+.avaliacao-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+.avaliacao-actions .btn-primary { width: auto; }
+
+.avaliacao-feita { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.avaliacao-feita-label { font-size: 13px; font-weight: 700; color: var(--texto-sec); }
+.avaliacao-comentario-exibido { font-size: 13px; color: var(--texto-sec); font-style: italic; width: 100%; margin-top: 2px; }
+
+.avaliacao-btn { margin-top: 0; }
+
 @media (max-width: 768px) {
   .ch-top-grid,
   .ch-hero-inner { grid-template-columns: 1fr; }

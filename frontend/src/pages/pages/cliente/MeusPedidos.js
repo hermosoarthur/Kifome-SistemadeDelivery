@@ -10,10 +10,37 @@ const STATUS_INFO = {
   cancelado: { label: 'Cancelado', cls: 'badge status-cancelado', icon: '❌' },
 };
 
+function StarRating({ value, onChange, disabled }) {
+  const [hover, setHover] = useState(0);
+  return (
+    <div className="star-rating">
+      {[1, 2, 3, 4, 5].map(star => (
+        <button
+          key={star}
+          type="button"
+          className={`star-btn ${star <= (hover || value) ? 'active' : ''}`}
+          onClick={() => !disabled && onChange(star)}
+          onMouseEnter={() => !disabled && setHover(star)}
+          onMouseLeave={() => !disabled && setHover(0)}
+          disabled={disabled}
+          aria-label={`${star} estrela${star > 1 ? 's' : ''}`}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function MeusPedidos() {
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [atualizando, setAtualizando] = useState(false);
+  const [avaliacaoAberta, setAvaliacaoAberta] = useState(null);
+  const [nota, setNota] = useState(0);
+  const [comentario, setComentario] = useState('');
+  const [enviandoAvaliacao, setEnviandoAvaliacao] = useState(false);
+  const [avaliacaoMsg, setAvaliacaoMsg] = useState(null);
 
   const ordemStatus = ['aguardando', 'confirmado', 'preparando', 'saiu_para_entrega', 'entregue'];
 
@@ -49,6 +76,43 @@ export default function MeusPedidos() {
     }, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  function abrirAvaliacao(pedidoId) {
+    setAvaliacaoAberta(pedidoId);
+    setNota(0);
+    setComentario('');
+    setAvaliacaoMsg(null);
+  }
+
+  function fecharAvaliacao() {
+    setAvaliacaoAberta(null);
+    setNota(0);
+    setComentario('');
+    setAvaliacaoMsg(null);
+  }
+
+  async function enviarAvaliacao(pedidoId) {
+    if (nota < 1 || nota > 5) {
+      setAvaliacaoMsg({ tipo: 'erro', texto: 'Selecione uma nota de 1 a 5 estrelas.' });
+      return;
+    }
+    setEnviandoAvaliacao(true);
+    setAvaliacaoMsg(null);
+    try {
+      await pedidoService.avaliar(pedidoId, nota, comentario);
+      setAvaliacaoMsg({ tipo: 'sucesso', texto: 'Avaliação enviada com sucesso!' });
+      setPedidos(prev => prev.map(p => p.id === pedidoId
+        ? { ...p, avaliacao_nota: nota, avaliacao_comentario: comentario }
+        : p
+      ));
+      setTimeout(() => fecharAvaliacao(), 1500);
+    } catch (err) {
+      const msg = err.response?.data?.erro || 'Erro ao enviar avaliação.';
+      setAvaliacaoMsg({ tipo: 'erro', texto: msg });
+    } finally {
+      setEnviandoAvaliacao(false);
+    }
+  }
 
   if (loading) return <div className="page"><div className="loading-state"><h3>Carregando seus pedidos</h3><p>Estamos organizando sua linha do tempo de pedidos para você acompanhar tudo em um só lugar.</p></div></div>;
 
@@ -107,11 +171,11 @@ export default function MeusPedidos() {
                 </div>
 
                 <div className="order-progress">
-                  <div className="order-progress-track">
+                  <div className="order-progress-track" role="progressbar" aria-label={`Status: ${info.label}`} aria-valuenow={atual + 1} aria-valuemin={1} aria-valuemax={5}>
                     {['aguardando', 'confirmado', 'preparando', 'saiu_para_entrega', 'entregue'].map(s => {
                       const este = ordemStatus.indexOf(s);
                       return (
-                        <div key={s} className={`order-progress-step ${este <= atual && p.status !== 'cancelado' ? 'active' : ''}`}>
+                        <div key={s} className={`order-progress-step ${este <= atual && p.status !== 'cancelado' ? 'active' : ''}`} title={STATUS_INFO[s]?.label}>
                           <div className="order-progress-dot" />
                           <span className="order-progress-icon">
                             {STATUS_INFO[s]?.icon}
@@ -121,6 +185,57 @@ export default function MeusPedidos() {
                     })}
                   </div>
                 </div>
+
+                {/* Avaliação do Pedido */}
+                {p.status === 'entregue' && (
+                  <div className="order-avaliacao">
+                    {p.avaliacao_nota ? (
+                      <div className="avaliacao-feita">
+                        <span className="avaliacao-feita-label">Sua avaliação</span>
+                        <div className="star-rating disabled">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <span key={star} className={`star-btn ${star <= p.avaliacao_nota ? 'active' : ''}`}>★</span>
+                          ))}
+                        </div>
+                        {p.avaliacao_comentario && (
+                          <p className="avaliacao-comentario-exibido">"{p.avaliacao_comentario}"</p>
+                        )}
+                      </div>
+                    ) : avaliacaoAberta === p.id ? (
+                      <div className="avaliacao-form">
+                        <p className="avaliacao-titulo">Como foi seu pedido?</p>
+                        <StarRating value={nota} onChange={setNota} disabled={enviandoAvaliacao} />
+                        <div className="input-box" style={{ marginTop: 10 }}>
+                          <textarea
+                            placeholder="Deixe um comentário (opcional)"
+                            value={comentario}
+                            onChange={e => setComentario(e.target.value)}
+                            maxLength={500}
+                            disabled={enviandoAvaliacao}
+                            rows={2}
+                          />
+                        </div>
+                        {avaliacaoMsg && (
+                          <div className={`alert alert-${avaliacaoMsg.tipo}`} style={{ marginTop: 8 }}>
+                            {avaliacaoMsg.texto}
+                          </div>
+                        )}
+                        <div className="avaliacao-actions">
+                          <button className="btn btn-ghost btn-sm" onClick={fecharAvaliacao} disabled={enviandoAvaliacao}>
+                            Cancelar
+                          </button>
+                          <button className="btn btn-primary btn-sm" onClick={() => enviarAvaliacao(p.id)} disabled={enviandoAvaliacao || nota === 0}>
+                            {enviandoAvaliacao ? 'Enviando...' : 'Enviar avaliação'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button className="btn btn-secondary btn-sm avaliacao-btn" onClick={() => abrirAvaliacao(p.id)}>
+                        ⭐ Avaliar pedido
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}

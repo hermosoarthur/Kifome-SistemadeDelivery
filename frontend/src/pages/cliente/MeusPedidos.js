@@ -32,6 +32,7 @@ function StarRating({ value, onChange, disabled }) {
   );
 }
 
+<<<<<<< HEAD
 export default function MeusPedidos() {
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -124,6 +125,8 @@ export default function MeusPedidos() {
         <p style={{ color: 'rgba(255,255,255,.78)', maxWidth: 620, lineHeight: 1.7 }}>Uma visualização mais parecida com apps de delivery: restaurante, itens, endereço, total e andamento do pedido no mesmo fluxo.</p>
       </div>
 
+=======
+>>>>>>> dc1c99c (feat(Sprint3): estilizacao painel restaurante)
       <div className="section-heading">
         <div>
           <h1 className="page-title">Meus Pedidos</h1>
@@ -148,6 +151,7 @@ export default function MeusPedidos() {
             const total = Number(p.total || 0);
             return (
               <div key={p.id} className="card order-card">
+<<<<<<< HEAD
                 <div className="order-card-head">
                   <div>
                     <div className="order-title-wrap">
@@ -235,6 +239,12 @@ export default function MeusPedidos() {
                       </button>
                     )}
                   </div>
+=======
+                <OrderHeader info={info} p={p} total={total} formatarData={formatarData} />
+                <OrderProgress atual={atual} p={p} ordemStatus={ordemStatus} />
+                {p.status === 'entregue' && (
+                  <OrderReview p={p} avaliacaoAberta={avaliacaoAberta} abrirAvaliacao={abrirAvaliacao} nota={nota} setNota={setNota} comentario={setComentario} enviandoAvaliacao={enviandoAvaliacao} avaliacaoMsg={avaliacaoMsg} enviarAvaliacao={enviarAvaliacao} resetarAvaliacao={resetarAvaliacao} />
+>>>>>>> dc1c99c (feat(Sprint3): estilizacao painel restaurante)
                 )}
               </div>
             );
@@ -244,3 +254,85 @@ export default function MeusPedidos() {
     </div>
   );
 }
+<<<<<<< HEAD
+=======
+
+function OrderHeader({ info, p, total, formatarData }) {
+  return (
+    <div className="order-card-head">
+      <div>
+        <div className="order-title-wrap">
+          <span style={{ fontSize: 20 }}>{info.icon}</span>
+          <strong>{p.restaurante?.nome_fantasia || 'Restaurante'}</strong>
+          <span className={info.cls}>{info.label}</span>
+        </div>
+        <p className="order-meta">Pedido #{p.id} • {formatarData(p.criado_em)}</p>
+        <div className="order-item-list">
+          {(p.itens || []).map(it => (
+            <span key={it.id} className="order-item-chip">
+              {it.quantidade}x {it.produto?.nome || 'Item'}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="order-side">
+        <strong className="order-total">R$ {total.toFixed(2)}</strong>
+        <p className="order-address">📍 {p.endereco_entrega || 'Endereço não informado'}</p>
+      </div>
+    </div>
+  );
+}
+
+function OrderProgress({ atual, p, ordemStatus }) {
+  return (
+    <div className="order-progress">
+      <div className="order-progress-track" role="progressbar" aria-valuenow={atual + 1} aria-valuemin={1} aria-valuemax={5}>
+        {ordemStatus.map(s => {
+          const este = ordemStatus.indexOf(s);
+          return (
+            <div key={s} className={`order-progress-step ${este <= atual && p.status !== 'cancelado' ? 'active' : ''}`} title={STATUS_INFO[s]?.label}>
+              <div className="order-progress-dot" />
+              <span className="order-progress-icon">{STATUS_INFO[s]?.icon}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function OrderReview({ p, avaliacaoAberta, abrirAvaliacao, nota, setNota, comentario, enviandoAvaliacao, avaliacaoMsg, enviarAvaliacao, resetarAvaliacao }) {
+  return (
+    <div className="order-avaliacao">
+      {p.avaliacao_nota ? (
+        <div className="avaliacao-feita">
+          <span className="avaliacao-feita-label">Sua avaliação</span>
+          <div className="star-rating disabled">
+            {[1, 2, 3, 4, 5].map(star => (
+              <span key={star} className={`star-btn ${star <= p.avaliacao_nota ? 'active' : ''}`}>★</span>
+            ))}
+          </div>
+          {p.avaliacao_comentario && <p className="avaliacao-comentario-exibido">"{p.avaliacao_comentario}"</p>}
+        </div>
+      ) : avaliacaoAberta === p.id ? (
+        <div className="avaliacao-form">
+          <p className="avaliacao-titulo">Como foi seu pedido?</p>
+          <StarRating value={nota} onChange={setNota} disabled={enviandoAvaliacao} />
+          <div className="input-box" style={{ marginTop: 10 }}>
+            <textarea placeholder="Deixe um comentário (opcional)" onChange={e => comentario(e.target.value)} maxLength={500} disabled={enviandoAvaliacao} rows={2} />
+          </div>
+          {avaliacaoMsg && <div className={`alert alert-${avaliacaoMsg.tipo}`} style={{ marginTop: 8 }}>{avaliacaoMsg.texto}</div>}
+          <div className="avaliacao-actions">
+            <button className="btn btn-ghost btn-sm" onClick={resetarAvaliacao} disabled={enviandoAvaliacao}>Cancelar</button>
+            <button className="btn btn-primary btn-sm" onClick={() => enviarAvaliacao(p.id)} disabled={enviandoAvaliacao || nota === 0}>
+              {enviandoAvaliacao ? 'Enviando...' : 'Enviar avaliação'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button className="btn btn-secondary btn-sm avaliacao-btn" onClick={() => abrirAvaliacao(p.id)}>⭐ Avaliar pedido</button>
+      )}
+    </div>
+  );
+}
+>>>>>>> dc1c99c (feat(Sprint3): estilizacao painel restaurante)

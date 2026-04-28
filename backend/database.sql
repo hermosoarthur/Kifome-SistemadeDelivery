@@ -32,6 +32,9 @@ CREATE TABLE restaurantes (
     nome_fantasia VARCHAR(100) NOT NULL,
     descricao VARCHAR(500),
     endereco VARCHAR(200) NOT NULL,
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
+    endereco_json JSONB,
     telefone VARCHAR(20),
     categoria VARCHAR(100),
     imagem_url VARCHAR(500),
@@ -75,6 +78,9 @@ CREATE TABLE pedidos (
     endereco_longitude DOUBLE PRECISION,
     total DECIMAL(10,2) NOT NULL DEFAULT 0,
     observacao TEXT,
+    avaliacao_nota INTEGER,
+    avaliacao_comentario TEXT,
+    avaliacao_em TIMESTAMP,
     criado_em TIMESTAMP NOT NULL DEFAULT NOW(),
     atualizado_em TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -94,5 +100,12 @@ CREATE INDEX ON restaurantes(status);
 CREATE INDEX ON produtos(restaurante_id);
 CREATE INDEX ON pedidos(cliente_id);
 CREATE INDEX ON pedidos(restaurante_id);
+
+-- ============================================================================
+-- MIGRATION: Add geo columns to restaurantes (run if table already exists)
+-- ============================================================================
+-- ALTER TABLE restaurantes ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION;
+-- ALTER TABLE restaurantes ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;
+-- ALTER TABLE restaurantes ADD COLUMN IF NOT EXISTS endereco_json JSONB;
 CREATE INDEX ON pedidos(status);
 CREATE INDEX ON entregadores(usuario_id);

@@ -42,7 +42,8 @@ def _sync_usuario_from_auth(user_data, *, email=None, telefone=None, defaults=No
     if not validar_email(provider_email):
         provider_email = ''
 
-    provider_phone = normalize_phone(user_data.get('phone') or telefone or '') if (user_data.get('phone') or telefone) else None
+    provider_phone = normalize_phone(user_data.get('phone') or telefone or '') if (
+        user_data.get('phone') or telefone) else None
     provider_phone = normalizar_telefone(provider_phone)
     if provider_phone and not validar_telefone(provider_phone):
         provider_phone = None
@@ -53,8 +54,10 @@ def _sync_usuario_from_auth(user_data, *, email=None, telefone=None, defaults=No
     if not usuario and provider_phone:
         usuario = Usuario.query.filter_by(telefone=provider_phone).first()
 
-    nome_default = _sanitize_nome(defaults.get('nome') or metadata.get('full_name') or metadata.get('name') or (provider_email.split('@')[0] if provider_email else 'Usuário'))
-    tipo_default = _sanitize_tipo(defaults.get('tipo') or metadata.get('tipo') or 'cliente')
+    nome_default = _sanitize_nome(defaults.get('nome') or metadata.get('full_name') or metadata.get(
+        'name') or (provider_email.split('@')[0] if provider_email else 'Usuário'))
+    tipo_default = _sanitize_tipo(defaults.get(
+        'tipo') or metadata.get('tipo') or 'cliente')
 
     if not usuario:
         usuario = Usuario(
@@ -68,7 +71,7 @@ def _sync_usuario_from_auth(user_data, *, email=None, telefone=None, defaults=No
         db.session.add(usuario)
     else:
         usuario.nome = _sanitize_nome(defaults.get('nome') or usuario.nome or nome_default)
-        usuario.tipo = _sanitize_tipo(defaults.get('tipo') or usuario.tipo or tipo_default)
+        # Não alterar o tipo de um usuário já existente para proteger a conta
         usuario.supabase_uid = user_data.get('id')
         if provider_phone:
             usuario.telefone = provider_phone
@@ -80,7 +83,8 @@ def _sync_usuario_from_auth(user_data, *, email=None, telefone=None, defaults=No
         if telefone and validar_telefone(telefone):
             usuario.telefone = telefone
 
-    endereco_principal = (defaults.get('endereco_principal') or '').strip() if defaults.get('endereco_principal') else ''
+    endereco_principal = (defaults.get('endereco_principal') or '').strip(
+    ) if defaults.get('endereco_principal') else ''
     if endereco_principal:
         usuario.endereco_principal = endereco_principal
         usuario.tem_endereco = True
@@ -132,7 +136,7 @@ def _validate_local_otp(tipo, destino, codigo):
 def _apply_usuario_profile_updates(
     usuario, *, nome='', email='', telefone='', tipo='',
     endereco_principal='', endereco_json=None, latitude=None, longitude=None,
-    allow_email_update=False
+    allow_email_update=False, allow_tipo_update=False
 ):
     if nome:
         usuario.nome = _sanitize_nome(nome)
@@ -142,7 +146,7 @@ def _apply_usuario_profile_updates(
         telefone_norm = normalizar_telefone(normalize_phone(telefone))
         if telefone_norm and validar_telefone(telefone_norm):
             usuario.telefone = telefone_norm
-    if tipo:
+    if tipo and allow_tipo_update:
         usuario.tipo = _sanitize_tipo(tipo) or usuario.tipo
     if endereco_principal:
         usuario.endereco_principal = endereco_principal
@@ -157,6 +161,7 @@ def _apply_usuario_profile_updates(
 # ============================================================================
 # MAGIC LINK (Passwordless)
 # ============================================================================
+
 
 def request_magic_link():
     """Request a magic link via email for passwordless login"""
@@ -196,14 +201,16 @@ def verify_magic_link():
         if session and session.user:
             user_data = session.user.model_dump()
             email = user_data.get('email', '').lower()
-            
+
             # Sync or create local user
             usuario = Usuario.query.filter_by(email=email).first()
             if not usuario:
                 usuario = Usuario(
-                    nome=user_data.get('user_metadata', {}).get('full_name', email.split('@')[0]),
+                    nome=user_data.get('user_metadata', {}).get(
+                        'full_name', email.split('@')[0]),
                     email=email,
-                    tipo=user_data.get('user_metadata', {}).get('tipo', 'cliente'),
+                    tipo=user_data.get('user_metadata', {}).get(
+                        'tipo', 'cliente'),
                     supabase_uid=user_data.get('id')
                 )
                 db.session.add(usuario)
@@ -211,7 +218,7 @@ def verify_magic_link():
             else:
                 usuario.supabase_uid = user_data.get('id')
                 db.session.commit()
-            
+
             token = gerar_token(usuario.id, usuario.tipo)
             return jsonify({'token': token, 'usuario': usuario.to_dict()}), 200
     except Exception:
@@ -237,7 +244,7 @@ def request_otp_email():
     expiracao = datetime.utcnow() + timedelta(
         minutes=int(os.environ.get('OTP_EXPIRATION_MINUTES', 10))
     )
-    
+
     otp = AuthOtpRequest(
         tipo='email',
         destino=email,
@@ -249,7 +256,8 @@ def request_otp_email():
 
     email_result = send_email_otp_message(email, codigo)
     if not email_result['success']:
-        current_app.logger.warning('[OTP Email] SMTP falhou para %s: %s', email, email_result['error'])
+        current_app.logger.warning(
+            '[OTP Email] SMTP falhou para %s: %s', email, email_result['error'])
         print(f'[OTP] Email fallback terminal: {email} -> Código: {codigo}')
         return jsonify({
             'mensagem': 'SMTP não configurado ou falhou. Consulte o terminal do backend para ver o código OTP.',
@@ -274,7 +282,8 @@ def verify_otp_email():
     telefone = data.get('telefone', '').strip()
     tipo = data.get('tipo', '').strip() or 'cliente'
     endereco_principal = (data.get('endereco_principal') or '').strip()
-    endereco_json = data.get('endereco_json') if isinstance(data.get('endereco_json'), dict) else None
+    endereco_json = data.get('endereco_json') if isinstance(
+        data.get('endereco_json'), dict) else None
     latitude = _to_float(data.get('latitude'))
     longitude = _to_float(data.get('longitude'))
 
@@ -297,7 +306,7 @@ def verify_otp_email():
     _, otp_error = _validate_local_otp('email', email, codigo)
     if otp_error:
         return otp_error
-    
+
     # Find or create user
     usuario = Usuario.query.filter_by(email=email).first()
     if not usuario:
@@ -326,7 +335,7 @@ def verify_otp_email():
         )
 
     db.session.commit()
-    
+
     token = gerar_token(usuario.id, usuario.tipo)
     return jsonify({'token': token, 'usuario': usuario.to_dict()}), 200
 
@@ -368,8 +377,10 @@ def request_otp_sms():
                 'telefone': result.get('phone', telefone_normalizado),
                 'provider': 'supabase'
             }), 200
-        erro_supabase = result.get('error') or 'Erro desconhecido ao enviar OTP por SMS.'
-        current_app.logger.warning('[OTP SMS] Supabase falhou para %s: %s', telefone_normalizado, erro_supabase)
+        erro_supabase = result.get(
+            'error') or 'Erro desconhecido ao enviar OTP por SMS.'
+        current_app.logger.warning(
+            '[OTP SMS] Supabase falhou para %s: %s', telefone_normalizado, erro_supabase)
 
         if not current_app.config.get('DEV_SMS_FALLBACK_ENABLED', True):
             erro_explicitado = erro_supabase
@@ -388,7 +399,7 @@ def request_otp_sms():
     expiracao = datetime.utcnow() + timedelta(
         minutes=current_app.config.get('OTP_EXPIRATION_MINUTES', 10)
     )
-    
+
     otp = AuthOtpRequest(
         tipo='sms',
         destino=telefone_normalizado,
@@ -398,10 +409,12 @@ def request_otp_sms():
     db.session.add(otp)
     db.session.commit()
 
-    current_app.logger.warning('[OTP SMS] Fallback local-dev ativo para %s. Código: %s', telefone_normalizado, codigo)
-    current_app.logger.warning('[OTP SMS] Motivo do fallback para %s: %s', telefone_normalizado, erro_supabase if 'erro_supabase' in locals() else 'Supabase client não inicializado.')
+    current_app.logger.warning(
+        '[OTP SMS] Fallback local-dev ativo para %s. Código: %s', telefone_normalizado, codigo)
+    current_app.logger.warning('[OTP SMS] Motivo do fallback para %s: %s', telefone_normalizado,
+                               erro_supabase if 'erro_supabase' in locals() else 'Supabase client não inicializado.')
     print(f'[OTP SMS] Phone: {telefone_normalizado} -> Código: {codigo}')
-    
+
     return jsonify({
         'mensagem': 'SMS indisponível no provedor atual. Em ambiente de desenvolvimento, consulte o terminal do backend para ver o código OTP gerado.',
         'telefone': telefone_normalizado,
@@ -420,7 +433,8 @@ def verify_otp_sms():
     email = data.get('email', '').strip().lower()
     tipo = data.get('tipo', '').strip() or 'cliente'
     endereco_principal = (data.get('endereco_principal') or '').strip()
-    endereco_json = data.get('endereco_json') if isinstance(data.get('endereco_json'), dict) else None
+    endereco_json = data.get('endereco_json') if isinstance(
+        data.get('endereco_json'), dict) else None
     latitude = _to_float(data.get('latitude'))
     longitude = _to_float(data.get('longitude'))
     telefone_normalizado = normalizar_telefone(normalize_phone(telefone))
@@ -465,7 +479,8 @@ def verify_otp_sms():
                 token = gerar_token(usuario.id, usuario.tipo)
                 return jsonify({'token': token, 'usuario': usuario.to_dict()}), 200
 
-            current_app.logger.warning('[OTP SMS] Verificação Supabase falhou para %s: %s', telefone_normalizado, result['error'])
+            current_app.logger.warning(
+                '[OTP SMS] Verificação Supabase falhou para %s: %s', telefone_normalizado, result['error'])
             if not current_app.config.get('DEV_SMS_FALLBACK_ENABLED', True):
                 erro_supabase = result['error']
                 if 'alpha' in erro_supabase.lower() or 'sender' in erro_supabase.lower():
@@ -481,7 +496,7 @@ def verify_otp_sms():
     _, otp_error = _validate_local_otp('sms', telefone_normalizado, codigo)
     if otp_error:
         return otp_error
-    
+
     # Find or create user by phone
     usuario = Usuario.query.filter_by(telefone=telefone_normalizado).first()
     if not usuario:
@@ -512,7 +527,7 @@ def verify_otp_sms():
         )
 
     db.session.commit()
-    
+
     token = gerar_token(usuario.id, usuario.tipo)
     return jsonify({'token': token, 'usuario': usuario.to_dict()}), 200
 
@@ -531,14 +546,13 @@ def login_google():
     if not (access_token or id_token or user_payload):
         return jsonify({'erro': 'Dados do Google obrigatórios'}), 400
 
-    sb = get_supabase()
-    if not sb:
-        return jsonify({'erro': 'Supabase não configurado'}), 503
-
     try:
         if user_payload:
             user_data = user_payload
         else:
+            sb = get_supabase()
+            if not sb:
+                return jsonify({'erro': 'Supabase não configurado'}), 503
             result = verify_oauth_token('google', id_token or access_token)
             if not result['success']:
                 return jsonify({'erro': result['error']}), 401
@@ -560,7 +574,7 @@ def login_google():
                 'tipo': metadata.get('tipo') or 'cliente',
             }
         )
-        
+
         token = gerar_token(usuario.id, usuario.tipo)
         return jsonify({'token': token, 'usuario': usuario.to_dict()}), 200
     except Exception as e:
@@ -576,14 +590,13 @@ def login_facebook():
     if not access_token and not user_payload:
         return jsonify({'erro': 'Token do Facebook obrigatório'}), 400
 
-    sb = get_supabase()
-    if not sb:
-        return jsonify({'erro': 'Supabase não configurado'}), 503
-
     try:
         if user_payload:
             user_data = user_payload
         else:
+            sb = get_supabase()
+            if not sb:
+                return jsonify({'erro': 'Supabase não configurado'}), 503
             result = verify_oauth_token('facebook', access_token)
             if not result['success']:
                 return jsonify({'erro': result['error']}), 401
@@ -592,9 +605,9 @@ def login_facebook():
         email = user_data.get('email', '')
         if not email:
             return jsonify({'erro': 'Facebook account must have email'}), 400
-        
+
         email = email.lower()
-        
+
         metadata = user_data.get('user_metadata', {}) or {}
         usuario = _sync_usuario_from_auth(
             user_data,
@@ -605,7 +618,7 @@ def login_facebook():
                 'tipo': metadata.get('tipo') or 'cliente',
             }
         )
-        
+
         token = gerar_token(usuario.id, usuario.tipo)
         return jsonify({'token': token, 'usuario': usuario.to_dict()}), 200
     except Exception as e:

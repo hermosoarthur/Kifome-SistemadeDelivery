@@ -2,11 +2,13 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
+import { NotificationsProvider } from './contexts/NotificationsContext';
 import Layout from './components/Layout';
 import Carrinho from './pages/cliente/Carrinho';
 
 // Shared
 import { Login, Registro } from './pages/shared/Auth';
+import LoginRestaurante from './pages/shared/LoginRestaurante';
 import { AuthCallback } from './pages/shared/AuthCallback';
 import './pages/shared/Auth.css';
 import Perfil from './pages/shared/Perfil';
@@ -18,6 +20,8 @@ import './pages/cliente/ClienteHome.css';
 import MeusPedidos from './pages/cliente/MeusPedidos';
 import RestaurantePage from './pages/cliente/Restaurante';
 import FinalizarPedido from './pages/cliente/FinalizarPedido';
+import PagamentoRetorno from './pages/cliente/PagamentoRetorno';
+import AcompanharPedido from './pages/cliente/AcompanharPedido';
 import './pages/cliente/Restaurante.css';
 
 // Restaurante
@@ -80,6 +84,7 @@ function AppRoutes() {
     <Routes>
       {/* Públicas */}
       <Route path="/login" element={<SoPublica><Login /></SoPublica>} />
+      <Route path="/login/restaurante" element={<SoPublica><LoginRestaurante /></SoPublica>} />
       <Route path="/registro" element={<SoPublica><Registro /></SoPublica>} />
       <Route path="/auth/callback" element={<AuthCallback />} />
 
@@ -96,6 +101,10 @@ function AppRoutes() {
       <Route path="/carrinho" element={<Protegida><Layout><Carrinho /></Layout></Protegida>} />
   <Route path="/finalizar-pedido" element={<Protegida><Layout><FinalizarPedido /></Layout></Protegida>} />
       <Route path="/restaurante/:id" element={<Protegida><Layout><RestaurantePage /></Layout></Protegida>} />
+
+      {/* ── Pagamento retorno MP ── */}
+      <Route path="/pagamento/retorno" element={<Protegida><Layout><PagamentoRetorno /></Layout></Protegida>} />
+      <Route path="/acompanhar-pedido/:pid" element={<Protegida><Layout><AcompanharPedido /></Layout></Protegida>} />
 
       {/* ── RESTAURANTE ── */}
       <Route path="/meu-restaurante" element={<Protegida><Layout><MeuRestaurante /></Layout></Protegida>} />
@@ -117,9 +126,12 @@ export default function App() {
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthProvider>
         <CartProvider>
-          <AppRoutes />
+          <NotificationsProvider>
+            <AppRoutes />
+          </NotificationsProvider>
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>
   );
 }
+

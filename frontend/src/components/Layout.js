@@ -111,7 +111,7 @@ export default function Layout({ children }) {
       )}
 
       <main className="layout-main">
-        <Header onToggleSidebar={() => setAberto(!aberto)} />
+        {tipo === 'cliente' && <Header onToggleSidebar={() => setAberto(!aberto)} />}
         <div className="layout-content">{children}</div>
       </main>
     </div>

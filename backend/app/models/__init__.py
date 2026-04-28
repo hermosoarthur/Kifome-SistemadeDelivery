@@ -2,6 +2,12 @@
 from datetime import datetime
 from app import db
 
+# ── STATUS VÁLIDOS DE PEDIDO ──────────────────────────────────────────────────
+STATUS_PEDIDO_VALIDOS = [
+    'aguardando', 'confirmado', 'preparando', 'saiu_para_entrega',
+    'entregue_aguardando_confirmacao_cliente', 'entregue', 'cancelado',
+]
+
 
 class Usuario(db.Model):
     __tablename__ = 'usuarios'
@@ -99,7 +105,7 @@ class Pedido(db.Model):
     cliente_id = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='CASCADE'), nullable=False)
     restaurante_id = db.Column(db.Integer, db.ForeignKey('restaurantes.id', ondelete='CASCADE'), nullable=False)
     entregador_id = db.Column(db.Integer, db.ForeignKey('entregadores.id', ondelete='SET NULL'), nullable=True)
-    status = db.Column(db.String(20), default='aguardando')
+    status = db.Column(db.String(50), default='aguardando')
     endereco_entrega = db.Column(db.String(500), nullable=False)
     endereco_detalhes = db.Column(db.JSON, nullable=True)
     endereco_latitude = db.Column(db.Float, nullable=True)
@@ -112,6 +118,27 @@ class Pedido(db.Model):
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # ── Sprint 3: Entrega ──────────────────────────────────────────────────────
+    tipo_entrega = db.Column(db.String(20), nullable=True, default='padrao')      # padrao | rapida
+    taxa_entrega = db.Column(db.Numeric(10, 2), nullable=True, default=0.0)
+
+    # ── Sprint 3: Pagamento ────────────────────────────────────────────────────
+    pagamento_contexto = db.Column(db.String(20), nullable=True)                  # site | entrega
+    pagamento_metodo = db.Column(db.String(30), nullable=True)                    # pix | cartao_app | dinheiro | maquininha
+    pagamento_status = db.Column(db.String(20), nullable=True, default='pendente')# pendente | aprovado | recusado | cancelado
+    pagamento_provedor = db.Column(db.String(50), nullable=True)
+    pagamento_preference_id = db.Column(db.String(200), nullable=True)
+    pagamento_transaction_id = db.Column(db.String(200), nullable=True)
+
+    # ── Sprint 3: Código de validação entrega ─────────────────────────────────
+    codigo_entrega_hash = db.Column(db.String(255), nullable=True)
+    codigo_entrega_expira_em = db.Column(db.DateTime, nullable=True)
+    codigo_entrega_enviado_em = db.Column(db.DateTime, nullable=True)
+
+    # ── Sprint 3: Confirmação cliente ─────────────────────────────────────────
+    entregue_confirmado_cliente_em = db.Column(db.DateTime, nullable=True)
+    entregue_confirmado_cliente_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'), nullable=True)
+
     itens = db.relationship('ItemPedido', backref='pedido', lazy='dynamic', cascade='all, delete-orphan')
 
     def to_dict(self):
@@ -123,9 +150,18 @@ class Pedido(db.Model):
             'endereco_latitude': self.endereco_latitude,
             'endereco_longitude': self.endereco_longitude,
             'total': float(self.total), 'observacao': self.observacao,
+            'tipo_entrega': self.tipo_entrega,
+            'taxa_entrega': float(self.taxa_entrega) if self.taxa_entrega is not None else 0.0,
+            'pagamento_contexto': self.pagamento_contexto,
+            'pagamento_metodo': self.pagamento_metodo,
+            'pagamento_status': self.pagamento_status,
+            'pagamento_preference_id': self.pagamento_preference_id,
             'avaliacao_nota': self.avaliacao_nota,
             'avaliacao_comentario': self.avaliacao_comentario,
             'avaliacao_em': self.avaliacao_em.isoformat() if self.avaliacao_em else None,
+            'codigo_entrega_expira_em': self.codigo_entrega_expira_em.isoformat() if self.codigo_entrega_expira_em else None,
+            'codigo_entrega_enviado_em': self.codigo_entrega_enviado_em.isoformat() if self.codigo_entrega_enviado_em else None,
+            'entregue_confirmado_cliente_em': self.entregue_confirmado_cliente_em.isoformat() if self.entregue_confirmado_cliente_em else None,
             'criado_em': self.criado_em.isoformat() if self.criado_em else None,
             'atualizado_em': self.atualizado_em.isoformat() if self.atualizado_em else None,
             'restaurante': self.restaurante.to_dict() if self.restaurante else None,
@@ -189,4 +225,33 @@ class AuthOtpRequest(db.Model):
             'id': self.id, 'tipo': self.tipo, 'destino': self.destino,
             'tentativas': self.tentativas, 'max_tentativas': self.max_tentativas,
             'expiracao': self.expiracao.isoformat() if self.expiracao else None,
+        }
+
+
+class Notificacao(db.Model):
+    """Notificações persistidas para os usuários."""
+    __tablename__ = 'notificacoes'
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='CASCADE'), nullable=False, index=True)
+    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id', ondelete='SET NULL'), nullable=True, index=True)
+    tipo = db.Column(db.String(50), nullable=False)       # ex: pedido_criado, status_mudou, codigo_entrega, etc.
+    titulo = db.Column(db.String(200), nullable=False)
+    mensagem = db.Column(db.Text, nullable=False)
+    dados_json = db.Column(db.JSON, nullable=True)
+    lida = db.Column(db.Boolean, default=False, nullable=False)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    lida_em = db.Column(db.DateTime, nullable=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'usuario_id': self.usuario_id,
+            'pedido_id': self.pedido_id,
+            'tipo': self.tipo,
+            'titulo': self.titulo,
+            'mensagem': self.mensagem,
+            'dados_json': self.dados_json,
+            'lida': self.lida,
+            'criado_em': self.criado_em.isoformat() if self.criado_em else None,
+            'lida_em': self.lida_em.isoformat() if self.lida_em else None,
         }

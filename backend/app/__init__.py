@@ -37,7 +37,9 @@ def get_supabase():
 
 
 def add_cors(response):
-    response.headers['Access-Control-Allow-Origin'] = '*'
+    frontend_url = os.environ.get('FRONTEND_URL', '')
+    origin = frontend_url if frontend_url else '*'
+    response.headers['Access-Control-Allow-Origin'] = origin
     response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
     return response
@@ -75,6 +77,8 @@ def create_app(config_name=None):
     from app.routes.entregador_routes import entregadores_bp
     from app.routes.produto_routes import produtos_bp
     from app.routes.pedido_routes import pedidos_bp
+    from app.routes.notificacao_routes import notificacoes_bp
+    from app.routes.pagamento_routes import pagamentos_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(usuarios_bp)
@@ -82,6 +86,8 @@ def create_app(config_name=None):
     app.register_blueprint(entregadores_bp)
     app.register_blueprint(produtos_bp)
     app.register_blueprint(pedidos_bp)
+    app.register_blueprint(notificacoes_bp)
+    app.register_blueprint(pagamentos_bp)
 
     @app.route('/api/health')
     def health():

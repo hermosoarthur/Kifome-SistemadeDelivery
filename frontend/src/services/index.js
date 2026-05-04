@@ -74,8 +74,27 @@ export const pedidoService = {
   meus: () => api.get('/api/pedidos/meus').then(r => r.data),
   doRestaurante: (rid, params) => api.get(`/api/pedidos/restaurante/${rid}`, { params }).then(r => r.data),
   atualizarStatus: (pid, status) => api.put(`/api/pedidos/${pid}/status`, { status }).then(r => r.data),
+  avaliar: (pid, nota, comentario) => api.post(`/api/pedidos/${pid}/avaliar`, { nota, comentario }).then(r => r.data),
   disponiveis: () => api.get('/api/pedidos/disponiveis').then(r => r.data),
   minhasEntregas: () => api.get('/api/pedidos/entregas').then(r => r.data),
+  validarEntrega: (pid, codigo) => api.post(`/api/pedidos/${pid}/validar-entrega`, { codigo }).then(r => r.data),
+  confirmarRecebimento: (pid) => api.post(`/api/pedidos/${pid}/confirmar-recebimento`).then(r => r.data),
+  simularPasso: (pid) => api.post(`/api/pedidos/${pid}/simular-passo`).then(r => r.data),
+  codigoEntrega: (pid) => api.get(`/api/pedidos/${pid}/codigo-entrega`).then(r => r.data),
+};
+
+// Notificações
+export const notificacaoService = {
+  minhas: (params) => api.get('/api/notificacoes/minhas', { params }).then(r => r.data),
+  marcarLida: (nid) => api.put(`/api/notificacoes/${nid}/lida`).then(r => r.data),
+  marcarTodasLidas: () => api.put('/api/notificacoes/marcar-todas-lidas').then(r => r.data),
+};
+
+// Pagamento Mercado Pago
+export const pagamentoService = {
+  criarPreferencia: (pedido_id) => api.post('/api/pagamentos/mp/preferencia', { pedido_id }).then(r => r.data),
+  statusPedido: (pid) => api.get(`/api/pagamentos/mp/pedido/${pid}/status`).then(r => r.data),
+  confirmarSandbox: (pid) => api.post(`/api/pagamentos/mp/sandbox/${pid}/confirmar`).then(r => r.data),
 };
 
 // Entregador

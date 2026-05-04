@@ -1,6 +1,7 @@
 // Arquivo: frontend/src/pages/restaurante/MeuRestaurante.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { restauranteService } from '../../services';
+import AddressModal from '../../components/address/AddressModal';
 
 const CATS = ['Italiana','Japonesa','Brasileira','Árabe','Chinesa','Americana','Mexicana','Fitness','Pizzaria','Hamburgeria','Açaí'];
 
@@ -9,10 +10,11 @@ export default function MeuRestaurante() {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
-  const [form, setForm] = useState({ nome_fantasia: '', descricao: '', endereco: '', telefone: '', categoria: '', imagem_url: '' });
+  const [form, setForm] = useState({ nome_fantasia: '', descricao: '', endereco: '', telefone: '', categoria: '', imagem_url: '', latitude: null, longitude: null, endereco_json: null });
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
   const [msg, setMsg] = useState('');
+  const [addressModal, setAddressModal] = useState(false);
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -25,7 +27,20 @@ export default function MeuRestaurante() {
 
   function abrirModal(item = null) {
     setEditItem(item);
-    setForm(item ? { nome_fantasia: item.nome_fantasia || '', descricao: item.descricao || '', endereco: item.endereco || '', telefone: item.telefone || '', categoria: item.categoria || '', imagem_url: item.imagem_url || '' } : { nome_fantasia: '', descricao: '', endereco: '', telefone: '', categoria: '', imagem_url: '' });
+    setForm(item ? {
+      nome_fantasia: item.nome_fantasia || '',
+      descricao: item.descricao || '',
+      endereco: item.endereco || '',
+      telefone: item.telefone || '',
+      categoria: item.categoria || '',
+      imagem_url: item.imagem_url || '',
+      latitude: item.latitude || null,
+      longitude: item.longitude || null,
+      endereco_json: item.endereco_json || null,
+    } : {
+      nome_fantasia: '', descricao: '', endereco: '', telefone: '', categoria: '', imagem_url: '',
+      latitude: null, longitude: null, endereco_json: null,
+    });
     setErro(''); setModal(true);
   }
 
@@ -115,7 +130,23 @@ export default function MeuRestaurante() {
                   <div className="form-group"><label>Nome fantasia *</label><div className="input-box"><input type="text" placeholder="Ex: Pizzaria do João" value={form.nome_fantasia} onChange={e => set('nome_fantasia', e.target.value)} /></div></div>
                   <div className="form-group"><label>Telefone</label><div className="input-box"><input type="tel" placeholder="(11) 99999-9999" value={form.telefone} onChange={e => set('telefone', e.target.value)} /></div></div>
                 </div>
-                <div className="form-group"><label>Endereço *</label><div className="input-box"><input type="text" placeholder="Rua, número, bairro" value={form.endereco} onChange={e => set('endereco', e.target.value)} /></div></div>
+                <div className="form-group">
+                  <label>Endereço *</label>
+                  <div className="input-box" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} onClick={() => setAddressModal(true)}>
+                    <span style={{ fontSize: 18, flexShrink: 0 }}>📍</span>
+                    <span style={{ flex: 1, color: form.endereco ? '#2d3038' : '#999', fontSize: 14 }}>
+                      {form.endereco || 'Clique para selecionar no mapa'}
+                    </span>
+                    <span style={{ color: '#6C63FF', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>
+                      {form.endereco ? 'Alterar' : 'Buscar'}
+                    </span>
+                  </div>
+                  {form.latitude && form.longitude && (
+                    <small style={{ color: '#888', marginTop: 4, display: 'block' }}>
+                      📌 Coordenadas: {Number(form.latitude).toFixed(5)}, {Number(form.longitude).toFixed(5)}
+                    </small>
+                  )}
+                </div>
                 <div className="form-group"><label>Descrição</label><div className="input-box"><textarea placeholder="Conte sobre seu restaurante..." value={form.descricao} onChange={e => set('descricao', e.target.value)} /></div></div>
                 <div className="form-row">
                   <div className="form-group"><label>Categoria</label><div className="input-box"><select value={form.categoria} onChange={e => set('categoria', e.target.value)}><option value="">Selecione...</option>{CATS.map(c => <option key={c} value={c}>{c}</option>)}</select></div></div>
@@ -130,6 +161,33 @@ export default function MeuRestaurante() {
           </div>
         </div>
       )}
+
+      <AddressModal
+        isOpen={addressModal}
+        title="Endereço do restaurante"
+        subtitle="Busque no mapa ou preencha manualmente o endereço do seu estabelecimento."
+        confirmLabel="Confirmar endereço"
+        initialValue={{
+          formatted_address: form.endereco_json?.formatted_address || form.endereco || '',
+          endereco_principal: form.endereco || '',
+          lat: form.latitude,
+          lng: form.longitude,
+          details: form.endereco_json?.details || {},
+        }}
+        required
+        onClose={() => setAddressModal(false)}
+        onSave={(address) => {
+          const enderecoText = address?.endereco_principal || address?.formatted_address || '';
+          setForm(prev => ({
+            ...prev,
+            endereco: enderecoText.slice(0, 200),
+            latitude: address?.lat ?? null,
+            longitude: address?.lng ?? null,
+            endereco_json: address,
+          }));
+          setAddressModal(false);
+        }}
+      />
     </div>
   );
 }

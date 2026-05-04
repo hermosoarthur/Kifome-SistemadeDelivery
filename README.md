@@ -135,6 +135,12 @@ pip install -r requirements.txt
 python run.py
 ```
 
+> Em ambiente de desenvolvimento, ao rodar `python run.py`, o projeto executa **seed automática de restaurantes e produtos demo** quando o banco estiver vazio.
+>
+> Para desativar o comportamento, configure:
+>
+> - `AUTO_SEED_DEMO=false`
+
 ### Frontend
 
 ```powershell

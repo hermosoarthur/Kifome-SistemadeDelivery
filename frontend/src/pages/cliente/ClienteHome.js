@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCart } from '../../contexts/CartContext';
 import { restauranteService } from '../../services';
 import RestaurantCard from '../../components/RestaurantCard';
 import './ClienteHome.css';
@@ -26,6 +27,7 @@ const CATS = [
 export default function ClienteHome() {
   const { tipo } = useParams();
   const { usuario } = useAuth();
+  const { count: cartCount } = useCart();
   const navigate = useNavigate();
 
   // Refs para os dois carrosséis
@@ -35,7 +37,6 @@ export default function ClienteHome() {
   const [restaurantes, setRestaurantes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [catAtiva, setCatAtiva] = useState('');
-  const [cartCount, setCartCount] = useState(0);
 
   const carregar = useCallback(async (filtros = {}) => {
     setLoading(true);
@@ -62,16 +63,6 @@ export default function ClienteHome() {
     carregar();
     if (!tipo) setCatAtiva(''); // Reseta a bolinha ativa se voltar para o início
   }, [tipo, carregar]);
-
-  useEffect(() => {
-    const atualizar = () => {
-      const c = JSON.parse(localStorage.getItem('@kifome:carrinho') || '{}');
-      setCartCount(Object.values(c).reduce((a, b) => a + Number(b), 0));
-    };
-    atualizar();
-    window.addEventListener('storage', atualizar);
-    return () => window.removeEventListener('storage', atualizar);
-  }, []);
 
   // Função de Scroll genérica
   const handleScroll = (ref, direction) => {

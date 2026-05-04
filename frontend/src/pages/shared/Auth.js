@@ -363,6 +363,10 @@ export function Login() {
       {method === AUTH_METHODS.SMS_OTP && step === 'sms-code' && enviouSms && (
         <LoginOtpStep title="Digite o código enviado por SMS" subtitle={telefone} code={codigoSms} setCode={setCodigoSms} loading={loading} onSubmit={handleVerifySms} onBack={() => { setEnviouSms(false); setStep('sms-entry'); }} buttonText="Entrar" />
       )}
+
+      <div className="auth-restaurant-link-wrapper">
+        <Link to="/login/restaurante" className="auth-restaurant-link">Sou restaurante</Link>
+      </div>
     </AuthShell>
   );
 }
@@ -380,7 +384,7 @@ export function Registro() {
   const [step, setStep] = useState(1); // 1: form, 2: otp verify
 
   // Form
-  const [form, setForm] = useState({ nome: '', email: '' });
+  const [form, setForm] = useState({ nome: '', email: '', telefone: '' });
   const [codigo, setCodigo] = useState('');
 
   const TIPOS = [
@@ -392,8 +396,28 @@ export function Registro() {
   async function handleSubmitForm(e) {
     e.preventDefault();
     if (!form.nome.trim() || !form.email.trim()) {
-      setErro('Preencha todos os campos');
+      setErro('Preencha todos os campos obrigatórios');
       return;
+    }
+    if (form.nome.trim().length > 100) {
+      setErro('Nome deve ter no máximo 100 caracteres');
+      return;
+    }
+    const emailVal = form.email.trim().toLowerCase();
+    if (emailVal.length < 5 || emailVal.length > 150) {
+      setErro('E-mail deve ter entre 5 e 150 caracteres');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+      setErro('Formato de e-mail inválido');
+      return;
+    }
+    if (form.telefone.trim()) {
+      const telDigits = form.telefone.replace(/\D/g, '');
+      if (telDigits.length < 10 || telDigits.length > 15) {
+        setErro('Telefone deve ter entre 10 e 15 dígitos');
+        return;
+      }
     }
     
     setLoading(true);
@@ -422,8 +446,9 @@ export function Registro() {
     setSucesso('');
     try {
       await verifyOtpEmail(form.email.trim().toLowerCase(), codigo, {
-        nome: form.nome,
+        nome: form.nome.trim(),
         tipo: tipoSelecionado,
+        ...(form.telefone.trim() ? { telefone: form.telefone.replace(/\D/g, '') } : {}),
       });
       navigate('/');
     } catch (err) {
@@ -435,60 +460,147 @@ export function Registro() {
 
   return (
     <AuthShell>
-      {erro && <AuthAlert type="error">{erro}</AuthAlert>}
-      {sucesso && <AuthAlert type="success">{sucesso}</AuthAlert>}
+      {erro && <AuthAlert type="error" onClose={() => setErro('')}>{erro}</AuthAlert>}
+      {sucesso && <AuthAlert type="success" onClose={() => setSucesso('')}>{sucesso}</AuthAlert>}
 
-          {/* STEP 1: FORM */}
+      {/* STEP 1: FORM */}
       {step === 1 && (
-        <form onSubmit={handleSubmitForm} className="auth-form smart-form">
-          <div className="tipo-grid tipo-grid-3">
+        <form onSubmit={handleSubmitForm} className="registro-form">
+          <div className="registro-heading">
+            <h2>Criar sua conta</h2>
+            <p>Escolha o perfil e preencha seus dados</p>
+          </div>
+
+          <div className="registro-tipo-grid">
             {TIPOS.map(tipo => (
-              <button key={tipo.v} type="button" className={`tipo-card ${tipoSelecionado === tipo.v ? 'active' : ''}`} onClick={() => setTipoSelecionado(tipo.v)}>
-                <span className="tipo-emoji">{tipo.e}</span>
-                <div>
-                  <span className="tipo-name">{tipo.l}</span>
-                  <span className="tipo-desc">{tipo.desc}</span>
-                </div>
+              <button
+                key={tipo.v}
+                type="button"
+                className={`registro-tipo-card${tipoSelecionado === tipo.v ? ' selected' : ''}`}
+                onClick={() => setTipoSelecionado(tipo.v)}
+              >
+                <span className="registro-tipo-emoji">{tipo.e}</span>
+                <span className="registro-tipo-name">{tipo.l}</span>
+                <span className="registro-tipo-desc">{tipo.desc}</span>
+                {tipoSelecionado === tipo.v && <span className="registro-tipo-check">✓</span>}
               </button>
             ))}
           </div>
 
-          <AuthField label="Seu nome" icon="👤">
-            <input type="text" placeholder="João Silva" value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} className="form-input" required />
-          </AuthField>
-
-          <AuthField label="E-mail" icon="📧">
-            <input type="email" placeholder="seu@email.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} autoComplete="email" className="form-input" required />
-          </AuthField>
-
-          <div className="auth-info-banner gradient">
-            <strong>Sem senha, menos fricção</strong>
-            <p>Seu acesso é por e-mail com código OTP, sem necessidade de senha ou celular.</p>
+          <div className="registro-field">
+            <label className="registro-label">Seu nome *</label>
+            <div className="registro-input-wrap">
+              <span className="registro-input-icon">👤</span>
+              <input
+                type="text"
+                className="registro-input"
+                placeholder="João Silva"
+                value={form.nome}
+                onChange={e => setForm({ ...form, nome: e.target.value })}
+                maxLength={100}
+                required
+              />
+            </div>
           </div>
 
-          <button type="submit" className="btn-submit" disabled={loading}>
-            {loading ? <><span className="btn-loader"></span>Enviando código...</> : <><span>Continuar cadastro</span><span className="btn-arrow">→</span></>}
+          <div className="registro-field">
+            <label className="registro-label">E-mail *</label>
+            <div className="registro-input-wrap">
+              <span className="registro-input-icon">📧</span>
+              <input
+                type="email"
+                className="registro-input"
+                placeholder="seu@email.com"
+                value={form.email}
+                onChange={e => setForm({ ...form, email: e.target.value })}
+                autoComplete="email"
+                maxLength={150}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="registro-field">
+            <label className="registro-label">Telefone</label>
+            <div className="registro-input-wrap registro-phone-wrap">
+              <span className="registro-phone-flag">🇧🇷 +55</span>
+              <input
+                type="tel"
+                className="registro-input registro-input-phone"
+                placeholder="(11) 99999-9999"
+                value={form.telefone}
+                onChange={e => {
+                  const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
+                  let formatted = digits;
+                  if (digits.length > 2 && digits.length <= 7) formatted = `(${digits.slice(0,2)}) ${digits.slice(2)}`;
+                  else if (digits.length > 7) formatted = `(${digits.slice(0,2)}) ${digits.slice(2,7)}-${digits.slice(7)}`;
+                  setForm({ ...form, telefone: formatted });
+                }}
+              />
+            </div>
+            <span className="registro-field-hint">Opcional — usado para receber atualizações</span>
+          </div>
+
+          <div className="registro-info-banner">
+            <div className="registro-info-icon">🔒</div>
+            <div>
+              <strong>Sem senha, menos fricção</strong>
+              <p>Seu acesso é por e-mail com código OTP, sem necessidade de senha ou celular.</p>
+            </div>
+          </div>
+
+          <button type="submit" className="registro-submit" disabled={loading}>
+            {loading ? (
+              <><span className="registro-spinner" />Enviando código...</>
+            ) : (
+              <>Continuar cadastro<span className="registro-submit-arrow">→</span></>
+            )}
           </button>
         </form>
       )}
 
-          {/* STEP 2: OTP */}
+      {/* STEP 2: OTP */}
       {step === 2 && (
-        <form onSubmit={handleVerifyAndRegister} className="auth-form smart-form">
-          <OtpStepHeader title="Confirme seu e-mail" subtitle={`Código enviado para ${form.email}`} onBack={() => setStep(1)} />
-          <div className="form-field auth-field">
-            <label className="form-label">Digite o código de 6 dígitos</label>
-            <input type="text" placeholder="000000" value={codigo} onChange={e => setCodigo(e.target.value.slice(0, 6))} maxLength="6" className="form-input otp-input auth-otp-input" required />
+        <form onSubmit={handleVerifyAndRegister} className="registro-form">
+          <div className="registro-otp-header">
+            <button type="button" className="registro-back-btn" onClick={() => setStep(1)}>
+              <span>←</span> Voltar
+            </button>
+            <div className="registro-otp-title">
+              <h3>Confirme seu e-mail</h3>
+              <p>Código enviado para <strong>{form.email}</strong></p>
+            </div>
           </div>
-          <button type="submit" className="btn-submit" disabled={loading || codigo.length < 6}>
-            {loading ? <><span className="btn-loader"></span>Criando conta...</> : <><span>Confirmar e entrar</span><span className="btn-arrow">→</span></>}
+
+          <div className="registro-field">
+            <label className="registro-label">Digite o código de 6 dígitos</label>
+            <input
+              type="text"
+              className="registro-input registro-otp-input"
+              placeholder="000000"
+              value={codigo}
+              onChange={e => setCodigo(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              maxLength="6"
+              required
+            />
+          </div>
+
+          <button type="submit" className="registro-submit" disabled={loading || codigo.length < 6}>
+            {loading ? (
+              <><span className="registro-spinner" />Criando conta...</>
+            ) : (
+              <>Confirmar e entrar<span className="registro-submit-arrow">→</span></>
+            )}
           </button>
-          <p className="form-hint centered-hint">Não recebeu? <button type="button" className="link-btn" onClick={() => setStep(1)}>Enviar novamente</button></p>
+
+          <p className="registro-hint">
+            Não recebeu? <button type="button" className="registro-link-btn" onClick={() => setStep(1)}>Enviar novamente</button>
+          </p>
         </form>
       )}
 
-      <div className="form-footer auth-footer-note">
-        <p>Já tem conta? <Link to="/login" className="link">Entrar</Link></p>
+      <div className="registro-footer">
+        <p>Já tem conta? <Link to="/login" className="registro-footer-link">Entrar</Link></p>
       </div>
     </AuthShell>
   );

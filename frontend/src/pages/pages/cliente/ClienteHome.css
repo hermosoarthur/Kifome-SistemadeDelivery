@@ -1,4 +1,4 @@
-﻿.cliente-home { min-height: 100vh; }
+.cliente-home { min-height: 100vh; }
 
 .ch-page { display: grid; gap: 24px; }
 
@@ -20,7 +20,7 @@
   z-index: 2;
 }
 
-/* SaudaÃ§Ã£o no canto esquerdo */
+/* Saudação no canto esquerdo */
 .ch-greeting-wrapper {
   text-align: left;
 }
@@ -40,7 +40,7 @@
   line-height: 1.45;
 }
 
-/* CÃ­rculos decorativos leves */
+/* Círculos decorativos leves */
 .ch-hero::before,
 .ch-hero::after {
   content: '';
@@ -63,7 +63,7 @@
   left: -45px; 
 }
 
-/* CÃ­rculos decorativos (suaves) */
+/* Círculos decorativos (suaves) */
 .ch-hero::before,
 .ch-hero::after {
   content: '';
@@ -112,7 +112,7 @@
   background: #41c484;
   color: #fff;
   padding: 15px 20px;
-  border-radius: 16px;           /* â† principal mudanÃ§a */
+  border-radius: 16px;           /* ← principal mudança */
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   position: relative;
   z-index: 10;
@@ -145,7 +145,7 @@
   cursor: pointer;
 }
 
-/* Ãšltimas lojas */
+/* Últimas lojas */
 .ultimas-lojas { margin: 18px 0 12px; }
 .ultimas-list { display:flex; gap:12px; align-items:center; }
 .ultimas-card { display:flex; gap:12px; align-items:center; padding:14px 18px; border-radius:14px; background:#fff; border:1px solid #f3ecec; cursor:pointer; min-width:280px; box-shadow: 0 8px 20px rgba(10,15,20,0.04); }
@@ -153,7 +153,7 @@
 .ultimas-info { font-size:14px; color:var(--texto); }
 .link-like { background:none; border:none; color:var(--primaria); font-weight:700; cursor:pointer; }
 
-/* BotÃ£o flutuante do carrinho */
+/* Botão flutuante do carrinho */
 .cart-float { position: fixed; right: 22px; bottom: 22px; z-index: 1200; display:flex; align-items:center; gap:8px; padding:12px 14px; background: linear-gradient(180deg, var(--primaria), var(--primaria-dark)); color:#fff; border:none; border-radius:999px; box-shadow: 0 18px 40px rgba(0,0,0,0.25); cursor:pointer; font-weight:800; }
 .cart-float .cart-count { background: #fff; color: var(--primaria); border-radius:999px; padding:4px 8px; font-size:13px; font-weight:900; }
 .cart-float .cart-emoji { font-size:18px; }
@@ -310,7 +310,7 @@
 .order-progress-icon { font-size: 11px; color: var(--texto-claro); }
 .order-progress-step.active .order-progress-icon { color: var(--primaria); }
 
-/* AvaliaÃ§Ã£o do Pedido */
+/* Avaliação do Pedido */
 .order-avaliacao { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--bordas); }
 
 .star-rating { display: flex; gap: 4px; }
@@ -369,7 +369,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  min-width: 90px; /* Largura mÃ­nima para os itens do carrossel */
+  min-width: 90px; /* Largura mínima para os itens do carrossel */
   flex-shrink: 0;
 }
 
@@ -377,7 +377,7 @@
   width: 80px;
   height: 80px;
   background: #f7f7f700;
-  border-radius: 50%; /* CÃ­rculos perfeitos do iFood */
+  border-radius: 50%; /* Círculos perfeitos do iFood */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -396,7 +396,7 @@
   color: #66666600;
 }
 
-/* Ajuste de imagens para nÃ£o ficarem gigantes */
+/* Ajuste de imagens para não ficarem gigantes */
 .r-img {
   width: 100%;
   height: 160px;
@@ -446,16 +446,16 @@
   display: none; /* Esconde barra no Chrome/Safari */
 }
 
-/* BOTÃƒO DA CATEGORIA */
+/* BOTÃO DA CATEGORIA */
 .cat-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 88px; /* Garante que os itens nÃ£o esmaguem */
+  min-width: 88px; /* Garante que os itens não esmaguem */
   background: none;
   border: none;
   cursor: pointer;
-  flex-shrink: 0; /* Impede que o flexbox diminua o botÃ£o */
+  flex-shrink: 0; /* Impede que o flexbox diminua o botão */
   transition: transform 0.2s ease;
 }
 
@@ -535,7 +535,7 @@
 .cat-circle {
   width: 80px;
   height: 80px;
-  border-radius: 50% !important; /* CÃ­rculo iFood */
+  border-radius: 50% !important; /* Círculo iFood */
   background: #f7f7f7;
   display: flex;
   align-items: center;
@@ -570,7 +570,7 @@
   display: none; /* Chrome */
 }
 
-/* Card das Ãºltimas lojas */
+/* Card das últimas lojas */
 .ultimas-card {
   min-width: 280px; /* Importante: impede que os cards fiquem pequenos */
   flex-shrink: 0;
@@ -659,22 +659,22 @@
 .coupon-cta:hover {
   background: rgba(255, 255, 255, 0.3);
 }
-/* AJUSTE DE POSICIONAMENTO E ESPAÃ‡AMENTO */
+/* AJUSTE DE POSICIONAMENTO E ESPAÇAMENTO */
 
 .cliente-home {
-    display: block; /* Garante que os elementos ocupem a largura toda e fiquem Ã  esquerda */
+    display: block; /* Garante que os elementos ocupem a largura toda e fiquem à esquerda */
     text-align: left; /* Alinha todos os textos para a esquerda */
 }
 
 .section {
     width: 100%;
-    margin-top: 50px !important; /* MantÃ©m o respiro da curva do Hero */
-    padding: 0 4%; /* Margem lateral suave para nÃ£o colar na ponta da tela */
+    margin-top: 50px !important; /* Mantém o respiro da curva do Hero */
+    padding: 0 4%; /* Margem lateral suave para não colar na ponta da tela */
 }
 
 .section-header {
     display: flex;
-    justify-content: flex-start; /* Alinha o tÃ­tulo e o "Ver todos" Ã  esquerda */
+    justify-content: flex-start; /* Alinha o título e o "Ver todos" à esquerda */
     align-items: center;
     gap: 15px;
     margin-bottom: 20px;

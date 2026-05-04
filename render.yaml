@@ -73,7 +73,7 @@ services:
         sync: false
       - key: REACT_APP_SUPABASE_ANON_KEY
         sync: false
-      - key: REACT_APP_GOOGLE_MAPS_KEY
+      - key: REACT_APP_GOOGLE_MAPS_API_KEY
         sync: false
 
 # ─── BANCO DE DADOS PostgreSQL ────────────────────────────────────────────

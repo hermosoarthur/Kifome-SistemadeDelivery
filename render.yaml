@@ -44,6 +44,8 @@ services:
         value: supabase
       - key: AUTO_SEED_DEMO
         value: "false"
+      - key: ADMIN_SEED_SECRET
+        sync: false          # senha para acionar o seed via POST /api/admin/seed?secret=VALOR
       - key: MP_ACCESS_TOKEN
         sync: false          # Token do Mercado Pago (produção ou sandbox)
       - key: MP_PUBLIC_KEY

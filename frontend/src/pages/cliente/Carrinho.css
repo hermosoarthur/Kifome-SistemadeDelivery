@@ -31,3 +31,16 @@
 	.cart-main { flex: 2; }
 	.cart-aside { flex: 1; position: sticky; top: 80px; }
 }
+
+@media (max-width: 480px) {
+  .carrinho-page { padding: 12px; }
+  .cart-main, .cart-aside { border-radius: 14px; padding: 14px; }
+  /* Item do carrinho mais compacto em mobile pequeno */
+  .cart-item { flex-direction: row; flex-wrap: wrap; gap: 10px; padding: 10px; }
+  .cart-item-left img { width: 60px; height: 60px; border-radius: 10px; }
+  /* Touch targets */
+  .qtd-btn { width: 40px; height: 40px; }
+  .remove-btn { padding: 10px 12px; min-height: 40px; border-radius: 12px; }
+  .cart-head h2 { font-size: 18px; }
+  .cart-total { font-size: 18px; }
+}

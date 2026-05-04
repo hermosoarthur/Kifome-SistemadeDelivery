@@ -15,30 +15,30 @@ const STEPS = [
     key: 'confirmado',
     icon: '✅',
     label: 'Pedido confirmado',
-    desc: 'O restaurante confirmou e esta separando seus itens.',
+    desc: 'O restaurante confirmou e está separando seus itens.',
   },
   {
     key: 'preparando',
     icon: '👨‍🍳',
     label: 'Preparando',
-    desc: 'Seu pedido esta sendo preparado com carinho.',
+    desc: 'Seu pedido está sendo preparado com carinho.',
   },
   {
     key: 'saiu_para_entrega',
     icon: '🛵',
     label: 'Saiu para entrega',
-    desc: 'O entregador pegou seu pedido e esta a caminho.',
+    desc: 'O entregador pegou seu pedido e está a caminho.',
   },
   {
     key: 'entregue_aguardando_confirmacao_cliente',
     icon: '📦',
     label: 'Entregue — confirme!',
-    desc: 'O entregador chegou. Confirme que voce recebeu o pedido.',
+    desc: 'O entregador chegou. Confirme que você recebeu o pedido.',
   },
   {
     key: 'entregue',
     icon: '🎉',
-    label: 'Concluido',
+    label: 'Concluído',
     desc: 'Pedido entregue. Obrigado por usar o Kifome!',
   },
 ];
@@ -58,9 +58,9 @@ const ETA = {
 
 const PAGAMENTO_LABEL = {
   pix: 'PIX',
-  cartao_app: 'Cartao no app',
+  cartao_app: 'Cartão no app',
   dinheiro: 'Dinheiro',
-  maquininha: 'Cartao na entrega',
+  maquininha: 'Cartão na entrega',
 };
 
 // Atrasos automáticos entre cada status de simulação (em segundos)
@@ -128,7 +128,7 @@ export default function AcompanharPedido() {
     try {
       const data = await pedidoService.meus();
       const encontrado = (data.pedidos || []).find(p => String(p.id) === String(pid));
-      if (!encontrado) { setErro('Pedido nao encontrado.'); return; }
+      if (!encontrado) { setErro('Pedido não encontrado.'); return; }
       if (statusAnteriorRef.current && statusAnteriorRef.current !== encontrado.status) {
         if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
       }
@@ -137,7 +137,7 @@ export default function AcompanharPedido() {
       setPedido(encontrado);
       setUltimaAtualizacao(new Date());
     } catch {
-      if (!silencioso) setErro('Nao foi possivel carregar o pedido.');
+      if (!silencioso) setErro('Não foi possível carregar o pedido.');
     } finally {
       if (!silencioso) setCarregando(false);
     }
@@ -336,7 +336,7 @@ export default function AcompanharPedido() {
           {isCancelado
             ? 'Este pedido foi cancelado.'
             : isConcluido
-            ? 'Pedido concluido com sucesso!'
+            ? 'Pedido concluído com sucesso!'
             : `Acompanhe em tempo real • atualiza a cada 10s`}
         </div>
       </div>
@@ -459,7 +459,7 @@ export default function AcompanharPedido() {
             <div className="acomp-concluded">
               <span className="acomp-concluded-emoji">🎉</span>
               <h3>Pedido entregue!</h3>
-              <p>Obrigado por pedir no Kifome.<br />Esperamos que voce tenha adorado!</p>
+              <p>Obrigado por pedir no Kifome.<br />Esperamos que você tenha adorado!</p>
             </div>
 
             {/* Avaliacao */}

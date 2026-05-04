@@ -307,7 +307,7 @@ def listar_produtos(rid):
         q = q.filter(Produto.disponivel == flag)
 
     p = q.order_by(Produto.criado_em.desc()).paginate(page=page, per_page=per_page, error_out=False)
-    return jsonify({'produtos': [p.to_dict() for p in p.items], 'total': p.total}), 200
+    return jsonify({'produtos': [produto.to_dict() for produto in p.items], 'total': p.total}), 200
 
 
 def criar_produto(usuario_atual, rid):
@@ -327,7 +327,7 @@ def criar_produto(usuario_atual, rid):
         return jsonify({'erro': 'descricao deve ter no máximo 100 caracteres'}), 400
     try:
         preco = float(data.get('preco', 0))
-    except:
+    except (TypeError, ValueError):
         return jsonify({'erro': 'Preço inválido'}), 400
     if preco < 0:
         return jsonify({'erro': 'preco deve ser maior ou igual a zero'}), 400
@@ -376,7 +376,7 @@ def atualizar_produto(usuario_atual, rid, pid):
             if preco < 0:
                 return jsonify({'erro': 'preco deve ser maior ou igual a zero'}), 400
             p.preco = preco
-        except:
+        except (TypeError, ValueError):
             return jsonify({'erro': 'Preço inválido'}), 400
     if 'disponivel' in data:
         p.disponivel = _to_bool(data['disponivel'])

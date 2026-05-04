@@ -44,6 +44,12 @@ services:
         value: supabase
       - key: AUTO_SEED_DEMO
         value: "false"
+      - key: MP_ACCESS_TOKEN
+        sync: false          # Token do Mercado Pago (produção ou sandbox)
+      - key: MP_PUBLIC_KEY
+        sync: false          # Public key do Mercado Pago
+      - key: FRONTEND_URL
+        value: https://kifome-frontend.onrender.com   # ajuste após criar o frontend
 
   # ─── FRONTEND (React / Static Site) ──────────────────────────────────────
   - type: web

@@ -341,6 +341,42 @@
   .r-footer { flex-direction: column; align-items: stretch; }
   .r-pedir-btn { width: 100%; }
   .order-side { text-align: left; }
+  /* Esconder setas de navegação em mobile (usa scroll touch) */
+  .nav-arrow { display: none; }
+  /* Hero compacto */
+  .ch-hero { padding: 56px 16px 40px; border-radius: 0 0 24px 24px; }
+  .ch-greeting { font-size: clamp(26px, 8vw, 38px); }
+  .ch-busca { min-height: 52px; padding: 0 14px; border-radius: 16px; }
+  .section { padding: 0 16px; }
+}
+
+@media (max-width: 480px) {
+  .ch-hero { padding: 50px 12px 32px; border-radius: 0 0 20px 20px; }
+  .ch-greeting { font-size: 28px; }
+  .ch-subtitle { font-size: 14px; }
+  .ch-busca { min-height: 48px; font-size: 14px; }
+  .ch-busca input { font-size: 14px; padding: 14px 0; }
+  .ch-page { padding: 12px; }
+  .section { padding: 0 12px; margin-bottom: 28px; }
+  .sec-title { font-size: 18px; }
+  /* Carrossel de categorias mais compacto */
+  .cat-btn { min-width: 72px; }
+  .cat-circle { width: 64px; height: 64px; font-size: 26px; }
+  .cat-label { font-size: 11px; }
+  /* Cards de restaurante */
+  .r-card { border-radius: 20px; }
+  .r-img { height: 160px; }
+  .r-body { padding: 14px; }
+  .r-body h3 { font-size: 16px; }
+  /* Botão flutuante do carrinho */
+  .cart-float { right: 16px; bottom: 16px; padding: 10px 12px; }
+  /* Cards de últimas lojas em scroll horizontal */
+  .ultimas-card { min-width: 240px; }
+  /* Estatísticas em 1 coluna */
+  .ch-stat-strip { grid-template-columns: 1fr 1fr; }
+  /* Coupon banner */
+  .coupon-inner { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .coupon-cta { align-self: flex-end; }
 }
 .ch-page {
   padding: 24px;

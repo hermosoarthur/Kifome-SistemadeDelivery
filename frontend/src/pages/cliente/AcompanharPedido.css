@@ -361,3 +361,16 @@
 @keyframes pollingBlink {
   0%,100% { opacity: 1; } 50% { opacity: .2; }
 }
+
+/* ── Mobile Responsivo ── */
+@media (max-width: 480px) {
+  .acomp-hero { padding: 20px 16px 70px; }
+  .acomp-restaurante { font-size: 18px; }
+  .acomp-status-blob { width: 52px; height: 52px; font-size: 24px; top: 16px; right: 16px; }
+  .acomp-body { padding: 0 12px; margin-top: -28px; gap: 12px; }
+  .acomp-card { padding: 16px 18px; border-radius: 18px; }
+  /* Botão de voltar com touch target adequado */
+  .acomp-hero-back { min-height: 40px; padding: 8px 16px; }
+  /* ETA */
+  .acomp-eta-icon { width: 42px; height: 42px; border-radius: 12px; }
+}

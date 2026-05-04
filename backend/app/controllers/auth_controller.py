@@ -260,9 +260,10 @@ def request_otp_email():
             '[OTP Email] SMTP falhou para %s: %s', email, email_result['error'])
         print(f'[OTP] Email fallback terminal: {email} -> Código: {codigo}')
         return jsonify({
-            'mensagem': 'SMTP não configurado ou falhou. Consulte o terminal do backend para ver o código OTP.',
+            'mensagem': 'SMTP não configurado ou falhou. Código gerado em modo desenvolvimento.',
             'email': email,
             'provider': 'local-dev',
+            'codigo_dev': codigo,
             'erro_envio': email_result['error']
         }), 200
 
@@ -416,9 +417,10 @@ def request_otp_sms():
     print(f'[OTP SMS] Phone: {telefone_normalizado} -> Código: {codigo}')
 
     return jsonify({
-        'mensagem': 'SMS indisponível no provedor atual. Em ambiente de desenvolvimento, consulte o terminal do backend para ver o código OTP gerado.',
+        'mensagem': 'SMS indisponível no provedor atual. Código gerado em modo desenvolvimento.',
         'telefone': telefone_normalizado,
         'provider': 'local-dev',
+        'codigo_dev': codigo,
         'fallback': True,
         'debug_provider_error': erro_supabase if 'erro_supabase' in locals() else 'Supabase client não inicializado.'
     }), 200

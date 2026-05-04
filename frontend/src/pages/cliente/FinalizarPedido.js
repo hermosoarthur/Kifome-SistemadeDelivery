@@ -498,7 +498,7 @@ export default function FinalizarPedido() {
 
             </div>
 
-            <p className="checkout-address">ðŸ“ {endereco || 'EndereÃ§o nÃ£o informado'}</p>
+            <p className="checkout-address">📍 {endereco || 'Endereço não informado'}</p>
 
 
 
@@ -506,7 +506,7 @@ export default function FinalizarPedido() {
 
               <button className={`delivery-option ${entregaTipo === 'padrao' ? 'active' : ''}`} onClick={() => setEntregaTipo('padrao')}>
 
-                <span className="label">PadrÃ£o</span>
+                <span className="label">Padrão</span>
 
                 <span className="time">Hoje, 16-31 min</span>
 
@@ -516,7 +516,7 @@ export default function FinalizarPedido() {
 
               <button className={`delivery-option ${entregaTipo === 'rapida' ? 'active' : ''}`} onClick={() => setEntregaTipo('rapida')}>
 
-                <span className="label">RÃ¡pido</span>
+                <span className="label">Rápido</span>
 
                 <span className="time">Hoje, 10-25 min</span>
 
@@ -552,15 +552,15 @@ export default function FinalizarPedido() {
 
                     <strong>Pague com Pix</strong>
 
-                    <span>Use o QR Code ou copie e cole o cÃ³digo</span>
+                    <span>Use o QR Code ou copie e cole o código</span>
 
                   </button>
 
                   <button className={`pay-item ${metodoPagamento === 'cartao_app' ? 'selected' : ''}`} onClick={() => setMetodoPagamento('cartao_app')}>
 
-                    <strong>CartÃ£o no app</strong>
+                    <strong>Cartão no app</strong>
 
-                    <span>Pague com cartÃ£o via Mercado Pago</span>
+                    <span>Pague com cartão via Mercado Pago</span>
 
                   </button>
 
@@ -580,9 +580,9 @@ export default function FinalizarPedido() {
 
                   <button className={`pay-item ${metodoPagamento === 'maquininha' ? 'selected' : ''}`} onClick={() => setMetodoPagamento('maquininha')}>
 
-                    <strong>CartÃ£o na entrega</strong>
+                    <strong>Cartão na entrega</strong>
 
-                    <span>CrÃ©dito ou dÃ©bito na maquininha</span>
+                    <span>Crédito ou débito na maquininha</span>
 
                   </button>
 
@@ -602,7 +602,7 @@ export default function FinalizarPedido() {
 
             <div className="input-box">
 
-              <input value={cupom} onChange={(e) => setCupom(e.target.value)} placeholder="CÃ³digo de cupom" />
+              <input value={cupom} onChange={(e) => setCupom(e.target.value)} placeholder="Código de cupom" />
 
             </div>
 
@@ -618,7 +618,7 @@ export default function FinalizarPedido() {
 
 
 
-            <label style={{ marginTop: 10 }}>ObservaÃ§Ã£o para o pedido</label>
+            <label style={{ marginTop: 10 }}>Observação para o pedido</label>
 
             <div className="input-box">
 
@@ -632,7 +632,7 @@ export default function FinalizarPedido() {
 
               <input type="checkbox" checked={salvarComoPrincipal} onChange={(e) => setSalvarComoPrincipal(e.target.checked)} />
 
-              Salvar como endereÃ§o principal
+              Salvar como endereço principal
 
             </label>
 
@@ -672,7 +672,7 @@ export default function FinalizarPedido() {
 
               <strong>{restauranteNome}</strong>
 
-              <button className="text-link" onClick={() => navigate(`/restaurante/${restauranteId}`)}>Ver CardÃ¡pio</button>
+              <button className="text-link" onClick={() => navigate(`/restaurante/${restauranteId}`)}>Ver Cardápio</button>
 
             </div>
 
@@ -708,7 +708,7 @@ export default function FinalizarPedido() {
 
             <div><span>Subtotal</span><strong>R$ {total.toFixed(2)}</strong></div>
 
-            <div><span>Taxa de entrega ({entregaTipo === 'padrao' ? 'PadrÃ£o' : 'RÃ¡pida'})</span><strong>R$ {taxaEntrega.toFixed(2)}</strong></div>
+            <div><span>Taxa de entrega ({entregaTipo === 'padrao' ? 'Padrão' : 'Rápida'})</span><strong>R$ {taxaEntrega.toFixed(2)}</strong></div>
 
             <div className="total"><span>Total</span><strong>R$ {totalGeral.toFixed(2)}</strong></div>
 
@@ -724,9 +724,9 @@ export default function FinalizarPedido() {
 
         isOpen={abrirEndereco}
 
-        title="Selecionar endereÃ§o de entrega"
+        title="Selecionar endereço de entrega"
 
-        confirmLabel="Usar este endereÃ§o"
+        confirmLabel="Usar este endereço"
 
         initialValue={enderecoInfo}
 

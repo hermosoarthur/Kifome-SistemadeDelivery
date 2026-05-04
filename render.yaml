@@ -1,0 +1,73 @@
+services:
+  # ─── BACKEND (Flask / Gunicorn) ───────────────────────────────────────────
+  - type: web
+    name: kifome-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn wsgi:app
+    plan: free
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        sync: false          # preencha no painel do Render
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kifome-db
+          property: connectionString
+      - key: JWT_EXPIRATION_HOURS
+        value: "24"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM_EMAIL
+        sync: false
+      - key: SMTP_FROM_NAME
+        value: Kifome
+      - key: SMTP_USE_TLS
+        value: "true"
+      - key: OTP_EXPIRATION_MINUTES
+        value: "10"
+      - key: SMS_PROVIDER
+        value: supabase
+      - key: AUTO_SEED_DEMO
+        value: "false"
+
+  # ─── FRONTEND (React / Static Site) ──────────────────────────────────────
+  - type: web
+    name: kifome-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: build
+    plan: free
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://kifome-backend.onrender.com   # ajuste após criar o backend
+      - key: REACT_APP_SUPABASE_URL
+        sync: false
+      - key: REACT_APP_SUPABASE_ANON_KEY
+        sync: false
+      - key: REACT_APP_GOOGLE_MAPS_KEY
+        sync: false
+
+# ─── BANCO DE DADOS PostgreSQL ────────────────────────────────────────────
+databases:
+  - name: kifome-db
+    plan: free

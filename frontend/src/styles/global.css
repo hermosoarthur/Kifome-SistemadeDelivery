@@ -343,9 +343,39 @@ img { max-width: 100%; display: block; }
   .form-row { grid-template-columns: 1fr; }
   .hero-panel { padding: 22px; border-radius: 24px; }
   .metric-grid { grid-template-columns: 1fr 1fr; }
+  /* Touch targets mínimos (44px) */
+  .btn { min-height: 44px; }
+  .btn-sm { min-height: 40px; }
+  .btn-icon { width: 44px; height: 44px; }
+  .input-box { min-height: 52px; }
+  .pill-tab { min-height: 44px; }
 }
 
 @media (max-width: 560px) {
   .metric-grid { grid-template-columns: 1fr; }
-  .modal { border-radius: 22px; }
+  /* Modal como drawer na base */
+  .modal-bg { align-items: flex-end; padding: 0; }
+  .modal {
+    border-radius: 24px 24px 0 0;
+    max-height: 92vh;
+    width: 100%;
+    max-width: 100%;
+  }
+  .page { padding: 12px; }
+  .page-title { font-size: 22px; }
+  .hero-panel { padding: 18px; border-radius: 20px; }
+}
+
+@media (max-width: 480px) {
+  /* Scroll suave no iOS */
+  * { -webkit-overflow-scrolling: touch; }
+  body { overflow-x: hidden; }
+  .btn { font-size: 15px; min-height: 48px; border-radius: 14px; }
+  .btn-primary { border-radius: 14px; }
+  .input-box { border-radius: 14px; min-height: 52px; }
+  .form-group label { font-size: 14px; }
+  /* Alertas em telas pequenas */
+  .alert { font-size: 13px; padding: 12px 14px; }
+  /* Garante que tabelas não causem scroll horizontal no body */
+  .table-wrap { border-radius: 16px; }
 }

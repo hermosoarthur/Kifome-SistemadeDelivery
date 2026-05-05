@@ -44,12 +44,16 @@ services:
         value: supabase
       - key: AUTO_SEED_DEMO
         value: "false"
+      - key: ADMIN_SEED_SECRET
+        sync: false          # senha para acionar o seed via POST /api/admin/seed?secret=VALOR
       - key: MP_ACCESS_TOKEN
         sync: false          # Token do Mercado Pago (produção ou sandbox)
       - key: MP_PUBLIC_KEY
         sync: false          # Public key do Mercado Pago
       - key: FRONTEND_URL
-        value: https://kifome-frontend.onrender.com   # ajuste após criar o frontend
+        value: https://kifome-frontend.onrender.com
+      - key: MP_WEBHOOK_URL
+        value: https://kifome-backend.onrender.com/api/pagamentos/mp/webhook
 
   # ─── FRONTEND (React / Static Site) ──────────────────────────────────────
   - type: web
@@ -64,12 +68,12 @@ services:
         destination: /index.html
     envVars:
       - key: REACT_APP_API_URL
-        value: https://kifome-backend.onrender.com   # ajuste após criar o backend
+        value: https://kifome-backend.onrender.com
       - key: REACT_APP_SUPABASE_URL
         sync: false
       - key: REACT_APP_SUPABASE_ANON_KEY
         sync: false
-      - key: REACT_APP_GOOGLE_MAPS_KEY
+      - key: REACT_APP_GOOGLE_MAPS_API_KEY
         sync: false
 
 # ─── BANCO DE DADOS PostgreSQL ────────────────────────────────────────────

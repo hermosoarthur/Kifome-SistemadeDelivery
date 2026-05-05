@@ -295,6 +295,19 @@
   .layout-topbar, .sidebar-toggle { display: none; }
 }
 
+/* AJUSTE PARA TELAS MUITO PEQUENAS */
+@media (max-width: 480px) {
+  .mob-header { top: 8px; left: 8px; right: 8px; height: 56px; border-radius: 16px; }
+  .mob-brand { font-size: 20px; }
+  .layout-main { padding-top: 76px; padding-left: 0; padding-right: 0; }
+  .layout-content { padding-top: 12px; padding-bottom: 80px; }
+  /* Sidebar ocupa quase toda a tela em mobile pequeno */
+  .sidebar { max-width: calc(100vw - 16px); width: 280px; }
+  /* Cards de pedido mais compactos */
+  .order-card { padding: 16px; border-radius: 18px; }
+  .order-progress-track { padding: 0 8px; }
+}
+
 /* ==========================================================
    AJUSTES FINAIS DE INTERATIVIDADE E CORREÇÃO DE CLIQUE
    ========================================================== */

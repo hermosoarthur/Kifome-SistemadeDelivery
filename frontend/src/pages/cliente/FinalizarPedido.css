@@ -233,3 +233,18 @@
     font-size: 28px;
   }
 }
+
+@media (max-width: 480px) {
+  .checkout-title { font-size: 22px; }
+  /* Touch targets para métodos de pagamento */
+  .pay-item { padding: 14px; min-height: 56px; }
+  /* Tabs de pagamento maiores */
+  .payment-tabs button { min-height: 44px; font-size: 14px; }
+  /* Inputs maiores */
+  .input-box input,
+  .input-box textarea { font-size: 16px; /* evita zoom no iOS */ }
+  /* Botão confirmar bem grande */
+  .checkout-confirm { height: 52px; font-size: 16px; border-radius: 16px; }
+  /* Totais */
+  .order-totals .total { font-size: 20px; }
+}

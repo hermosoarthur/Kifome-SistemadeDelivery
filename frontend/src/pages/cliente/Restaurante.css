@@ -77,3 +77,20 @@
   font-size: 14px;
   opacity: 0.9;
 }
+
+/* ── Mobile Responsivo ── */
+@media (max-width: 480px) {
+  .rest-hero { height: 240px; }
+  .rest-hero-content { padding: 16px; }
+  .rest-hero-content h1 { font-size: 22px; max-width: 90%; }
+  .rest-back { top: 10px; left: 10px; padding: 10px 12px; min-height: 40px; border-radius: 10px; }
+  .rest-body { padding: 0 12px; }
+  /* Tabs com scroll horizontal suave */
+  .rest-tabs { gap: 6px; padding: 10px 0; }
+  .rest-tab { padding: 10px 12px; min-height: 40px; font-size: 13px; white-space: nowrap; }
+  /* Produto em mobile */
+  .produto-item { padding: 12px; border-radius: 14px; }
+  .produto-info strong { font-size: 14px; }
+  /* Botões de quantidade maiores */
+  .qtd-btn { width: 36px; height: 36px; }
+}

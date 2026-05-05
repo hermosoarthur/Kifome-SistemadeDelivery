@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Default policy: do not allow cleartext in non-debug builds. -->
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>
+

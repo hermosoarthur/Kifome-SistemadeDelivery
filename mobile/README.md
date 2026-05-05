@@ -192,7 +192,8 @@ O arquivo `res/xml/network_security_config.xml` bloqueia tráfego HTTP (cleartex
 ## 📝 Variáveis Externas (não expor no código)
 
 ```
-GOOGLE_MAPS_KEY = AIzaSyCBKPpX-A-P9HAh3biTqJBkAWOGYrzA4vg
-SUPABASE_URL    = https://rvwupjbciayqdmmxixdq.supabase.co
+GOOGLE_MAPS_KEY = your_google_maps_api_key
+SUPABASE_URL    = https://your-project-id.supabase.co
+SUPABASE_ANON_KEY = your_supabase_anon_key
 ```
 

@@ -1,7 +1,49 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { pedidoService, pagamentoService } from '../../services';
+import { useJsApiLoader, GoogleMap, MarkerF, DirectionsRenderer } from '@react-google-maps/api';
 import './AcompanharPedido.css';
+
+const GMAPS_LIBRARIES = ['places'];
+const GMAPS_KEY = process.env.REACT_APP_GOOGLE_MAPS_KEY || '';
+
+function RotaEntrega({ pedido }) {
+  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: GMAPS_KEY, libraries: GMAPS_LIBRARIES });
+  const [directions, setDirections] = useState(null);
+
+  const restLat = pedido?.restaurante?.latitude ?? pedido?.restaurante_latitude ?? null;
+  const restLng = pedido?.restaurante?.longitude ?? pedido?.restaurante_longitude ?? null;
+  const destLat = pedido?.endereco_latitude ?? null;
+  const destLng = pedido?.endereco_longitude ?? null;
+
+  useEffect(() => {
+    if (!isLoaded || !restLat || !restLng || !destLat || !destLng) return;
+    const svc = new window.google.maps.DirectionsService();
+    svc.route({
+      origin: { lat: Number(restLat), lng: Number(restLng) },
+      destination: { lat: Number(destLat), lng: Number(destLng) },
+      travelMode: window.google.maps.TravelMode.DRIVING,
+    }, (result, status) => {
+      if (status === 'OK') setDirections(result);
+    });
+  }, [isLoaded, restLat, restLng, destLat, destLng]);
+
+  if (!isLoaded || !restLat || !destLat) return null;
+
+  return (
+    <div style={{ borderRadius: 16, overflow: 'hidden', margin: '16px 0', boxShadow: '0 4px 16px rgba(0,0,0,0.10)' }}>
+      <GoogleMap mapContainerStyle={{ width: '100%', height: 260 }}
+        center={{ lat: Number(restLat), lng: Number(restLng) }} zoom={13}>
+        {directions
+          ? <DirectionsRenderer directions={directions} />
+          : <>
+              <MarkerF position={{ lat: Number(restLat), lng: Number(restLng) }} label="🍽️" />
+              <MarkerF position={{ lat: Number(destLat), lng: Number(destLng) }} label="📍" />
+            </>}
+      </GoogleMap>
+    </div>
+  );
+}
 
 // ── Definicao dos steps estilo iFood ─────────────────────────────────────────
 const STEPS = [
@@ -393,6 +435,14 @@ export default function AcompanharPedido() {
                 </p>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ── Mapa de rota ── */}
+        {['confirmado','preparando','saiu_para_entrega','entregue_aguardando_confirmacao_cliente'].includes(pedido.status) && pedido.endereco_latitude && (
+          <div className="acomp-card">
+            <p style={{ fontWeight: 700, marginBottom: 4 }}>🗺️ Rota de entrega</p>
+            <RotaEntrega pedido={pedido} />
           </div>
         )}
 

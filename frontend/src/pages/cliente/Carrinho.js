@@ -118,7 +118,7 @@ export default function Carrinho() {
           <div className="cart-summary">
             <h3>Resumo</h3>
             <div className="cart-row"><span>Subtotal</span><strong>R$ {total.toFixed(2)}</strong></div>
-            <div className="cart-row"><span>Taxa de entrega</span><strong>{taxaEntrega > 0 ? `R$ ${taxaEntrega.toFixed(2)}` : 'Grátis'}</strong></div>
+            <div className="cart-row"><span>Taxa de entrega</span><strong>Calculada no checkout</strong></div>
             <div className="cart-row total"><span>Total</span><strong>R$ {totalGeral.toFixed(2)}</strong></div>
             <button className="btn btn-primary full" onClick={irParaFinalizacao} disabled={items.length === 0}>
               Escolher forma de pagamento

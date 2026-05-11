@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useEffect, useCallback, useMemo, useRef, useState } from 'react';
 
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -10,11 +10,13 @@ import { pedidoService, restauranteService, usuarioService, pagamentoService } f
 
 import AddressModal from '../../components/address/AddressModal';
 
+import PixCheckout from '../../components/PixCheckout';
+
 import './FinalizarPedido.css';
 
 
 
-const TAXAS = {
+const TAXAS_FALLBACK = {
 
   padrao: 4.99,
 
@@ -64,16 +66,24 @@ export default function FinalizarPedido() {
 
   const [abrirEndereco, setAbrirEndereco] = useState(false);
 
+  const [pixPedidoId, setPixPedidoId] = useState(null);
+
+  const [taxaEntrega, setTaxaEntrega] = useState(TAXAS_FALLBACK.padrao);
+
+  const [taxaInfo, setTaxaInfo] = useState(null);
+
+  const [taxaLoading, setTaxaLoading] = useState(false);
+
   // Estado para aguardar pagamento na nova aba
   const [aguardandoPagamento, setAguardandoPagamento] = useState(null); // { pedidoId, url }
   const pollingRef = useRef(null);
   const mpTabRef = useRef(null);
+  // Ref para evitar redirect ao /carrinho após PIX ser gerado e clearCart() chamado
+  const pixAtivo = useRef(false);
 
 
 
   const restauranteId = items[0]?.restaurante_id;
-
-  const taxaEntrega = items.length > 0 ? TAXAS[entregaTipo] : 0;
 
   const totalGeral = useMemo(() => total + taxaEntrega, [total, taxaEntrega]);
 
@@ -94,6 +104,8 @@ export default function FinalizarPedido() {
   useEffect(() => {
 
     if (items.length === 0) {
+
+      if (pixAtivo.current) return; // PIX gerado — não redirecionar
 
       navigate('/carrinho', { replace: true });
 
@@ -157,10 +169,39 @@ export default function FinalizarPedido() {
 
   }, [restauranteId]);
 
+  const calcularTaxa = useCallback(async (tipo, endInfo) => {
+    const lat = endInfo?.lat ?? null;
+    const lng = endInfo?.lng ?? null;
+    if (!restauranteId || lat == null || lng == null) {
+      setTaxaEntrega(TAXAS_FALLBACK[tipo] ?? TAXAS_FALLBACK.padrao);
+      return;
+    }
+    setTaxaLoading(true);
+    try {
+      const res = await pedidoService.calcularTaxa({
+        restaurante_id: restauranteId,
+        endereco_lat: lat,
+        endereco_lng: lng,
+        tipo_entrega: tipo,
+      });
+      setTaxaEntrega(res.taxa ?? TAXAS_FALLBACK[tipo]);
+      setTaxaInfo(res);
+    } catch {
+      setTaxaEntrega(TAXAS_FALLBACK[tipo] ?? TAXAS_FALLBACK.padrao);
+    } finally {
+      setTaxaLoading(false);
+    }
+  }, [restauranteId]);
+
   // Limpar polling ao desmontar o componente
   useEffect(() => {
     return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
   }, []);
+
+  // Recalcular taxa ao mudar tipo de entrega ou endereço
+  useEffect(() => {
+    calcularTaxa(entregaTipo, enderecoInfo);
+  }, [entregaTipo, enderecoInfo, calcularTaxa]);
 
   // Ouvir postMessage da aba do MP quando confirmar pagamento
   useEffect(() => {
@@ -308,13 +349,23 @@ export default function FinalizarPedido() {
 
       // 3. Fluxo por método de pagamento
 
-      if ((metodoPagamento === 'cartao_app' || metodoPagamento === 'pix') && pedidoCriado?.id) {
+      if (metodoPagamento === 'pix' && pedidoCriado?.id) {
 
-        // Cartão ou PIX via Mercado Pago: criar preference e redirecionar para checkout
+        // PIX: mostrar QR Code inline (sem redirecionar)
+        // Marcar ref ANTES de clearCart para bloquear o useEffect de redirect
+        pixAtivo.current = true;
+        setPixPedidoId(pedidoCriado.id);
+        setLoading(false);
+        clearCart();
+        return;
 
-        const labelMetodo = metodoPagamento === 'pix' ? 'PIX' : 'Mercado Pago';
+      }
 
-        setLoadingMsg(`Redirecionando para pagamento via ${labelMetodo}...`);
+      if (metodoPagamento === 'cartao_app' && pedidoCriado?.id) {
+
+        // Cartão via Mercado Pago: redirecionar para checkout
+
+        setLoadingMsg(`Redirecionando para pagamento via Mercado Pago...`);
 
         try {
 
@@ -410,7 +461,16 @@ export default function FinalizarPedido() {
 
 
 
-  if (items.length === 0 && !aguardandoPagamento) return null;
+  if (items.length === 0 && !aguardandoPagamento && !pixPedidoId) return null;
+
+  // ── Tela PIX inline ───────────────────────────────────────────────────────
+  if (pixPedidoId) {
+    return (
+      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
+        <PixCheckout pedidoId={pixPedidoId} />
+      </div>
+    );
+  }
 
   // ── Tela de aguardando pagamento na nova aba ──────────────────────────────
   if (aguardandoPagamento) {
@@ -508,9 +568,9 @@ export default function FinalizarPedido() {
 
                 <span className="label">Padrão</span>
 
-                <span className="time">Hoje, 16-31 min</span>
+                <span className="time">{taxaInfo?.duracao_minutos ? `~${taxaInfo.duracao_minutos} min` : 'Hoje, 16-31 min'}</span>
 
-                <strong>R$ {TAXAS.padrao.toFixed(2)}</strong>
+                <strong>{taxaLoading ? 'Calculando...' : `R$ ${(entregaTipo === 'padrao' ? taxaEntrega : TAXAS_FALLBACK.padrao).toFixed(2)}`}</strong>
 
               </button>
 
@@ -518,13 +578,19 @@ export default function FinalizarPedido() {
 
                 <span className="label">Rápido</span>
 
-                <span className="time">Hoje, 10-25 min</span>
+                <span className="time">{taxaInfo?.duracao_minutos ? `~${Math.max(10, (taxaInfo.duracao_minutos || 25) - 6)} min` : 'Hoje, 10-25 min'}</span>
 
-                <strong>R$ {TAXAS.rapido?.toFixed(2) ?? TAXAS.rapida?.toFixed(2)}</strong>
+                <strong>{taxaLoading ? 'Calculando...' : `R$ ${(entregaTipo === 'rapida' ? taxaEntrega : TAXAS_FALLBACK.rapida).toFixed(2)}`}</strong>
 
               </button>
 
             </div>
+
+            {taxaInfo?.distancia_km && (
+              <p style={{ fontSize: 12, color: 'var(--texto-sec)', marginTop: 4 }}>
+                📍 {taxaInfo.distancia_km} km até você
+              </p>
+            )}
 
           </div>
 
@@ -552,7 +618,7 @@ export default function FinalizarPedido() {
 
                     <strong>Pague com Pix</strong>
 
-                    <span>Use o QR Code ou copie e cole o código</span>
+                    <span>QR Code gerado na tela — sem redirecionar</span>
 
                   </button>
 
@@ -649,6 +715,10 @@ export default function FinalizarPedido() {
             {loading
 
               ? loadingMsg
+
+              : metodoPagamento === 'pix'
+
+              ? '💚 Gerar QR Code PIX'
 
               : metodoPagamento === 'cartao_app'
 

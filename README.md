@@ -184,8 +184,6 @@ Fluxos legados de senha foram removidos para manter consistência com o produto.
 
 Base de autenticação: `/api/auth`
 
-- `POST /request_magic_link`
-- `POST /verify_magic_link`
 - `POST /request_otp_email`
 - `POST /verify_otp_email`
 - `POST /request_otp_sms`

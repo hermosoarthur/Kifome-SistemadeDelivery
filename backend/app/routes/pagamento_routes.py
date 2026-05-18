@@ -1,5 +1,5 @@
 from flask import Blueprint, request
-from app.controllers import mp_criar_preferencia, mp_webhook, mp_status_pedido, mp_confirmar_sandbox
+from app.controllers import mp_criar_preferencia, mp_webhook, mp_status_pedido, mp_confirmar_sandbox, pix_criar, pix_status
 from app.utils.jwt_utils import token_requerido, requer_tipo
 
 pagamentos_bp = Blueprint('pagamentos', __name__, url_prefix='/api/pagamentos')
@@ -18,3 +18,12 @@ def rota_status(u, pid): return mp_status_pedido(u, pid)
 @pagamentos_bp.route('/mp/sandbox/<int:pid>/confirmar', methods=['POST'])
 @requer_tipo('cliente')
 def rota_confirmar_sandbox(u, pid): return mp_confirmar_sandbox(u, pid)
+
+# ── PIX nativo ──────────────────────────────────────────
+@pagamentos_bp.route('/pix/criar', methods=['POST'])
+@requer_tipo('cliente')
+def rota_pix_criar(u): return pix_criar(u)
+
+@pagamentos_bp.route('/pix/<payment_id>/status', methods=['GET'])
+@requer_tipo('cliente')
+def rota_pix_status(u, payment_id): return pix_status(u, payment_id)

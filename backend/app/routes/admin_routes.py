@@ -3,7 +3,7 @@ import jwt
 import datetime
 from functools import wraps
 from flask import Blueprint, jsonify, request
-from sqlalchemy import func, cast, Date
+from sqlalchemy import func, cast, Date, case
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 
@@ -277,14 +277,24 @@ def atualizar_usuario_ativo(uid):
 @admin_required
 def relatorio_faturamento():
     from app.models import Pedido, Restaurante
-    periodo = request.args.get('periodo', '30')  # dias
+
+    data_inicio_str = request.args.get('data_inicio', '')
+    data_fim_str    = request.args.get('data_fim', '')
 
     try:
-        dias = int(periodo)
-    except ValueError:
-        dias = 30
+        if data_inicio_str:
+            inicio = datetime.datetime.strptime(data_inicio_str, '%Y-%m-%d')
+        else:
+            dias = int(request.args.get('periodo', '30'))
+            inicio = datetime.datetime.utcnow() - datetime.timedelta(days=dias)
 
-    inicio = datetime.datetime.utcnow() - datetime.timedelta(days=dias)
+        if data_fim_str:
+            fim = datetime.datetime.strptime(data_fim_str, '%Y-%m-%d') + datetime.timedelta(days=1)
+        else:
+            fim = datetime.datetime.utcnow() + datetime.timedelta(days=1)
+    except (ValueError, TypeError):
+        inicio = datetime.datetime.utcnow() - datetime.timedelta(days=30)
+        fim    = datetime.datetime.utcnow() + datetime.timedelta(days=1)
 
     rows = (
         Pedido.query
@@ -293,10 +303,10 @@ def relatorio_faturamento():
             func.count(Pedido.id).label('total_pedidos'),
             func.coalesce(func.sum(Pedido.total), 0).label('faturamento'),
             func.coalesce(func.avg(Pedido.total), 0).label('ticket_medio'),
-            func.sum(func.cast(Pedido.status == 'cancelado', func.Integer())).label('cancelados'),
-            func.sum(func.cast(Pedido.status == 'entregue', func.Integer())).label('entregues'),
+            func.sum(case((Pedido.status == 'cancelado', 1), else_=0)).label('cancelados'),
+            func.sum(case((Pedido.status == 'entregue', 1), else_=0)).label('entregues'),
         )
-        .filter(Pedido.criado_em >= inicio)
+        .filter(Pedido.criado_em >= inicio, Pedido.criado_em < fim)
         .group_by(Pedido.restaurante_id)
         .order_by(func.sum(Pedido.total).desc())
         .all()
@@ -318,7 +328,8 @@ def relatorio_faturamento():
 
     faturamento_total_periodo = sum(x['faturamento'] for x in resultado)
     return jsonify({
-        'periodo_dias': dias,
+        'data_inicio': data_inicio_str,
+        'data_fim': data_fim_str,
         'faturamento_total': faturamento_total_periodo,
         'restaurantes': resultado,
     }), 200
@@ -330,16 +341,26 @@ def relatorio_faturamento():
 @admin_required
 def relatorio_produtos_mais_vendidos():
     from app.models import ItemPedido, Produto, Pedido, Restaurante
-    periodo = request.args.get('periodo', '30')
-    limit   = int(request.args.get('limit', 20))
+    limit = int(request.args.get('limit', 20))
+    restaurante_id = request.args.get('restaurante_id', '')
+
+    data_inicio_str = request.args.get('data_inicio', '')
+    data_fim_str    = request.args.get('data_fim', '')
     try:
-        dias = int(periodo)
-    except ValueError:
-        dias = 30
+        if data_inicio_str:
+            inicio = datetime.datetime.strptime(data_inicio_str, '%Y-%m-%d')
+        else:
+            dias = int(request.args.get('periodo', '30'))
+            inicio = datetime.datetime.utcnow() - datetime.timedelta(days=dias)
+        if data_fim_str:
+            fim = datetime.datetime.strptime(data_fim_str, '%Y-%m-%d') + datetime.timedelta(days=1)
+        else:
+            fim = datetime.datetime.utcnow() + datetime.timedelta(days=1)
+    except (ValueError, TypeError):
+        inicio = datetime.datetime.utcnow() - datetime.timedelta(days=30)
+        fim    = datetime.datetime.utcnow() + datetime.timedelta(days=1)
 
-    inicio = datetime.datetime.utcnow() - datetime.timedelta(days=dias)
-
-    rows = (
+    q = (
         ItemPedido.query
         .join(Pedido, ItemPedido.pedido_id == Pedido.id)
         .with_entities(
@@ -352,9 +373,18 @@ def relatorio_produtos_mais_vendidos():
         )
         .filter(
             Pedido.criado_em >= inicio,
+            Pedido.criado_em < fim,
             Pedido.status != 'cancelado',
         )
-        .group_by(ItemPedido.produto_id)
+    )
+
+    if restaurante_id:
+        q = q.join(Produto, ItemPedido.produto_id == Produto.id).filter(
+            Produto.restaurante_id == int(restaurante_id)
+        )
+
+    rows = (
+        q.group_by(ItemPedido.produto_id)
         .order_by(func.sum(ItemPedido.quantidade).desc())
         .limit(limit)
         .all()
@@ -376,7 +406,7 @@ def relatorio_produtos_mais_vendidos():
             'receita':            float(r.receita),
         })
 
-    return jsonify({'periodo_dias': dias, 'produtos': resultado}), 200
+    return jsonify({'data_inicio': data_inicio_str, 'data_fim': data_fim_str, 'produtos': resultado}), 200
 
 
 # ── Relatorio 4: Taxa de Cancelamento por Restaurante ────────────────────────
@@ -385,32 +415,37 @@ def relatorio_produtos_mais_vendidos():
 @admin_required
 def relatorio_cancelamentos():
     from app.models import Pedido, Restaurante
-    periodo = request.args.get('periodo', '30')
-    try:
-        dias = int(periodo)
-    except ValueError:
-        dias = 30
 
-    inicio = datetime.datetime.utcnow() - datetime.timedelta(days=dias)
+    data_inicio_str = request.args.get('data_inicio', '')
+    data_fim_str    = request.args.get('data_fim', '')
+    try:
+        if data_inicio_str:
+            inicio = datetime.datetime.strptime(data_inicio_str, '%Y-%m-%d')
+        else:
+            dias = int(request.args.get('periodo', '30'))
+            inicio = datetime.datetime.utcnow() - datetime.timedelta(days=dias)
+        if data_fim_str:
+            fim = datetime.datetime.strptime(data_fim_str, '%Y-%m-%d') + datetime.timedelta(days=1)
+        else:
+            fim = datetime.datetime.utcnow() + datetime.timedelta(days=1)
+    except (ValueError, TypeError):
+        inicio = datetime.datetime.utcnow() - datetime.timedelta(days=30)
+        fim    = datetime.datetime.utcnow() + datetime.timedelta(days=1)
 
     rows = (
         Pedido.query
         .with_entities(
             Pedido.restaurante_id,
             func.count(Pedido.id).label('total'),
-            func.sum(
-                func.cast(Pedido.status == 'cancelado', func.Integer())
-            ).label('cancelados'),
-            func.sum(
-                func.cast(Pedido.status == 'entregue', func.Integer())
-            ).label('entregues'),
+            func.sum(case((Pedido.status == 'cancelado', 1), else_=0)).label('cancelados'),
+            func.sum(case((Pedido.status == 'entregue', 1), else_=0)).label('entregues'),
             func.coalesce(func.sum(Pedido.total), 0).label('faturamento'),
         )
-        .filter(Pedido.criado_em >= inicio)
+        .filter(Pedido.criado_em >= inicio, Pedido.criado_em < fim)
         .group_by(Pedido.restaurante_id)
         .having(func.count(Pedido.id) > 0)
         .order_by(
-            (func.sum(func.cast(Pedido.status == 'cancelado', func.Integer())) /
+            (func.sum(case((Pedido.status == 'cancelado', 1), else_=0)) /
              func.cast(func.count(Pedido.id), func.Float())).desc()
         )
         .all()
@@ -437,7 +472,8 @@ def relatorio_cancelamentos():
     ) if resultado else 0
 
     return jsonify({
-        'periodo_dias': dias,
+        'data_inicio': data_inicio_str,
+        'data_fim': data_fim_str,
         'media_taxa_cancelamento': media_taxa,
         'restaurantes': resultado,
     }), 200

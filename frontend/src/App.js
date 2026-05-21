@@ -3,6 +3,15 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { NotificationsProvider } from './contexts/NotificationsContext';
+import { AdminAuthProvider, useAdminAuth } from './contexts/AdminAuthContext';
+
+// Admin
+import AdminLogin from './pages/admin/AdminLogin';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminPedidos from './pages/admin/AdminPedidos';
+import AdminRestaurantes from './pages/admin/AdminRestaurantes';
+import AdminUsuarios from './pages/admin/AdminUsuarios';
+import AdminRelatorios from './pages/admin/AdminRelatorios';
 import Layout from './components/Layout';
 import Carrinho from './pages/cliente/Carrinho';
 
@@ -78,6 +87,12 @@ function HomeRouter() {
   return <ClienteHome />;
 }
 
+function AdminProtegida({ children }) {
+  const { autenticado, verificando } = useAdminAuth();
+  if (verificando) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', fontSize: 18 }}>Verificando acesso...</div>;
+  return autenticado ? children : <Navigate to="/admin/login" replace />;
+}
+
 function AppRoutes() {
   // Removida a trava de 'tipo' aqui para garantir que os links do Layout funcionem sempre
   return (
@@ -115,6 +130,15 @@ function AppRoutes() {
       <Route path="/disponivel" element={<Protegida><Layout><PedidosDisponiveis /></Layout></Protegida>} />
       <Route path="/minhas-entregas" element={<Protegida><Layout><MinhasEntregas /></Layout></Protegida>} />
 
+      {/* ── ADMIN ── */}
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin/dashboard" element={<AdminProtegida><AdminDashboard /></AdminProtegida>} />
+      <Route path="/admin/pedidos" element={<AdminProtegida><AdminPedidos /></AdminProtegida>} />
+      <Route path="/admin/restaurantes" element={<AdminProtegida><AdminRestaurantes /></AdminProtegida>} />
+      <Route path="/admin/usuarios" element={<AdminProtegida><AdminUsuarios /></AdminProtegida>} />
+      <Route path="/admin/relatorios" element={<AdminProtegida><AdminRelatorios /></AdminProtegida>} />
+      <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
+
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -124,13 +148,15 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <AuthProvider>
-        <CartProvider>
-          <NotificationsProvider>
-            <AppRoutes />
-          </NotificationsProvider>
-        </CartProvider>
-      </AuthProvider>
+      <AdminAuthProvider>
+        <AuthProvider>
+          <CartProvider>
+            <NotificationsProvider>
+              <AppRoutes />
+            </NotificationsProvider>
+          </CartProvider>
+        </AuthProvider>
+      </AdminAuthProvider>
     </BrowserRouter>
   );
 }

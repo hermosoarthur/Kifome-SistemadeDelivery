@@ -239,23 +239,8 @@ def request_otp_email():
     if not email or not validar_email(email):
         return jsonify({'erro': 'Email inválido'}), 400
 
-    # --- Try Supabase OTP first (avoids needing backend SMTP) ---
-    sb = get_supabase()
-    if sb:
-        try:
-            from app.utils.supabase_utils import send_magic_link
-            result = send_magic_link(email)
-            if result['success']:
-                return jsonify({
-                    'mensagem': 'Código enviado para seu email',
-                    'email': email,
-                    'provider': 'supabase'
-                }), 200
-            current_app.logger.warning('[OTP Email] Supabase OTP falhou: %s', result['error'])
-        except Exception as exc:
-            current_app.logger.warning('[OTP Email] Supabase OTP exception: %s', exc)
-
-    # --- Fallback: local SMTP ---
+    # --- Gerar OTP local de 6 dígitos e enviar via SMTP ---
+    # (não usa magic link do Supabase para garantir que o usuário receba um código numérico)
     codigo = ''.join([str(secrets.randbelow(10)) for _ in range(6)])
     codigo_hash = bcrypt.hashpw(codigo.encode(), bcrypt.gensalt()).decode()
     expiracao = datetime.utcnow() + timedelta(
@@ -320,24 +305,11 @@ def verify_otp_email():
     if data.get('longitude') not in (None, '') and longitude is None:
         return jsonify({'erro': 'Longitude inválida'}), 400
 
-    # --- Try Supabase OTP verification first ---
-    sb = get_supabase()
+    # --- Verificação local do OTP de 6 dígitos (gerado via SMTP) ---
     user_data_from_supabase = None
-    if sb:
-        try:
-            sb_result = verify_otp(email, codigo, otp_type='email')
-            if not sb_result['success']:
-                return jsonify({'erro': sb_result['error'] or 'Código inválido ou expirado'}), 401
-            user_data_from_supabase = sb_result['user']
-        except Exception as exc:
-            current_app.logger.warning('[OTP Email verify] Supabase falhou, tentando local: %s', exc)
-            user_data_from_supabase = None
-
-    # --- Fallback: local OTP verification ---
-    if user_data_from_supabase is None:
-        _, otp_error = _validate_local_otp('email', email, codigo)
-        if otp_error:
-            return otp_error
+    _, otp_error = _validate_local_otp('email', email, codigo)
+    if otp_error:
+        return otp_error
 
     # Find or create user
     usuario = Usuario.query.filter_by(email=email).first()

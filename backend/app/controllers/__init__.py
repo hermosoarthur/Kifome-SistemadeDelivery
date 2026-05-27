@@ -955,10 +955,60 @@ def confirmar_recebimento(usuario_atual, pid):
     )
     try:
         db.session.commit()
-        return jsonify({'pedido': pedido.to_dict(), 'mensagem': 'Recebimento confirmado com sucesso'}), 200
     except Exception:
         db.session.rollback()
         return jsonify({'erro': 'Erro ao confirmar recebimento'}), 500
+
+    # ── Envio da Nota Fiscal em PDF por e-mail ────────────────────────────────
+    def _enviar_nf_async(app, pedido_id):
+        """Gera e envia a NF em background para não bloquear a resposta."""
+        import threading  # noqa: PLC0415
+        _ = threading.current_thread()  # garante contexto de thread
+
+        with app.app_context():
+            try:
+                from app.models import Pedido as PedidoModel  # noqa: PLC0415
+                from app.utils.email_utils import enviar_email_com_anexo  # noqa: PLC0415
+                from app.utils.nf_utils import gerar_nf_pdf  # noqa: PLC0415
+
+                ped = PedidoModel.query.get(pedido_id)
+                if ped is None:
+                    return
+
+                email_cliente = ped.cliente.email if ped.cliente else None
+                if not email_cliente:
+                    return
+
+                pdf_bytes = gerar_nf_pdf(ped)
+                nome_cli = ped.cliente.nome if ped.cliente else 'Cliente'
+                corpo_html = (
+                    f'<p>Olá, <b>{nome_cli}</b>!</p>'
+                    f'<p>Seu pedido <b>#{ped.id}</b> foi concluído com sucesso. 🎉</p>'
+                    f'<p>Em anexo você encontra a Nota Fiscal (comprovante) do seu pedido.</p>'
+                    f'<p>Obrigado por usar o <b>Kifome</b>!</p>'
+                )
+                enviar_email_com_anexo(
+                    destinatario=email_cliente,
+                    assunto=f'Kifome — Nota Fiscal do Pedido #{ped.id}',
+                    corpo_html=corpo_html,
+                    anexo_bytes=pdf_bytes,
+                    nome_arquivo=f'NF_Pedido_{ped.id}.pdf',
+                )
+            except Exception as exc:  # noqa: BLE001
+                import logging  # noqa: PLC0415
+                logging.getLogger(__name__).error(
+                    '[confirmar_recebimento] Falha ao enviar NF por e-mail para pedido #%s: %s',
+                    pedido_id, exc,
+                )
+
+    import threading  # noqa: PLC0415
+    from flask import current_app  # noqa: PLC0415
+    app = current_app._get_current_object()  # type: ignore[attr-defined]
+    t = threading.Thread(target=_enviar_nf_async, args=(app, pedido.id), daemon=True)
+    t.start()
+    # ──────────────────────────────────────────────────────────────────────────
+
+    return jsonify({'pedido': pedido.to_dict(), 'mensagem': 'Recebimento confirmado com sucesso'}), 200
 
 
 # ── NOTIFICAÇÕES ─────────────────────────────────────────
@@ -1431,9 +1481,11 @@ def simular_passo_entrega(usuario_atual, pid):
         if codigo_gerado:
             resp['codigo_entrega'] = codigo_gerado
         return jsonify(resp), 200
-    except Exception:
+    except Exception as exc:
         db.session.rollback()
-        return jsonify({'erro': 'Erro ao simular passo'}), 500
+        import logging, traceback
+        logging.getLogger(__name__).error('[simular_passo] ERRO: %s\n%s', exc, traceback.format_exc())
+        return jsonify({'erro': f'Erro ao simular passo: {str(exc)}'}), 500
 
 
 # ── CÓDIGO DE ENTREGA PARA O CLIENTE ────────────────────────────────────────

@@ -25,7 +25,13 @@ const ICON_DEST  = emojiIcon('📍', 40);
 const ICON_MOTO  = emojiIcon('🛵', 44);
 
 function MapaEntrega({ pedido, statusAtivo }) {
-  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: GMAPS_KEY, libraries: GMAPS_LIBRARIES });
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: GMAPS_KEY,
+    libraries: GMAPS_LIBRARIES,
+    language: 'pt-BR',
+    region: 'BR',
+  });
   const restLat = Number(pedido?.restaurante?.latitude ?? 0);
   const restLng = Number(pedido?.restaurante?.longitude ?? 0);
   const destLat = Number(pedido?.endereco_latitude ?? 0);

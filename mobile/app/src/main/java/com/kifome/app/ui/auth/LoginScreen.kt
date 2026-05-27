@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -29,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -88,9 +90,10 @@ fun LoginScreen(
             Text("🍔", fontSize = 72.sp)
             Text(
                 text = "Kifome",
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Black,
+                fontStyle = FontStyle.Italic,
+                color = MaterialTheme.colorScheme.primary
             )
             Text(
                 text = "Seu delivery favorito",
@@ -154,19 +157,15 @@ fun LoginScreen(
 
             OutlinedButton(
                 onClick = { viewModel.loginGoogle(context as Activity) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Text("Entrar com Google")
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Text(
-                text = "É um restaurante? Entrar aqui",
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.clickable { }
-            )
+
         }
     }
 }

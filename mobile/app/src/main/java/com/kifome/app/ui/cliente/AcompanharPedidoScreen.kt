@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kifome.app.ui.theme.KifomeError
-import com.kifome.app.ui.theme.KifomeOrange
+import com.kifome.app.ui.theme.KifomePrimary
 import com.kifome.app.ui.theme.KifomeSuccess
 import com.kifome.app.ui.theme.KifomeWarning
 
@@ -36,7 +36,7 @@ private val PASSOS = listOf(
 private fun statusColor(status: String) = when (status) {
     "pendente"   -> KifomeWarning
     "confirmado" -> Color(0xFF3B82F6)
-    "preparando" -> KifomeOrange
+    "preparando" -> KifomePrimary
     "pronto"     -> Color(0xFF84CC16)
     "em_entrega" -> Color(0xFF8B5CF6)
     "entregue"   -> KifomeSuccess
@@ -73,7 +73,11 @@ fun AcompanharPedidoScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Voltar")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -292,7 +296,7 @@ fun AcompanharPedidoScreen(
                         onValueChange = { notaAvaliacao = it.toInt() },
                         valueRange = 1f..5f,
                         steps = 3,
-                        colors = SliderDefaults.colors(thumbColor = KifomeOrange, activeTrackColor = KifomeOrange)
+                        colors = SliderDefaults.colors(thumbColor = KifomePrimary, activeTrackColor = KifomePrimary)
                     )
                     OutlinedTextField(
                         value = comentarioAvaliacao,
@@ -309,7 +313,7 @@ fun AcompanharPedidoScreen(
                         viewModel.avaliar(notaAvaliacao, comentarioAvaliacao)
                         showAvaliacaoDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = KifomeOrange)
+                    colors = ButtonDefaults.buttonColors(containerColor = KifomePrimary)
                 ) { Text("Enviar", color = Color.White) }
             },
             dismissButton = {

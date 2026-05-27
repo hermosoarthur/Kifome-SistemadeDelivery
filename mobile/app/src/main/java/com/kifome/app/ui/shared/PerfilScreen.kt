@@ -1,8 +1,9 @@
 package com.kifome.app.ui.shared
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -11,12 +12,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.kifome.app.ui.theme.KifomePrimary
+import com.kifome.app.ui.theme.KifomeSecundaria
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,7 +42,11 @@ fun PerfilScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Meu Perfil") },
-                navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Voltar") } }
+                navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Voltar") } },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -84,16 +93,21 @@ fun PerfilScreen(
                     Box(
                         modifier = Modifier
                             .size(96.dp)
-                            .clip(CircleShape),
+                            .clip(RoundedCornerShape(24.dp)),
                         contentAlignment = Alignment.Center
                     ) {
                         if (u.avatarUrl != null) {
                             AsyncImage(model = u.avatarUrl, contentDescription = "Avatar", contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                         } else {
-                            Surface(color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.fillMaxSize()) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text(inicialNome, style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.primary)
-                                }
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        brush = Brush.linearGradient(listOf(KifomePrimary, KifomeSecundaria))
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(inicialNome, style = MaterialTheme.typography.headlineLarge, color = Color.White, fontWeight = FontWeight.Bold)
                             }
                         }
                     }

@@ -14,7 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kifome.app.ui.theme.KifomeOrange
+import com.kifome.app.ui.theme.KifomePrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,10 +43,14 @@ fun NotificacoesScreen(
                     val state = uiState
                     if (state is NotificacoesUiState.Success && state.notificacoes.any { !it.lida }) {
                         TextButton(onClick = { viewModel.marcarTodasLidas() }) {
-                            Text("Marcar todas", color = KifomeOrange, style = MaterialTheme.typography.labelMedium)
+                            Text("Marcar todas", color = KifomePrimary, style = MaterialTheme.typography.labelMedium)
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -55,7 +59,7 @@ fun NotificacoesScreen(
             is NotificacoesUiState.Loading -> {
                 Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        CircularProgressIndicator(color = KifomeOrange)
+                        CircularProgressIndicator(color = KifomePrimary)
                         Text("Carregando...", style = MaterialTheme.typography.bodySmall)
                     }
                 }
@@ -93,7 +97,7 @@ fun NotificacoesScreen(
                                 Text(
                                     "Não lidas (${naoLidas.size})",
                                     style = MaterialTheme.typography.labelMedium,
-                                    color = KifomeOrange,
+                                    color = KifomePrimary,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(bottom = 4.dp)
                                 )
@@ -152,7 +156,7 @@ private fun NotificacaoItem(
             containerColor = if (lida)
                 MaterialTheme.colorScheme.surface
             else
-                KifomeOrange.copy(alpha = 0.08f)
+                KifomePrimary.copy(alpha = 0.08f)
         ),
         onClick = { if (!lida) onMarcarLida() }
     ) {
@@ -165,7 +169,7 @@ private fun NotificacaoItem(
             if (!lida) {
                 Surface(
                     shape = androidx.compose.foundation.shape.CircleShape,
-                    color = KifomeOrange,
+                    color = KifomePrimary,
                     modifier = Modifier.size(8.dp).padding(top = 4.dp)
                 ) {}
             }

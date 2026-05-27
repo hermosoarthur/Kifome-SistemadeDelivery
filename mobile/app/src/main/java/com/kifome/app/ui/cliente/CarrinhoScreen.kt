@@ -23,7 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kifome.app.ui.theme.KifomeOrange
+import com.kifome.app.ui.theme.KifomePrimary
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -71,7 +71,11 @@ fun CarrinhoScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Voltar")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -108,7 +112,7 @@ fun CarrinhoScreen(
                             onClick = { viewModel.finalizarPedido() },
                             enabled = uiState !is CarrinhoUiState.Loading,
                             modifier = Modifier.fillMaxWidth().height(52.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = KifomeOrange)
+                            colors = ButtonDefaults.buttonColors(containerColor = KifomePrimary)
                         ) {
                             if (uiState is CarrinhoUiState.Loading) {
                                 CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
@@ -132,7 +136,7 @@ fun CarrinhoScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("🛒", fontSize = 64.sp)
                     Text("Seu carrinho está vazio", style = MaterialTheme.typography.titleMedium)
-                    Button(onClick = onNavigateBack, colors = ButtonDefaults.buttonColors(containerColor = KifomeOrange)) {
+                    Button(onClick = onNavigateBack, colors = ButtonDefaults.buttonColors(containerColor = KifomePrimary)) {
                         Text("Explorar restaurantes", color = Color.White)
                     }
                 }
@@ -181,7 +185,7 @@ fun CarrinhoScreen(
                                 FilledIconButton(
                                     onClick = { viewModel.addItem(cartItem.produto.id) },
                                     modifier = Modifier.size(32.dp),
-                                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = KifomeOrange)
+                                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = KifomePrimary)
                                 ) {
                                     Icon(Icons.Default.Add, "Adicionar", modifier = Modifier.size(14.dp), tint = Color.White)
                                 }
@@ -202,17 +206,17 @@ fun CarrinhoScreen(
                                     .weight(1f)
                                     .clickable { viewModel.setTipoEntrega(tipo) }
                                     .then(
-                                        if (isSelected) Modifier.border(2.dp, KifomeOrange, RoundedCornerShape(12.dp))
+                                        if (isSelected) Modifier.border(2.dp, KifomePrimary, RoundedCornerShape(12.dp))
                                         else Modifier
                                     ),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = if (isSelected) KifomeOrange.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface
+                                    containerColor = if (isSelected) KifomePrimary.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface
                                 )
                             ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
-                                    Text(tipo.label, style = MaterialTheme.typography.bodySmall, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, color = if (isSelected) KifomeOrange else MaterialTheme.colorScheme.onSurface)
-                                    Text(formatter.format(tipo.taxa), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = if (isSelected) KifomeOrange else MaterialTheme.colorScheme.primary)
+                                    Text(tipo.label, style = MaterialTheme.typography.bodySmall, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, color = if (isSelected) KifomePrimary else MaterialTheme.colorScheme.onSurface)
+                                    Text(formatter.format(tipo.taxa), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = if (isSelected) KifomePrimary else MaterialTheme.colorScheme.primary)
                                 }
                             }
                         }
@@ -238,12 +242,12 @@ fun CarrinhoScreen(
                                     .fillMaxWidth()
                                     .clickable { viewModel.setMetodoPagamento(metodo) }
                                     .then(
-                                        if (isSelected) Modifier.border(2.dp, KifomeOrange, RoundedCornerShape(12.dp))
+                                        if (isSelected) Modifier.border(2.dp, KifomePrimary, RoundedCornerShape(12.dp))
                                         else Modifier
                                     ),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = if (isSelected) KifomeOrange.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface
+                                    containerColor = if (isSelected) KifomePrimary.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface
                                 )
                             ) {
                                 Row(
@@ -254,10 +258,10 @@ fun CarrinhoScreen(
                                     RadioButton(
                                         selected = isSelected,
                                         onClick = { viewModel.setMetodoPagamento(metodo) },
-                                        colors = RadioButtonDefaults.colors(selectedColor = KifomeOrange)
+                                        colors = RadioButtonDefaults.colors(selectedColor = KifomePrimary)
                                     )
                                     Column {
-                                        Text(emoji, style = MaterialTheme.typography.bodyMedium, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, color = if (isSelected) KifomeOrange else MaterialTheme.colorScheme.onSurface)
+                                        Text(emoji, style = MaterialTheme.typography.bodyMedium, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, color = if (isSelected) KifomePrimary else MaterialTheme.colorScheme.onSurface)
                                         if (isSelected && (metodo == MetodoPagamento.PIX || metodo == MetodoPagamento.CARTAO)) {
                                             Text("Será redirecionado para o Mercado Pago", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                                         }

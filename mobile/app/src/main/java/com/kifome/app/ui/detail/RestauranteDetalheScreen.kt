@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -27,6 +28,7 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.kifome.app.data.api.dto.ProdutoDto
+import com.kifome.app.ui.theme.KifomePrimary
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -63,7 +65,11 @@ fun RestauranteDetalheScreen(
                             }
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         }
     ) { padding ->
@@ -294,7 +300,15 @@ private fun ProdutoItem(produto: ProdutoDto, onAdd: () -> Unit) {
             }
 
             Spacer(Modifier.width(8.dp))
-            FilledIconButton(onClick = onAdd, modifier = Modifier.size(38.dp)) {
+            FilledIconButton(
+                onClick = onAdd,
+                modifier = Modifier.size(38.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = Color(0xFFFFECEE),
+                    contentColor = KifomePrimary
+                )
+            ) {
                 Icon(Icons.Default.Add, "Adicionar", modifier = Modifier.size(20.dp))
             }
         }

@@ -1,12 +1,11 @@
 package com.kifome.app.ui.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.kifome.app.data.api.dto.RestauranteDto
+import com.kifome.app.ui.theme.KifomeBordas
+import com.kifome.app.ui.theme.KifomeSurface
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -29,13 +30,14 @@ fun RestauranteCard(
 ) {
     val formatter = NumberFormat.getCurrencyInstance(Locale("pt", "BR"))
 
-    Surface(
+    Card(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(18.dp),
-        shadowElevation = 4.dp,
-        tonalElevation = 2.dp
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = KifomeSurface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        border = BorderStroke(1.dp, KifomeBordas)
     ) {
         Row(
             modifier = Modifier
@@ -83,7 +85,6 @@ fun RestauranteCard(
                         maxLines = 1,
                         modifier = Modifier.weight(1f)
                     )
-                    // Nota
                     if (restaurante.nota != null) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("⭐", fontSize = 12.sp)
@@ -112,15 +113,15 @@ fun RestauranteCard(
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = if (restaurante.status == "aberto")
-                        Color(0xFF22C55E).copy(alpha = 0.15f)
+                        Color(0xFFD1FAE5)
                     else
-                        MaterialTheme.colorScheme.error.copy(alpha = 0.1f)
+                        Color(0xFFFEE2E2)
                 ) {
                     Text(
                         text = if (restaurante.status == "aberto") "● Aberto" else "● Fechado",
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (restaurante.status == "aberto") Color(0xFF22C55E)
-                                else MaterialTheme.colorScheme.error,
+                        color = if (restaurante.status == "aberto") Color(0xFF065F46)
+                        else Color(0xFFc20c0c),
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
@@ -128,7 +129,6 @@ fun RestauranteCard(
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Taxa e tempo
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     val taxa = restaurante.taxaEntrega
                     val tempo = restaurante.tempoEstimado

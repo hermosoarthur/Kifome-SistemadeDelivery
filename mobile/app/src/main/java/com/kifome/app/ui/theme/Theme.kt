@@ -1,48 +1,46 @@
 package com.kifome.app.ui.theme
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = KifomePrimary,
-    onPrimary = KifomeOnPrimary,
-    primaryContainer = KifomeSurface2,
-    onPrimaryContainer = KifomeOnSurface,
-    secondary = KifomePrimary,
-    onSecondary = KifomeOnPrimary,
-    background = KifomeBackground,
-    onBackground = KifomeOnSurface,
-    surface = KifomeSurface,
-    onSurface = KifomeOnSurface,
-    surfaceVariant = KifomeSurface2,
-    onSurfaceVariant = KifomeMuted,
-    error = KifomeError,
-    outline = KifomeSurface2
+private val LightColorScheme = lightColorScheme(
+    primary            = KifomePrimary,
+    onPrimary          = KifomeOnPrimary,
+    primaryContainer   = KifomePrimarySoft,
+    onPrimaryContainer = KifomePrimaryDark,
+    secondary          = KifomeSecundaria,
+    onSecondary        = KifomeOnPrimary,
+    secondaryContainer = KifomePrimarySoft,
+    background         = KifomeFundo,
+    onBackground       = KifomeTextoPrimario,
+    surface            = KifomeSurface,
+    onSurface          = KifomeTextoPrimario,
+    surfaceVariant     = KifomeMuted,
+    onSurfaceVariant   = KifomeTextoSecundario,
+    outline            = KifomeBordas,
+    error              = KifomeErro,
+    onError            = KifomeOnPrimary,
 )
 
 @Composable
 fun KifomeTheme(
-    darkTheme: Boolean = true,
-    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = DarkColorScheme
-
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as android.app.Activity).window
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
         }
     }
-
     MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
+        colorScheme = LightColorScheme,
+        typography  = KifomeTypography,
+        shapes      = KifomeShapes,
+        content     = content
     )
 }

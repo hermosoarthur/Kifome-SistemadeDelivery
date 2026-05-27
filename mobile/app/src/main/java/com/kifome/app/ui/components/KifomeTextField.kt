@@ -1,14 +1,17 @@
 package com.kifome.app.ui.components
 
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
+import com.kifome.app.ui.theme.KifomeBordas
+import com.kifome.app.ui.theme.KifomePrimary
+import com.kifome.app.ui.theme.KifomeSurface
+import com.kifome.app.ui.theme.KifomeTextoClaro
 
 @Composable
 fun KifomeTextField(
@@ -31,13 +34,15 @@ fun KifomeTextField(
         shape = RoundedCornerShape(16.dp),
         keyboardOptions = keyboardOptions,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+            focusedContainerColor = KifomeSurface,
+            unfocusedContainerColor = KifomeSurface,
+            disabledContainerColor = KifomeSurface.copy(alpha = 0.6f),
+            focusedBorderColor = KifomePrimary,
+            unfocusedBorderColor = KifomeBordas,
+            cursorColor = KifomePrimary,
+            unfocusedPlaceholderColor = KifomeTextoClaro,
+            focusedPlaceholderColor = KifomeTextoClaro,
         ),
         modifier = modifier
     )
 }
-

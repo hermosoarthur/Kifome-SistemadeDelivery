@@ -54,7 +54,7 @@ fun SplashScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(text = "🍊", fontSize = 80.sp)
+            Text(text = "🍔", fontSize = 80.sp)
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "Kifome",

@@ -1,206 +1,231 @@
-# Kifome — Sistema de Delivery
+# 🏷️ Kifome · Next-Gen Delivery Ecosystem
 
-Plataforma fullstack de delivery inspirada em aplicações consolidadas como iFood, projetada para oferecer uma experiência completa e intuitiva. O sistema suporta múltiplos perfis de usuário (cliente, restaurante e entregador), conta com autenticação moderna e segura (OTP e OAuth) e implementa um fluxo completo de pedidos, desde a descoberta de restaurantes até a entrega final.
----
-
-## 📌 Visão geral do projeto
-
-O **Kifome** é dividido em duas aplicações principais:
-
-- **Backend** (`backend/`) em Flask, responsável por autenticação, regras de negócio e API REST.
-- **Frontend** (`frontend/`) em React, responsável pela experiência do usuário (cliente, restaurante e entregador).
-
-O projeto já está estruturado para operar com autenticação **passwordless**, usando OTP, login social e integração com Supabase.
+A revolução do delivery local sem fricção. Um ecossistema Full-Stack de alta performance, projetado sob os pilares de Design Thinking e engenharia moderna para eliminar barreiras de entrada, otimizar a conversão e conectar clientes e restaurantes em tempo real.
 
 ---
 
-## 🚀 Funcionalidades principais
+# 🎯 O PROBLEMA E A SOLUÇÃO
 
-### Autenticação e conta
+## ❌ O Cenário Atual (O Problema)
 
-- Login via **OTP por e-mail**
-- Login via **OTP por SMS**
-- Login social com **Google** e **Facebook** (via Supabase OAuth)
-- Sincronização de usuário autenticado com base local
+Plataformas tradicionais sofrem com altas taxas de abandono logo no onboarding devido a fluxos de cadastro complexos e recuperação de senhas obsoletas.
 
-### Perfis de usuário
+Além disso, sistemas de endereço rígidos geram atrito severo no checkout, resultando em perda de conversão para os restaurantes e uma experiência frustrante para o usuário final.
 
-- **Cliente**: navega em restaurantes, adiciona itens no carrinho, fecha pedido e acompanha status
-- **Restaurante**: gerencia restaurante, cardápio/produtos e pedidos recebidos
-- **Entregador**: visualiza pedidos disponíveis e gerencia entregas em andamento
+## ✔️ A Abordagem Kifome (A Solução)
 
-### Catálogo e pedidos
+O Kifome redefine a experiência de delivery através de uma arquitetura **100% Passwordless** (autenticação sem senha via OTP e OAuth), reduzindo o tempo de onboarding a segundos.
 
-- Listagem de restaurantes e produtos
-- CRUD de produtos para restaurantes
-- Criação e atualização de pedidos
-- Fluxo de status de pedido por tipo de usuário
-
-### Endereço e entrega
-
-Fluxo de endereço inspirado em apps de delivery:
-
-- seleção por autocomplete + mapa com marcador
-- botão de geolocalização
-- fallback manual (logradouro, número, bairro, cidade, UF, CEP, complemento, referência)
-- salvamento de endereço principal do usuário
-- reaproveitamento no carrinho e possibilidade de troca no checkout
+Combinando uma interface fluida em React com um motor geográfico inteligente (Google Maps API), a plataforma garante uma jornada de compra sem fricção, sustentada por um ecossistema robusto, seguro e altamente escalável.
 
 ---
 
-## 🧱 Arquitetura e organização
+# 📱 O ECOSSISTEMA (FEATURES CORE)
 
-### Backend (`backend/app`)
+O ecossistema é integrado de ponta a ponta, conectando múltiplos perfis com regras de negócio centralizadas e comunicação via API RESTful de alta performance.
 
-- `controllers/` → regras de negócio e processamento das requisições
-- `routes/` → definição dos endpoints REST
-- `models/` → modelos SQLAlchemy
-- `utils/` → JWT, OTP, validações e integrações auxiliares
-- `config/` → configurações por ambiente
+## 🔐 1. Autenticação Passwordless & Segura
 
-### Frontend (`frontend/src`)
+### Acesso Instantâneo
+- Login ágil via OTP (One-Time Password) enviado por E-mail ou SMS.
 
-- `pages/` → telas por domínio (`cliente`, `restaurante`, `entregador`, `shared`)
-- `components/` → componentes reutilizáveis de UI
-- `contexts/` → estado global (`AuthContext`, `CartContext`)
-- `services/` → camada de comunicação com API e Supabase
-- `styles/` → tema e estilos globais
+### Login Social
+- Integração nativa com Google e Facebook via Supabase OAuth.
+
+### Sincronização em Tempo Real
+- Sincronização automatizada entre o provedor de autenticação externo e a base de dados local (`/sync_supabase_user`), eliminando fluxos legados de senha.
 
 ---
 
-## 🛠️ Stack tecnológica
+## 📱 2. Jornada Inteligente do Cliente
 
-### Backend
+### Geolocalização Avançada
+- Seleção de endereço por autocomplete integrada a mapa com marcador visual dinâmico.
+- Botão de geolocalização por hardware.
+- Fallback manual inteligente.
 
-- **Python 3**
-- **Flask**
-- **Flask-SQLAlchemy / SQLAlchemy**
-- **PyJWT**
-- **bcrypt**
-- **Supabase Python SDK**
-- **PostgreSQL** (via Supabase)
+### Smart Checkout
+- Persistência de carrinho.
+- Salvamento automático do endereço principal do usuário.
+- Flexibilidade para troca rápida antes da finalização do pedido.
 
-### Frontend
-
-- **React 18**
-- **React Router DOM**
-- **Axios**
-- **@supabase/supabase-js**
-- **@react-google-maps/api**
-- **CSS** (arquitetura modular por componente/página)
-
-### Infra e execução
-
-- **Node.js + npm** para frontend
-- **pip + requirements.txt** para backend
-- **Supabase** para autenticação social/OTP e base de dados
+### Fluxo de Descoberta
+- Navegação fluida por catálogos de restaurantes.
+- Gerenciamento de itens.
+- Acompanhamento de status em tempo real.
 
 ---
 
-## ⚙️ Configuração de ambiente
+## 🏪 3. Gestão do Restaurante
 
-### Frontend (`frontend/.env`)
+### Live Menu Manager
+- CRUD completo e intuitivo para gerenciamento de produtos, categorias e cardápio em tempo real.
 
-Crie o arquivo `frontend/.env` a partir de `frontend/.env.example` e preencha:
-
-- `REACT_APP_API_URL`
-- `REACT_APP_SUPABASE_URL`
-- `REACT_APP_SUPABASE_ANON_KEY`
-- `REACT_APP_GOOGLE_MAPS_API_KEY`
-
-> Se `REACT_APP_GOOGLE_MAPS_API_KEY` não estiver configurada, o app continua funcionando com preenchimento manual de endereço.
-
-### Backend (`backend/.env`)
-
-Defina as variáveis do Flask e integração com Supabase/SMTP (quando aplicável), por exemplo:
-
-- `FLASK_ENV`
-- `DATABASE_URL`
-- `JWT_SECRET_KEY`
-- `SUPABASE_URL`
-- `SUPABASE_KEY` ou `SUPABASE_SERVICE_KEY`
-- `SMS_PROVIDER`
-- `OTP_EXPIRATION_MINUTES`
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL`
+### Order Control
+- Painel operacional reativo focado na atualização rápida do fluxo de status dos pedidos recebidos.
 
 ---
 
-## ▶️ Como executar
+# 🛠️ ARQUITETURA E TECH STACK
 
-### Backend
+A aplicação adota o princípio de **Separação de Responsabilidades (SoC)**, garantindo alta manutenibilidade e escalabilidade para o ecossistema.
 
-```powershell
-cd backend
-pip install -r requirements.txt
-python run.py
+## 🗂️ Organização dos Repositórios
+
+```plaintext
+├── backend/app              # Backend Flask (API Stateless)
+│   ├── config/              # Configurações dinâmicas por ambiente
+│   ├── controllers/         # Regras de negócio e processamento de requisições
+│   ├── models/              # Modelos relacionais SQLAlchemy (PostgreSQL)
+│   ├── routes/              # Definição e agrupamento dos endpoints REST
+│   └── utils/               # Core helpers (JWT, OTP, validações e integrações)
+│
+├── frontend/src             # Frontend React 18 (SPA)
+│   ├── components/          # Componentes modulares e reutilizáveis de UI
+│   ├── contexts/            # Estados globais unificados (AuthContext, CartContext)
+│   ├── pages/               # Views divididas por domínio (Cliente, Restaurante, Shared)
+│   ├── services/            # Camada de comunicação com API REST e Supabase Client
+│   └── styles/              # Arquitetura de estilos modulares por componente
 ```
 
-> Em ambiente de desenvolvimento, ao rodar `python run.py`, o projeto executa **seed automática de restaurantes e produtos demo** quando o banco estiver vazio.
->
-> Para desativar o comportamento, configure:
->
-> - `AUTO_SEED_DEMO=false`
+---
 
-### Frontend
+## 💻 Stack Tecnológica
 
-```powershell
-cd frontend
+| Camada | Tecnologia | Papel Estratégico |
+|----------|------------|-------------------|
+| Backend Core | Python 3 + Flask | API RESTful ágil, centralização de regras de negócio e roteamento |
+| ORM & Token | SQLAlchemy + PyJWT | Abstração segura da camada de dados e gerenciamento de sessões |
+| Frontend | React 18 + React Router DOM | Interface SPA modular, reativa e focada em UX |
+| Integração API | Axios | Requisições HTTP otimizadas e tratamento de erros |
+| BaaS / Infra | Supabase (Python/JS SDK) | Fluxos Passwordless, SMS/Email OTP e OAuth Social |
+| Banco de Dados | PostgreSQL | Persistência relacional robusta com conformidade ACID |
+| Geolocalização | @react-google-maps/api | Mapas, autocomplete e experiência visual avançada |
+
+---
+
+# 📊 ENGENHARIA DE DADOS
+
+O coração do Kifome baseia-se em um modelo relacional planejado para garantir máxima consistência, rastreabilidade e integridade das informações de ponta a ponta.
+
+---
+
+## 📡 Endpoints de Autenticação (`/api/auth`)
+
+A API expõe rotas otimizadas para o fluxo passwordless, garantindo transições seguras sem expor dados sensíveis.
+
+### OTP por E-mail
+
+```http
+POST /request_otp_email
+POST /verify_otp_email
+```
+
+### OTP por SMS
+
+```http
+POST /request_otp_sms
+POST /verify_otp_sms
+```
+
+### OAuth Social
+
+```http
+POST /login_google
+POST /login_facebook
+```
+
+### Sincronização e Sessão
+
+```http
+GET  /me
+POST /sync_supabase_user
+```
+
+### 🔒 Segurança Arquitetural
+
+O modelo físico assegura:
+
+- Mapeamento correto de chaves estrangeiras (FKs)
+- Índices otimizados para consulta rápida de pedidos
+- Políticas rígidas de relacionamento
+- Sincronização segura de usuários locais e externos
+- Eliminação de inconsistências de dados
+
+---
+
+# 🚀 COMO EXECUTAR O MVP
+
+## Pré-requisitos
+
+- Python 3.10+
+- Node.js 18+
+
+---
+
+## 🖥️ 1. Configurando o Back-end (Flask API)
+
+```bash
+# Navegar até o diretório do backend
+cd backend
+
+# Criar e ativar o ambiente virtual
+python -m venv venv
+
+# Linux/Mac
+source venv/bin/activate
+
+# Windows
+venv\Scripts\activate
+
+# Instalar dependências
+pip install -r requirements.txt
+
+# Executar servidor
+flask run
+```
+
+---
+
+## 🌐 2. Configurando o Front-end (React)
+
+```bash
+# Navegar até o frontend
+cd ../frontend
+
+# Instalar dependências
 npm install
+
+# Iniciar aplicação
 npm start
 ```
 
-### Build de produção (frontend)
+---
 
-```powershell
-cd frontend
-npm run build
-```
+# 🎯 Diferenciais Competitivos
+
+✅ Arquitetura 100% Passwordless
+
+✅ Login Social (Google e Facebook)
+
+✅ Geolocalização Inteligente
+
+✅ Checkout Sem Fricção
+
+✅ Painel Operacional para Restaurantes
+
+✅ Sincronização em Tempo Real
+
+✅ Backend Escalável em Flask
+
+✅ Frontend SPA em React 18
+
+✅ PostgreSQL + Supabase
+
+✅ Design Thinking aplicado à experiência do usuário
 
 ---
 
-## 🗄️ Banco de dados
+## 📌 Visão
 
-Schema base:
-
-- `backend/database.sql`
-
-Este projeto está configurado para usar **apenas** o `backend/database.sql` como fonte de verdade do schema.
-
----
-
-## 🔐 Autenticação (modelo atual)
-
-O projeto está orientado para autenticação **sem senha de usuário**:
-
-- OTP por e-mail
-- OTP por SMS
-- OAuth com Google/Facebook
-
-Fluxos legados de senha foram removidos para manter consistência com o produto.
-
----
-
-## 📡 Endpoints principais (resumo)
-
-Base de autenticação: `/api/auth`
-
-- `POST /request_otp_email`
-- `POST /verify_otp_email`
-- `POST /request_otp_sms`
-- `POST /verify_otp_sms`
-- `POST /login_google`
-- `POST /login_facebook`
-- `GET /me`
-- `POST /sync_supabase_user`
-
-Além disso, o backend expõe rotas para usuários, restaurantes, produtos, pedidos e entregadores.
-
----
-
-## 👥 Perfis e jornadas no app
-
-- **Cliente**: descoberta de restaurantes → carrinho → pedido → acompanhamento
-- **Restaurante**: gestão de cardápio e pedidos
-- **Entregador**: captação e execução de entregas
-
-Essa separação já está refletida na estrutura de páginas em `frontend/src/pages/`.
+Transformar o delivery local em uma experiência rápida, personalizada e sem barreiras, conectando consumidores e restaurantes através de tecnologia moderna, acessível e escalável.

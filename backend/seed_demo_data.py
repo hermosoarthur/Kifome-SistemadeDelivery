@@ -283,6 +283,38 @@ MENU_POR_CATEGORIA = {
     },
 }
 
+# ── Endereços reais em Guarulhos-SP ──────────────────────────────────────────
+ENDERECOS_REAIS = {
+    "Smash Point Burger":      {"endereco": "Av. Guarulhos, 1200 - Vila Galvão, Guarulhos - SP, 07072-000",       "lat": -23.4562, "lng": -46.5332},
+    "Big Bites Grill":         {"endereco": "R. Sete de Setembro, 450 - Centro, Guarulhos - SP, 07010-040",       "lat": -23.4628, "lng": -46.5334},
+    "Panelinha da Vó":         {"endereco": "Av. Monteiro Lobato, 3500 - Macedo, Guarulhos - SP, 07112-000",      "lat": -23.4431, "lng": -46.4899},
+    "Marmitex Bom Prato":      {"endereco": "R. João Pessoa, 200 - Gopouva, Guarulhos - SP, 07051-040",           "lat": -23.4698, "lng": -46.5178},
+    "Trattoria Bella Massa":   {"endereco": "Av. Paulo Faccini, 800 - Macedo, Guarulhos - SP, 07112-070",         "lat": -23.4423, "lng": -46.4854},
+    "Nonna Pasta House":       {"endereco": "R. Henrique Schaumann, 100 - Vila Augusta, Guarulhos - SP, 07030-010","lat": -23.4534, "lng": -46.5271},
+    "Oferta do Dia Express":   {"endereco": "Av. das Nações Unidas, 500 - Centro, Guarulhos - SP, 07010-000",     "lat": -23.4612, "lng": -46.5301},
+    "Desconta Aí Delivery":    {"endereco": "R. Voluntários da Pátria, 1100 - Gopoúva, Guarulhos - SP, 07051-001","lat": -23.4689, "lng": -46.5169},
+    "Rei dos Salgados":        {"endereco": "Av. Tiradentes, 2800 - Jd. Pres. Dutra, Guarulhos - SP, 07172-000",  "lat": -23.4742, "lng": -46.5056},
+    "Casa do Salgado Gourmet": {"endereco": "R. Francisco Otaviano, 300 - Vila Rosália, Guarulhos - SP, 07070-060","lat": -23.4580, "lng": -46.5198},
+    "Verde Leve Cozinha":      {"endereco": "Av. Embu, 60 - Jd. Flor da Montanha, Guarulhos - SP, 07112-130",    "lat": -23.4382, "lng": -46.5243},
+    "Fit no Pote":             {"endereco": "R. Tibiriçá, 1400 - Gopouva, Guarulhos - SP, 07051-070",             "lat": -23.4671, "lng": -46.5153},
+    "Açaí da Praia":           {"endereco": "Av. Salgado Filho, 3200 - Vila Galvão, Guarulhos - SP, 07072-100",   "lat": -23.4521, "lng": -46.5287},
+    "Tigela Tropical":         {"endereco": "R. Dom Pedro II, 900 - Centro, Guarulhos - SP, 07013-020",           "lat": -23.4608, "lng": -46.5348},
+    "Sultão do Kebab":         {"endereco": "Av. Presidente Vargas, 1700 - Centro, Guarulhos - SP, 07014-000",    "lat": -23.4637, "lng": -46.5319},
+    "Cedro Árabe":             {"endereco": "R. Voluntários da Pátria, 650 - Gopoúva, Guarulhos - SP, 07051-001", "lat": -23.4668, "lng": -46.5172},
+    "Dragão Wok":              {"endereco": "Av. Guarulhos, 2500 - Vila Galvão, Guarulhos - SP, 07072-000",       "lat": -23.4548, "lng": -46.5301},
+    "China in Box Guarulhos":  {"endereco": "R. Sete de Setembro, 850 - Centro, Guarulhos - SP, 07010-040",       "lat": -23.4625, "lng": -46.5329},
+    "Brasa Nobre Steak":       {"endereco": "Av. Monteiro Lobato, 5100 - Cumbica, Guarulhos - SP, 07180-000",     "lat": -23.4398, "lng": -46.4768},
+    "Parrilla 33":             {"endereco": "R. Tobias Barreto, 500 - Jd. São João, Guarulhos - SP, 07140-150",   "lat": -23.4554, "lng": -46.4982},
+    "Forno de Pedra Pizzaria": {"endereco": "Av. Paulo Faccini, 2200 - Macedo, Guarulhos - SP, 07112-070",        "lat": -23.4415, "lng": -46.4819},
+    "Bella Pizza Prime":       {"endereco": "R. Dom Pedro II, 450 - Centro, Guarulhos - SP, 07013-020",           "lat": -23.4617, "lng": -46.5355},
+    "Doce Encanto Confeitaria":{"endereco": "Av. São João, 1200 - Jd. São João, Guarulhos - SP, 07140-000",       "lat": -23.4562, "lng": -46.4995},
+    "Bolo da Praça":           {"endereco": "Praça Getúlio Vargas, 45 - Centro, Guarulhos - SP, 07010-904",       "lat": -23.4627, "lng": -46.5343},
+    "Padaria Pão Quente":      {"endereco": "R. Henrique Schaumann, 700 - Vila Augusta, Guarulhos - SP, 07030-010","lat": -23.4529, "lng": -46.5264},
+    "Cantinho do Trigo":       {"endereco": "Av. Tiradentes, 1100 - Gopoúva, Guarulhos - SP, 07172-000",          "lat": -23.4712, "lng": -46.5093},
+    "Pastel da Feira 1988":    {"endereco": "R. Marechal Deodoro, 230 - Centro, Guarulhos - SP, 07010-080",       "lat": -23.4633, "lng": -46.5351},
+    "Mega Pastelaria":         {"endereco": "Av. Guarulhos, 3800 - Macedo, Guarulhos - SP, 07110-000",            "lat": -23.4487, "lng": -46.5215},
+}
+
 IMAGEM_POR_CATEGORIA = {
     "Lanches": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=1200",
     "Marmita": "https://images.unsplash.com/photo-1543332164-6e82f355badc?w=1200",
@@ -482,7 +514,16 @@ def ensure_restaurante(owner: Usuario, categoria: str, numero: int) -> Restauran
 
     restaurante.nome_fantasia = limit_text(tema_nome, 100)
     restaurante.descricao = limit_text(f"{tema_desc}. Faixa de preço: {faixa}.", 500)
-    restaurante.endereco = limit_text(f"Rua {slugify(categoria).replace('-', ' ').title()} {numero * 10}, Guarulhos - SP", 200)
+    _end_real = ENDERECOS_REAIS.get(tema_nome, {})
+    _endereco_str = _end_real.get("endereco") or f"Rua {slugify(categoria).replace('-', ' ').title()} {numero * 10}, Guarulhos - SP"
+    restaurante.endereco = limit_text(_endereco_str, 200)
+    restaurante.latitude = _end_real.get("lat")
+    restaurante.longitude = _end_real.get("lng")
+    restaurante.endereco_json = {
+        "formatted_address": _endereco_str,
+        "lat": _end_real.get("lat"),
+        "lng": _end_real.get("lng"),
+    } if _end_real else None
     restaurante.telefone = f"11 4002-{1000 + numero + (len(categoria) * 2)}"
     restaurante.categoria = categoria
     restaurante.imagem_url = IMAGEM_POR_CATEGORIA.get(categoria, "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200")

@@ -83,3 +83,46 @@ def obter_pagamento_mp(payment_id: str) -> dict:
     except Exception as ex:
         print(f'[MP] Erro ao obter pagamento {payment_id}: {ex}')
         return {}
+
+
+def criar_pix_mp(pedido, usuario) -> dict:
+    """
+    Cria um pagamento PIX via Mercado Pago Payments API.
+    Retorna: { payment_id, qr_code, qr_code_base64, status, transaction_amount }
+    """
+    import uuid
+    sdk = _sdk()
+
+    total = float(pedido.total)
+    descricao = f'Kifome - Pedido #{pedido.id}'
+
+    payment_data = {
+        'transaction_amount': total,
+        'description': descricao,
+        'payment_method_id': 'pix',
+        'payer': {
+            'email': usuario.email or 'cliente@kifome.app',
+            'first_name': (usuario.nome or 'Cliente').split()[0],
+            'last_name': ' '.join((usuario.nome or 'Cliente').split()[1:]) or 'Kifome',
+        },
+        'external_reference': f'pedido_{pedido.id}',
+    }
+
+    # X-Idempotency-Key único por tentativa
+    idempotency_key = str(uuid.uuid4())
+
+    result = sdk.payment().create(payment_data, {'X-Idempotency-Key': idempotency_key})
+    resp = result.get('response', {})
+
+    if result.get('status') not in (200, 201):
+        raise RuntimeError(f'Erro MP PIX: {resp}')
+
+    pix_data = resp.get('point_of_interaction', {}).get('transaction_data', {})
+
+    return {
+        'payment_id': str(resp.get('id', '')),
+        'qr_code': pix_data.get('qr_code', ''),
+        'qr_code_base64': pix_data.get('qr_code_base64', ''),
+        'status': resp.get('status', 'pending'),
+        'transaction_amount': total,
+    }

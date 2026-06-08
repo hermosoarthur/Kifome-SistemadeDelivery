@@ -81,6 +81,9 @@ export const pedidoService = {
   confirmarRecebimento: (pid) => api.post(`/api/pedidos/${pid}/confirmar-recebimento`).then(r => r.data),
   simularPasso: (pid) => api.post(`/api/pedidos/${pid}/simular-passo`).then(r => r.data),
   codigoEntrega: (pid) => api.get(`/api/pedidos/${pid}/codigo-entrega`).then(r => r.data),
+  calcularTaxa: (d) => api.post('/api/pedidos/calcular-taxa', d).then(r => r.data),
+  rota: (pid) => api.get(`/api/pedidos/${pid}/rota`).then(r => r.data),
+  cancelarPagamento: (pid) => api.post(`/api/pedidos/${pid}/cancelar-pagamento`).then(r => r.data),
 };
 
 // Notificações
@@ -95,6 +98,8 @@ export const pagamentoService = {
   criarPreferencia: (pedido_id) => api.post('/api/pagamentos/mp/preferencia', { pedido_id }).then(r => r.data),
   statusPedido: (pid) => api.get(`/api/pagamentos/mp/pedido/${pid}/status`).then(r => r.data),
   confirmarSandbox: (pid) => api.post(`/api/pagamentos/mp/sandbox/${pid}/confirmar`).then(r => r.data),
+  criarPix: (pedido_id) => api.post('/api/pagamentos/pix/criar', { pedido_id }).then(r => r.data),
+  statusPix: (payment_id) => api.get(`/api/pagamentos/pix/${payment_id}/status`).then(r => r.data),
 };
 
 // Entregador

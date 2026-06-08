@@ -239,6 +239,8 @@ def request_otp_email():
     if not email or not validar_email(email):
         return jsonify({'erro': 'Email inválido'}), 400
 
+    # --- Gerar OTP local de 6 dígitos e enviar via SMTP ---
+    # (não usa magic link do Supabase para garantir que o usuário receba um código numérico)
     codigo = ''.join([str(secrets.randbelow(10)) for _ in range(6)])
     codigo_hash = bcrypt.hashpw(codigo.encode(), bcrypt.gensalt()).decode()
     expiracao = datetime.utcnow() + timedelta(
@@ -303,6 +305,8 @@ def verify_otp_email():
     if data.get('longitude') not in (None, '') and longitude is None:
         return jsonify({'erro': 'Longitude inválida'}), 400
 
+    # --- Verificação local do OTP de 6 dígitos (gerado via SMTP) ---
+    user_data_from_supabase = None
     _, otp_error = _validate_local_otp('email', email, codigo)
     if otp_error:
         return otp_error
@@ -319,10 +323,13 @@ def verify_otp_email():
             endereco_json=endereco_json,
             latitude=latitude,
             longitude=longitude,
-            tem_endereco=bool(endereco_principal)
+            tem_endereco=bool(endereco_principal),
+            supabase_uid=user_data_from_supabase.get('id') if user_data_from_supabase else None
         )
         db.session.add(usuario)
     else:
+        if user_data_from_supabase and user_data_from_supabase.get('id'):
+            usuario.supabase_uid = user_data_from_supabase['id']
         _apply_usuario_profile_updates(
             usuario,
             nome=nome,

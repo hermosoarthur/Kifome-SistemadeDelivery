@@ -46,6 +46,10 @@ services:
         value: "false"
       - key: ADMIN_SEED_SECRET
         sync: false          # senha para acionar o seed via POST /api/admin/seed?secret=VALOR
+      - key: ADMIN_EMAIL
+        sync: false          # email de login do painel admin (ex: admin@kifome.com)
+      - key: ADMIN_PASSWORD
+        sync: false          # senha de login do painel admin
       - key: MP_ACCESS_TOKEN
         sync: false          # Token do Mercado Pago (produção ou sandbox)
       - key: MP_PUBLIC_KEY
@@ -54,6 +58,14 @@ services:
         value: https://kifome-frontend.onrender.com
       - key: MP_WEBHOOK_URL
         value: https://kifome-backend.onrender.com/api/pagamentos/mp/webhook
+      - key: GOOGLE_MAPS_SERVER_KEY
+        sync: false          # Chave server-side Google Maps (Distance Matrix API)
+      - key: PIX_CHAVE
+        sync: false          # Chave PIX do recebedor (email, CPF, CNPJ ou aleatória)
+      - key: PIX_NOME
+        sync: false          # Nome do recebedor PIX (máx 25 chars)
+      - key: PIX_CIDADE
+        sync: false          # Cidade do recebedor PIX (máx 15 chars)
 
   # ─── FRONTEND (React / Static Site) ──────────────────────────────────────
   - type: web
@@ -73,8 +85,8 @@ services:
         sync: false
       - key: REACT_APP_SUPABASE_ANON_KEY
         sync: false
-      - key: REACT_APP_GOOGLE_MAPS_API_KEY
-        sync: false
+      - key: REACT_APP_GOOGLE_MAPS_KEY
+        sync: false          # Chave pública Google Maps (usada no frontend)
 
 # ─── BANCO DE DADOS PostgreSQL ────────────────────────────────────────────
 databases:

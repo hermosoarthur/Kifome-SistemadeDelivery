@@ -407,7 +407,140 @@ def deletar_produto(usuario_atual, rid, pid):
 # Regras de compatibilidade pagamento
 _METODOS_SITE = {'pix', 'cartao_app'}
 _METODOS_ENTREGA = {'dinheiro', 'maquininha'}
-_TAXAS_ENTREGA = {'padrao': 4.99, 'rapida': 7.99}
+_TAXAS_ENTREGA = {'padrao': 4.99, 'rapida': 7.99}  # fallback fixo
+
+
+def _haversine(lat1, lon1, lat2, lon2):
+    """Calcula distância em km entre dois pontos usando a fórmula de Haversine."""
+    import math
+    R = 6371.0
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+    return R * 2 * math.asin(math.sqrt(a))
+
+
+def _calcular_taxa_por_distancia(distancia_km: float, tipo: str) -> float:
+    """Calcula taxa de entrega baseada na distância real em km."""
+    taxa = 2.99  # base até 1 km
+    if distancia_km > 1:
+        excedente = distancia_km - 1
+        if excedente <= 4:
+            taxa += excedente * 0.99
+        else:
+            taxa += 4 * 0.99
+            excedente2 = excedente - 4
+            if excedente2 <= 5:
+                taxa += excedente2 * 0.79
+            else:
+                taxa += 5 * 0.79
+                taxa += (excedente2 - 5) * 0.59
+    if tipo == 'rapida':
+        taxa *= 1.4
+    return round(min(max(taxa, 2.99), 19.99), 2)
+
+
+def _distancia_google(orig_lat, orig_lng, dest_lat, dest_lng):
+    """Chama Distance Matrix API e retorna (distancia_km, duracao_minutos)."""
+    import os, requests as _req
+    key = os.environ.get('GOOGLE_MAPS_SERVER_KEY', '')
+    if not key:
+        return None, None
+    try:
+        url = 'https://maps.googleapis.com/maps/api/distancematrix/json'
+        params = {
+            'origins': f'{orig_lat},{orig_lng}',
+            'destinations': f'{dest_lat},{dest_lng}',
+            'mode': 'driving',
+            'language': 'pt-BR',
+            'key': key,
+        }
+        resp = _req.get(url, params=params, timeout=5)
+        data = resp.json()
+        rows = data.get('rows') or []
+        elements = rows[0].get('elements') if rows else []
+        element = elements[0] if elements else {}
+        if element.get('status') == 'OK':
+            dist_m = element['distance']['value']
+            dur_s = element['duration']['value']
+            return round(dist_m / 1000, 2), round(dur_s / 60)
+        # Log útil para diagnóstico
+        status_api = data.get('status', 'UNKNOWN')
+        if status_api != 'OK':
+            print(f'[Google Distance] API status: {status_api} | error_message: {data.get("error_message", "")}')
+    except Exception as ex:
+        print(f'[Google Distance] Erro: {ex}')
+    return None, None
+
+
+def calcular_taxa_entrega_view():
+    """POST /api/calcular-taxa — retorna taxa dinâmica por distância."""
+    data = request.get_json(silent=True) or {}
+    rid = data.get('restaurante_id')
+    end_lat = _to_float(data.get('endereco_lat'))
+    end_lng = _to_float(data.get('endereco_lng'))
+    tipo = (data.get('tipo_entrega') or 'padrao').lower()
+
+    if tipo not in _TAXAS_ENTREGA:
+        return jsonify({'erro': 'tipo_entrega inválido'}), 400
+
+    restaurante = Restaurante.query.get(rid) if rid else None
+    rest_lat = restaurante.latitude if restaurante else None
+    rest_lng = restaurante.longitude if restaurante else None
+
+    distancia_km = None
+    duracao_minutos = None
+
+    if rest_lat and rest_lng and end_lat and end_lng:
+        distancia_km, duracao_minutos = _distancia_google(rest_lat, rest_lng, end_lat, end_lng)
+        if distancia_km is None:
+            # Fallback: Haversine
+            distancia_km = round(_haversine(rest_lat, rest_lng, end_lat, end_lng), 2)
+            duracao_minutos = round(distancia_km / 0.4)  # ~24 km/h urbano
+        taxa = _calcular_taxa_por_distancia(distancia_km, tipo)
+    else:
+        taxa = _TAXAS_ENTREGA[tipo]
+
+    return jsonify({
+        'taxa': taxa,
+        'distancia_km': distancia_km,
+        'duracao_minutos': duracao_minutos,
+        'fallback': rest_lat is None or end_lat is None,
+    }), 200
+
+
+def rota_pedido(usuario_atual, pid):
+    """GET /api/pedidos/<pid>/rota — retorna coords de origem e destino para renderizar no Maps."""
+    pedido = Pedido.query.get_or_404(int(pid))
+    if pedido.cliente_id != usuario_atual.id:
+        return jsonify({'erro': 'Sem permissão'}), 403
+
+    restaurante = Restaurante.query.get(pedido.restaurante_id)
+
+    orig_lat = restaurante.latitude if restaurante else None
+    orig_lng = restaurante.longitude if restaurante else None
+    dest_lat = pedido.endereco_latitude
+    dest_lng = pedido.endereco_longitude
+
+    distancia_km = None
+    duracao_minutos = None
+
+    if orig_lat and orig_lng and dest_lat and dest_lng:
+        distancia_km, duracao_minutos = _distancia_google(orig_lat, orig_lng, dest_lat, dest_lng)
+        if distancia_km is None:
+            distancia_km = round(_haversine(orig_lat, orig_lng, dest_lat, dest_lng), 2)
+            duracao_minutos = round(distancia_km / 0.4)
+
+    return jsonify({
+        'origem_lat': orig_lat,
+        'origem_lng': orig_lng,
+        'destino_lat': dest_lat,
+        'destino_lng': dest_lng,
+        'distancia_km': distancia_km,
+        'duracao_minutos': duracao_minutos,
+        'restaurante_nome': restaurante.nome_fantasia if restaurante else '',
+        'endereco_entrega': pedido.endereco_entrega,
+    }), 200
 
 
 def _criar_notificacao(usuario_id, tipo, titulo, mensagem, pedido_id=None, dados=None):
@@ -444,7 +577,14 @@ def criar_pedido(usuario_atual):
 
     if tipo_entrega not in _TAXAS_ENTREGA:
         return jsonify({'erro': 'tipo_entrega inválido. Use: padrao, rapida'}), 400
-    taxa_entrega = _TAXAS_ENTREGA[tipo_entrega]
+
+    # Calcular taxa dinamicamente pela distância, com fallback fixo
+    taxa_entrega_payload = _to_float(data.get('taxa_entrega'))
+    if taxa_entrega_payload and taxa_entrega_payload > 0:
+        # Frontend já calculou e enviou no payload — usar esse valor
+        taxa_entrega = taxa_entrega_payload
+    else:
+        taxa_entrega = _TAXAS_ENTREGA[tipo_entrega]  # fallback
 
     if pagamento_contexto not in {'site', 'entrega'}:
         return jsonify({'erro': 'pagamento_contexto inválido. Use: site, entrega'}), 400
@@ -815,10 +955,60 @@ def confirmar_recebimento(usuario_atual, pid):
     )
     try:
         db.session.commit()
-        return jsonify({'pedido': pedido.to_dict(), 'mensagem': 'Recebimento confirmado com sucesso'}), 200
     except Exception:
         db.session.rollback()
         return jsonify({'erro': 'Erro ao confirmar recebimento'}), 500
+
+    # ── Envio da Nota Fiscal em PDF por e-mail ────────────────────────────────
+    def _enviar_nf_async(app, pedido_id):
+        """Gera e envia a NF em background para não bloquear a resposta."""
+        import threading  # noqa: PLC0415
+        _ = threading.current_thread()  # garante contexto de thread
+
+        with app.app_context():
+            try:
+                from app.models import Pedido as PedidoModel  # noqa: PLC0415
+                from app.utils.email_utils import enviar_email_com_anexo  # noqa: PLC0415
+                from app.utils.nf_utils import gerar_nf_pdf  # noqa: PLC0415
+
+                ped = PedidoModel.query.get(pedido_id)
+                if ped is None:
+                    return
+
+                email_cliente = ped.cliente.email if ped.cliente else None
+                if not email_cliente:
+                    return
+
+                pdf_bytes = gerar_nf_pdf(ped)
+                nome_cli = ped.cliente.nome if ped.cliente else 'Cliente'
+                corpo_html = (
+                    f'<p>Olá, <b>{nome_cli}</b>!</p>'
+                    f'<p>Seu pedido <b>#{ped.id}</b> foi concluído com sucesso. 🎉</p>'
+                    f'<p>Em anexo você encontra a Nota Fiscal (comprovante) do seu pedido.</p>'
+                    f'<p>Obrigado por usar o <b>Kifome</b>!</p>'
+                )
+                enviar_email_com_anexo(
+                    destinatario=email_cliente,
+                    assunto=f'Kifome — Nota Fiscal do Pedido #{ped.id}',
+                    corpo_html=corpo_html,
+                    anexo_bytes=pdf_bytes,
+                    nome_arquivo=f'NF_Pedido_{ped.id}.pdf',
+                )
+            except Exception as exc:  # noqa: BLE001
+                import logging  # noqa: PLC0415
+                logging.getLogger(__name__).error(
+                    '[confirmar_recebimento] Falha ao enviar NF por e-mail para pedido #%s: %s',
+                    pedido_id, exc,
+                )
+
+    import threading  # noqa: PLC0415
+    from flask import current_app  # noqa: PLC0415
+    app = current_app._get_current_object()  # type: ignore[attr-defined]
+    t = threading.Thread(target=_enviar_nf_async, args=(app, pedido.id), daemon=True)
+    t.start()
+    # ──────────────────────────────────────────────────────────────────────────
+
+    return jsonify({'pedido': pedido.to_dict(), 'mensagem': 'Recebimento confirmado com sucesso'}), 200
 
 
 # ── NOTIFICAÇÕES ─────────────────────────────────────────
@@ -868,6 +1058,179 @@ def marcar_todas_lidas(usuario_atual):
     except Exception:
         db.session.rollback()
         return jsonify({'erro': 'Erro ao atualizar notificações'}), 500
+
+
+# ── CANCELAR PEDIDO POR PAGAMENTO ABANDONADO ────────────
+def cancelar_pedido_pagamento(usuario_atual, pedido_id):
+    """POST /api/pedidos/<id>/cancelar-pagamento
+    Cancela um pedido que ficou em aguardando com pagamento pendente.
+    Só o dono do pedido pode chamar, e apenas enquanto status = 'aguardando'.
+    """
+    pedido = Pedido.query.get_or_404(int(pedido_id))
+    if pedido.cliente_id != usuario_atual.id:
+        return jsonify({'erro': 'Sem permissão'}), 403
+    if pedido.status != 'aguardando':
+        return jsonify({'erro': f'Pedido não pode ser cancelado (status atual: {pedido.status})'}), 400
+    if pedido.pagamento_status == 'aprovado':
+        return jsonify({'erro': 'Pagamento já aprovado, pedido não pode ser cancelado'}), 400
+
+    pedido.status = 'cancelado'
+    pedido.pagamento_status = 'cancelado'
+    _criar_notificacao(
+        usuario_id=pedido.cliente_id,
+        tipo='status_mudou',
+        titulo='❌ Pedido cancelado',
+        mensagem='Seu pedido foi cancelado por pagamento não concluído.',
+        pedido_id=pedido.id,
+        dados={'novo_status': 'cancelado'},
+    )
+    try:
+        db.session.commit()
+        return jsonify({'ok': True, 'pedido_id': pedido.id}), 200
+    except Exception:
+        db.session.rollback()
+        return jsonify({'erro': 'Erro ao cancelar pedido'}), 500
+
+
+# ── LIMPEZA AUTOMÁTICA: pedidos aguardando expirados ─────
+def limpar_pedidos_expirados():
+    """POST /api/pedidos/limpar-expirados (interno/admin)
+    Cancela pedidos em 'aguardando' com pagamento pendente há mais de 35 minutos.
+    Pode ser chamado por cron, scheduler ou endpoint protegido.
+    """
+    from datetime import datetime, timedelta
+    limite = datetime.utcnow() - timedelta(minutes=35)
+    expirados = Pedido.query.filter(
+        Pedido.status == 'aguardando',
+        Pedido.pagamento_status == 'pendente',
+        Pedido.criado_em < limite,
+    ).all()
+    cancelados = 0
+    for pedido in expirados:
+        pedido.status = 'cancelado'
+        pedido.pagamento_status = 'cancelado'
+        cancelados += 1
+    if cancelados:
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+    return jsonify({'cancelados': cancelados}), 200
+
+
+# ── PAGAMENTO PIX NATIVO ─────────────────────────────────
+def pix_criar(usuario_atual):
+    """POST /api/pagamentos/pix/criar — gera QR Code PIX via BR Code local ou Mercado Pago."""
+    data = request.get_json(silent=True) or {}
+    pid = data.get('pedido_id')
+    if not pid:
+        return jsonify({'erro': 'pedido_id é obrigatório'}), 400
+    pedido = Pedido.query.get_or_404(int(pid))
+    if pedido.cliente_id != usuario_atual.id:
+        return jsonify({'erro': 'Sem permissão'}), 403
+
+    # Reusar PIX já gerado se ainda pendente
+    if pedido.pagamento_transaction_id and pedido.pagamento_status == 'pendente':
+        if str(pedido.pagamento_transaction_id).startswith('local_pix_'):
+            # PIX local: regen QR a partir do brcode salvo
+            try:
+                from app.utils.pix_utils import gerar_brcode, gerar_qrcode_base64
+                brcode = gerar_brcode(float(pedido.total), f'PED{pedido.id}', f'Kifome Pedido {pedido.id}')
+                qr64 = gerar_qrcode_base64(brcode)
+                return jsonify({
+                    'payment_id': pedido.pagamento_transaction_id,
+                    'qr_code': brcode,
+                    'qr_code_base64': qr64,
+                    'status': 'pending',
+                    'transaction_amount': float(pedido.total),
+                }), 200
+            except Exception:
+                pass
+        else:
+            from app.utils.mp_utils import obter_pagamento_mp
+            pag = obter_pagamento_mp(pedido.pagamento_transaction_id)
+            pix_data = (pag.get('point_of_interaction') or {}).get('transaction_data') or {}
+            qr = pix_data.get('qr_code', '')
+            qr64 = pix_data.get('qr_code_base64', '')
+            if qr:
+                return jsonify({
+                    'payment_id': pedido.pagamento_transaction_id,
+                    'qr_code': qr,
+                    'qr_code_base64': qr64,
+                    'status': pag.get('status', 'pending'),
+                    'transaction_amount': float(pedido.total),
+                }), 200
+
+    try:
+        # Tentar Mercado Pago primeiro; fallback para geração local
+        resultado = None
+        try:
+            from app.utils.mp_utils import criar_pix_mp
+            resultado = criar_pix_mp(pedido, usuario_atual)
+        except Exception as mp_err:
+            print(f'[PIX] MP falhou ({mp_err}), usando geração local.')
+            from app.utils.pix_utils import criar_pix_local
+            resultado = criar_pix_local(pedido, usuario_atual)
+
+        pedido.pagamento_transaction_id = resultado['payment_id']
+        pedido.pagamento_provedor = 'mercadopago' if not str(resultado['payment_id']).startswith('local_') else 'local'
+        pedido.pagamento_status = 'pendente'
+        db.session.commit()
+        return jsonify(resultado), 201
+    except Exception as ex:
+        db.session.rollback()
+        return jsonify({'erro': f'Erro ao gerar PIX: {str(ex)}'}), 500
+
+
+def pix_status(usuario_atual, payment_id):
+    """GET /api/pagamentos/pix/<payment_id>/status — consulta status do pagamento PIX."""
+    pid_str = str(payment_id)
+
+    # PIX gerado localmente — retorna status do pedido diretamente
+    if pid_str.startswith('local_pix_'):
+        try:
+            # extrai pedido_id do payment_id: local_pix_<pedido_id>_<hex>
+            partes = pid_str.split('_')
+            pedido_id = int(partes[2]) if len(partes) >= 3 else None
+            if pedido_id:
+                pedido = Pedido.query.get(pedido_id)
+                if pedido and pedido.cliente_id == usuario_atual.id:
+                    status_mp = 'approved' if pedido.pagamento_status == 'aprovado' else 'pending'
+                    return jsonify({'status': status_mp, 'pedido_id': pedido_id}), 200
+        except Exception:
+            pass
+        return jsonify({'status': 'pending', 'pedido_id': None}), 200
+
+    # PIX do Mercado Pago
+    from app.utils.mp_utils import obter_pagamento_mp
+    try:
+        pag = obter_pagamento_mp(pid_str)
+        mp_status = pag.get('status', '')
+        external_ref = pag.get('external_reference', '')
+
+        pedido_id = None
+        if external_ref.startswith('pedido_'):
+            pedido_id = int(external_ref.replace('pedido_', ''))
+            pedido = Pedido.query.get(pedido_id)
+            if pedido and pedido.cliente_id == usuario_atual.id:
+                mapa = {'approved': 'aprovado', 'rejected': 'recusado', 'cancelled': 'cancelado', 'pending': 'pendente', 'in_process': 'pendente'}
+                novo_status = mapa.get(mp_status, 'pendente')
+                if pedido.pagamento_status != novo_status:
+                    pedido.pagamento_status = novo_status
+                    if mp_status == 'approved':
+                        pedido.status = 'confirmado'
+                        _criar_notificacao(
+                            usuario_id=pedido.cliente_id,
+                            tipo='pagamento_aprovado',
+                            titulo='💚 PIX aprovado!',
+                            mensagem=f'Pagamento PIX do pedido #{pedido.id} confirmado.',
+                            pedido_id=pedido.id,
+                        )
+                    db.session.commit()
+
+        return jsonify({'status': mp_status, 'pedido_id': pedido_id}), 200
+    except Exception as ex:
+        return jsonify({'erro': str(ex)}), 500
 
 
 # ── PAGAMENTO MERCADO PAGO ───────────────────────────────
@@ -1118,9 +1481,11 @@ def simular_passo_entrega(usuario_atual, pid):
         if codigo_gerado:
             resp['codigo_entrega'] = codigo_gerado
         return jsonify(resp), 200
-    except Exception:
+    except Exception as exc:
         db.session.rollback()
-        return jsonify({'erro': 'Erro ao simular passo'}), 500
+        import logging, traceback
+        logging.getLogger(__name__).error('[simular_passo] ERRO: %s\n%s', exc, traceback.format_exc())
+        return jsonify({'erro': f'Erro ao simular passo: {str(exc)}'}), 500
 
 
 # ── CÓDIGO DE ENTREGA PARA O CLIENTE ────────────────────────────────────────

@@ -3,6 +3,7 @@ from app.controllers import (
     criar_pedido, meus_pedidos_cliente, pedidos_restaurante,
     atualizar_status_pedido, entregas_entregador, pedidos_disponiveis, avaliar_pedido,
     validar_entrega, confirmar_recebimento, simular_passo_entrega, codigo_entrega_cliente,
+    calcular_taxa_entrega_view, rota_pedido, cancelar_pedido_pagamento, limpar_pedidos_expirados,
 )
 from app.utils.jwt_utils import token_requerido, requer_tipo
 
@@ -51,3 +52,20 @@ def rota_simular_passo(u, pid): return simular_passo_entrega(u, pid)
 @pedidos_bp.route('/<int:pid>/codigo-entrega', methods=['GET'])
 @requer_tipo('cliente')
 def rota_codigo_entrega(u, pid): return codigo_entrega_cliente(u, pid)
+
+@pedidos_bp.route('/<int:pid>/rota', methods=['GET'])
+@requer_tipo('cliente')
+def rota_pedido_maps(u, pid): return rota_pedido(u, pid)
+
+
+@pedidos_bp.route('/calcular-taxa', methods=['POST'])
+@requer_tipo('cliente')
+def rota_calcular_taxa(u): return calcular_taxa_entrega_view()
+
+@pedidos_bp.route('/<int:pid>/cancelar-pagamento', methods=['POST'])
+@requer_tipo('cliente')
+def rota_cancelar_pagamento(u, pid): return cancelar_pedido_pagamento(u, pid)
+
+@pedidos_bp.route('/limpar-expirados', methods=['POST'])
+@token_requerido
+def rota_limpar_expirados(u): return limpar_pedidos_expirados()
